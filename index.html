@@ -61,7 +61,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 .ib.busy{opacity:.4}
 .scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
 .wrap{max-width:760px;margin:0 auto;padding-top:10px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 84px);padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));display:grid;gap:8px}
-.tabs{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);pointer-events:none}
+.tabs{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;padding-bottom:max(6px,calc(env(safe-area-inset-bottom,0px) - 14px));pointer-events:none}
 .tabs-in{pointer-events:auto;display:flex;gap:4px;padding:4px;border-radius:999px;
   background:rgba(32,36,44,.38);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
   border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(0,0,0,.2),0 10px 30px rgba(0,0,0,.4)}
@@ -584,7 +584,7 @@ const FX = { data: {}, byTeam: {}, ready: false };
 const lastName = n => { const p = String(n || '').replace(/ (Jr\.?|Sr\.?|II|III|IV)$/i, '').split(' '); return p.length > 1 ? p.slice(1).join(' ') : p[0]; };
 function buildByTeam() {
   const m = {};
-  [['sv', 'PFL'], ['cv', 'CBS']].forEach(([k, tag]) => { const d = FX.data[k]; if (!d || !d.me) return; d.me.rows.filter(r => r.st && r.team).forEach(r => { const a = nflAbbr(r.pos === 'DEF' ? r.team : r.team); (m[a] = m[a] || []).push({ tag, name: r.pos === 'DEF' ? r.team + ' D' : lastName(r.name), pts: r.pts }); }); });
+  [['sv', 'PFL'], ['cv', 'BELL']].forEach(([k, tag]) => { const d = FX.data[k]; if (!d || !d.me) return; d.me.rows.filter(r => r.st && r.team).forEach(r => { const a = nflAbbr(r.pos === 'DEF' ? r.team : r.team); (m[a] = m[a] || []).push({ tag, name: r.pos === 'DEF' ? r.team + ' D' : lastName(r.name), pts: r.pts }); }); });
   FX.byTeam = m;
 }
 const minesIn = g => (FX.byTeam[g.home.abbr] || []).concat(FX.byTeam[g.away.abbr] || []);
@@ -690,7 +690,7 @@ async function loadFantasy(nfl) {
 function oddsOf(m) { if (!m || !m.me || !m.opp) return null; const sd = Math.max(5, Math.sqrt(m.me.left + m.opp.left) * 12); return Math.round(clamp(ncdf((m.me.est - m.opp.est) / sd), .01, .99) * 100); }
 function fxCards() {
   const d = FX.data; const cards = [];
-  [['sv', 'PFL'], ['cv', 'CBS']].forEach(([k, def]) => {
+  [['sv', 'PFL'], ['cv', 'BELL']].forEach(([k, def]) => {
     const m = d[k];
     if (m && m.me) {
       const o = oddsOf(m); const lead = m.opp && m.me.pts >= m.opp.pts;
@@ -699,7 +699,7 @@ function fxCards() {
     } else if (d[k + 'Err']) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">${esc(d[k + 'Err'])}</div><div class="fxm">Tap to fix in Settings</div></button>`);
     else if (m) cards.push(`<button class="fxc" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span></div><div class="fxm">Pick your team in Settings</div></button>`);
   });
-  if (!CFG.cbsToken && CFG.cbsTeam) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>CBS</span></div><div class="fxm" style="white-space:normal">Add your CBS token in Settings to see this matchup</div></button>`);
+  if (!CFG.cbsToken && CFG.cbsTeam) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>BELL</span></div><div class="fxm" style="white-space:normal">Add your CBS token in Settings to see this matchup</div></button>`);
   if (!CFG.sleeperLeague && !CFG.cbsToken && !CFG.cbsTeam) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>Fantasy</span></div><div class="fxm" style="white-space:normal">Paste your setup code in Settings to see your matchups here</div></button>`);
   if (cards.length === 1) cards[0] = cards[0].replace('class="fxc"', 'class="fxc solo"');
   return cards.length ? `<div class="lbl">Your matchups<span class="r">Week ${esc(FX.week || '')}</span></div><div class="g2">${cards.join('')}</div>` : '';
@@ -1265,11 +1265,11 @@ async function cbsData(nfl) {
   if (!T.some(t => t.opp != null)) { try { const om = await cbsOpponents(wk); T.forEach(t => { if (om[t.rid]) t.opp = om[t.rid]; }); } catch (e) {} }
   const oid = t => String(typeof t.opp === 'object' ? t.opp.id : t.opp);
   const me = T.find(t => t.rid === String(CFG.cbsTeam)); const opp = me && me.opp != null ? T.find(t => t.rid === oid(me)) : null;
-  if (me) me.rows.forEach(r => addMine(r.name, 'CBS'));
+  if (me) me.rows.forEach(r => addMine(r.name, 'BELL'));
   let league = [];
   if (T.some(t => t.opp != null)) { const seen = new Set(); T.forEach(t => { if (seen.has(t.rid)) return; const o = T.find(x => x.rid === oid(t)); seen.add(t.rid); if (o) { seen.add(o.rid); league.push([t, o]); } else league.push([t]); }); }
   else league = T.slice().sort((a, b) => b.pts - a.pts).map(t => [t]);
-  return { key: 'cv', title: 'CBS league', short: 'CBS', src: 'CBS', week: wk, me, opp, league, nfl };
+  return { key: 'cv', title: 'BELL', short: 'BELL', src: 'CBS', week: wk, me, opp, league, nfl };
 }
 const fmtP = v => v == null ? '–' : (Math.round(v * 10) / 10).toFixed(1);
 function ncdf(z) { const t = 1 / (1 + .3275911 * Math.abs(z) / Math.SQRT2); const e = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - .284496736) * t + .254829592) * t * Math.exp(-z * z / 2); return .5 * (1 + Math.sign(z) * e); }
