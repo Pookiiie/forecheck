@@ -450,7 +450,7 @@ function tLine(g, t, si) {
 function tile(g, grouped) {
   const si = g.sp === 'nfl' ? nflSit(g) : null;
   const mine = g.sp === 'nfl' ? minesIn(g) : [];
-  const mineH = mine.length ? `<div class="tmine">${mine.slice(0, 3).map(p => `<span><b>${p.tag}</b>${esc(p.name)}${g.state !== 'pre' ? ` <i>${fmtP(p.pts)}</i>` : ''}</span>`).join('')}${mine.length > 3 ? `<span>+${mine.length - 3}</span>` : ''}</div>` : '';
+  const mineH = mine.length ? `<div class="tmine">${mine.map(p => `<span><b>${p.tag}</b>${esc(p.name)}${g.state !== 'pre' ? ` <i>${fmtP(p.pts)}</i>` : ''}</span>`).join('')}</div>` : '';
   let x = '';
   if (si && si.off) x = `<span class="x yl">${esc(si.dd)}${si.rz ? ' · RZ' : ''}</span>`;
   else if (showWatch(g)) x = `<span class="x">${watchHabs(g).items.slice(0, 2).map(i => esc(SHORT_TV[i.name] || i.name)).join(' · ')}</span>`;
