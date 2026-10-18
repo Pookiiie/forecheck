@@ -113,8 +113,8 @@ button.stc:active{opacity:.8}
 .stc-t .in{color:var(--green)}.stc-t .out{color:var(--red)}
 .stc .go{color:var(--fg3);width:8px;height:13px;flex:none}
 /* standings strip slides out from under the score bug card, like a drawer */
-.hero:has(+ .stc){position:relative;z-index:2;box-shadow:0 1px 0 rgba(255,255,255,.10),0 8px 12px -4px rgba(0,0,0,.45)}
-.hero + .stc{margin:-8px 12px 0;width:auto;border-radius:0 0 10px 10px;padding:8px 10px 7px;background:color-mix(in srgb,var(--well) 85%,#000);border:1px solid rgba(255,255,255,.06);border-top:0;box-shadow:inset 0 10px 10px -8px rgba(0,0,0,.65);position:relative;z-index:1}
+.hero:has(+ .stc){position:relative;z-index:2;box-shadow:0 8px 12px -4px rgba(0,0,0,.4)}
+.hero + .stc{margin:-8px 14px 0;width:auto;border-radius:0 0 10px 10px;padding:8px 10px 7px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.07);border-top:0;box-shadow:inset 0 10px 10px -8px rgba(0,0,0,.45);position:relative;z-index:1}
 body[data-ice="light"] .hero + .stc{background:var(--well);border-color:rgba(12,29,43,.08);box-shadow:inset 0 10px 10px -8px rgba(12,29,43,.25)}
 .stb{width:100%;border-collapse:collapse;font:700 14px var(--bc);font-variant-numeric:tabular-nums;white-space:nowrap}
 .stb th{font:600 10.5px var(--ui);color:var(--fg2);text-align:right;padding:0 5px 4px}
@@ -1358,9 +1358,17 @@ function myPlayersSec(g, s) {
       const T = (s && s.boxscore && s.boxscore.teams) || []; const opp = T.find(t => t.team && t.team.abbreviation && nflAbbr(t.team.abbreviation) !== p.team);
       const v = k => { const x = opp && (opp.statistics || []).find(z => z.name === k); return x ? x.displayValue : null; };
       const oppTeam = g.home.abbr === p.team ? g.away : g.home; const pa = num0(oppTeam.score);
-      const sk = parseInt(v('sacksYardsLost')) || 0, ints = num0(v('interceptions')), fr = num0(v('fumblesLost'));
+      const sk = parseInt(v('sacksYardsLost')) || 0, ints = num0(v('interceptions')), fr = num0(v('fumblesLost')), ya = num0(v('totalYards'));
+      const me = T.find(t => t.team && nflAbbr(t.team.abbreviation) === p.team); const myId = me && String(me.team.id);
+      const sp = (s && s.scoringPlays) || []; const mine = q => myId && String(q.team && q.team.id) === myId;
+      const tds = sp.filter(q => mine(q) && /return|recovery|blocked/i.test((q.type && q.type.text) || q.text || '') && /touchdown/i.test((q.type && q.type.text) || q.text || '')).length;
+      const sfs = sp.filter(q => mine(q) && /safety/i.test((q.type && q.type.text) || '')).length;
       const tier = pa === 0 ? 'pts_allow_0' : pa <= 6 ? 'pts_allow_1_6' : pa <= 13 ? 'pts_allow_7_13' : pa <= 20 ? 'pts_allow_14_20' : pa <= 27 ? 'pts_allow_21_27' : pa <= 34 ? 'pts_allow_28_34' : 'pts_allow_35p';
-      const items = [[`${sk} sack${sk === 1 ? '' : 's'}`, { sack: sk }], [`${ints} INT`, { int: ints }], [`${fr} fumble rec`, { fum_rec: fr }], [`${pa} pts allowed`, { [tier]: 1 }]].filter(([l, st]) => Object.values(st).some(x => x) || /pts allowed/.test(l));
+      const btier = pa === 0 ? 'b_pa_0' : pa <= 6 ? 'b_pa_1_6' : pa <= 13 ? 'b_pa_7_13' : pa <= 20 ? 'b_pa_14_20' : pa <= 27 ? 'b_pa_21_27' : 'b_pa_28p';
+      const ytier = ya < 100 ? 'yds_allow_0_100' : ya < 200 ? 'yds_allow_100_199' : ya < 300 ? 'yds_allow_200_299' : ya < 350 ? 'yds_allow_300_349' : ya < 400 ? 'yds_allow_350_399' : ya < 450 ? 'yds_allow_400_449' : ya < 500 ? 'yds_allow_450_499' : ya < 550 ? 'yds_allow_500_549' : 'yds_allow_550p';
+      const bytier = ya < 50 ? 'b_ya_0_49' : ya < 100 ? 'b_ya_50_99' : ya < 150 ? 'b_ya_100_149' : ya < 200 ? 'b_ya_150_199' : ya < 250 ? 'b_ya_200_249' : ya < 300 ? 'b_ya_250_299' : 'b_ya_300p';
+      const items = [[`${sk} sack${sk === 1 ? '' : 's'}`, { sack: sk }], [`${ints} INT`, { int: ints }], [`${fr} fumble rec`, { fum_rec: fr }], [`${tds} D/ST TD`, { def_td: tds }], [`${sfs} safety`, { safe: sfs }],
+        [`${pa} pts allowed`, { [tier]: 1, [btier]: 1 }], [`${ya} yds allowed`, { [ytier]: 1, [bytier]: 1 }]].filter(([l, st]) => Object.values(st).some(x => x) && !/^0 /.test(l) || /allowed/.test(l));
       const rows = items.map(([label, st]) => `<tr><td>${esc(label)}</td>${lg.map(x => { const val = scoreOf(st, x.sc); return `<td class="${val === 0 ? 'z' : val < 0 ? 'neg' : ''}">${val === 0 ? '–' : (val > 0 ? '' : '−') + fmtP(Math.abs(val))}</td>`; }).join('')}</tr>`);
       const other = lg.map(x => x.pts - items.reduce((a, [, st]) => a + scoreOf(st, x.sc), 0));
       if (other.some(x => Math.abs(x) >= .05)) rows.push(`<tr class="oth"><td>Other</td>${other.map(x => `<td class="${Math.abs(x) < .05 ? 'z' : x < 0 ? 'neg' : ''}">${Math.abs(x) < .05 ? '–' : (x > 0 ? '+' : '−') + fmtP(Math.abs(x))}</td>`).join('')}</tr>`);
@@ -1509,12 +1517,22 @@ async function sleeperData(nfl) {
 /* Weekly projections from Sleeper; CBS live scoring has none, so CBS players are projected
    from the same stat lines using the BELL MIRABEL scoring (6-pt pass TD, -2 INT, no PPR). */
 const projRows = (season, wk) => cached(`proj:${season}:${wk}`, 60e3, () => getJSON(`https://api.sleeper.app/projections/nfl/${season}/${wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF`));
+/* BELL D/ST: sack 1, INT 2, fumble rec 2, D/ST TD 6, safety 2; points against 0:12, 1-6:8, 7-13:6,
+   14-20:4, 21-27:2, 28+:0; yards allowed <50:12, 50-99:10, 100-149:8, 150-199:6, 200-249:4, 250-299:2, 300+:0 */
+const BELL_DEF = { sack: 1, int: 2, fum_rec: 2, def_td: 6, safe: 2, b_pa_0: 12, b_pa_1_6: 8, b_pa_7_13: 6, b_pa_14_20: 4, b_pa_21_27: 2, b_ya_0_49: 12, b_ya_50_99: 10, b_ya_100_149: 8, b_ya_150_199: 6, b_ya_200_249: 4, b_ya_250_299: 2 };
+function bellDefProj(st) {
+  if (st.pts_allow == null) return +(st.pts_std || 0);
+  const pa = +st.pts_allow, ya = +(st.yds_allow ?? 999);
+  const paPts = pa < .5 ? 12 : pa <= 6 ? 8 : pa <= 13 ? 6 : pa <= 20 ? 4 : pa <= 27 ? 2 : 0;
+  const yaPts = ya < 50 ? 12 : ya < 100 ? 10 : ya < 150 ? 8 : ya < 200 ? 6 : ya < 250 ? 4 : ya < 300 ? 2 : 0;
+  return (st.sack || 0) * 1 + (st.int || 0) * 2 + (st.fum_rec || 0) * 2 + (st.def_td || 0) * 6 + (st.safe || 0) * 2 + paPts + yaPts;
+}
 const CBS_SC = { pass_yd: .04, pass_td: 6, pass_int: -2, rush_yd: .1, rush_td: 6, rec_yd: .1, rec_td: 6, fum_lost: -2, pass_2pt: 2, rush_2pt: 2, rec_2pt: 2 };
 function cbsProjMap(rows) {
   const k = {}, n = {};
   (rows || []).forEach(r => {
     const p = r.player || {}, s = r.stats || {}, pos = p.position; const team = nflAbbr(p.team || r.team || '');
-    let v; if (pos === 'K' || pos === 'DEF') v = +(s.pts_std || 0); else { v = 0; for (const [key, w] of Object.entries(CBS_SC)) v += (s[key] || 0) * w; }
+    let v; if (pos === 'K') v = +(s.pts_std || 0); else if (pos === 'DEF') v = bellDefProj(s); else { v = 0; for (const [key, w] of Object.entries(CBS_SC)) v += (s[key] || 0) * w; }
     if (pos === 'DEF') { k['DEF|' + team] = v; return; }
     const nm = normName((p.first_name || '') + ' ' + (p.last_name || '')); k[nm + '|' + team] = v; if (!(nm in n)) n[nm] = v;
   });
@@ -1568,7 +1586,7 @@ async function cbsData(nfl) {
   let league = [];
   if (T.some(t => t.opp != null)) { const seen = new Set(); T.forEach(t => { if (seen.has(t.rid)) return; const o = T.find(x => x.rid === oid(t)); seen.add(t.rid); if (o) { seen.add(o.rid); league.push([t, o]); } else league.push([t]); }); }
   else league = T.slice().sort((a, b) => b.pts - a.pts).map(t => [t]);
-  return { key: 'cv', sc: Object.assign({ rec: 0 }, CBS_SC), title: 'BELL', short: 'BELL', src: 'CBS', week: wk, me, opp, league, nfl };
+  return { key: 'cv', sc: Object.assign({ rec: 0 }, CBS_SC, BELL_DEF), title: 'BELL', short: 'BELL', src: 'CBS', week: wk, me, opp, league, nfl };
 }
 const fmtP = v => v == null ? '–' : (Math.round(v * 10) / 10).toFixed(1);
 function ncdf(z) { const t = 1 / (1 + .3275911 * Math.abs(z) / Math.SQRT2); const e = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - .284496736) * t + .254829592) * t * Math.exp(-z * z / 2); return .5 * (1 + Math.sign(z) * e); }
