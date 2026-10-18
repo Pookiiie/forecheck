@@ -464,7 +464,7 @@ const isFav = (sp, abbr) => abbr && abbr === (sp === 'nfl' ? CFG.favNFL : CFG.fa
 const hasFav = g => isFav(g.sp, g.home.abbr) || isFav(g.sp, g.away.abbr);
 const FB = "this.onerror=null;this.src=this.dataset.fb";
 const lightIce = () => document.body.dataset.sport === 'nhl' && CFG.look === 'light';
-const logo = (t, onColour) => { const u = !onColour && lightIce() ? t.logo : t.logoDark; const f = LOGO_FIT[u]; return `<img class="lgo" src="${esc(u)}" data-fb="${esc(t.logo)}" onerror="${FB}" alt="" decoding="async"${f ? ` style="transform:${f}"` : ''}>`; };
+const logo = (t, onColour, ctx = 'std') => { const u = !onColour && lightIce() ? t.logo : t.logoDark; const f = LOGO_FIT[u]; return `<img class="lgo" data-ctx="${ctx}" src="${esc(u)}" data-fb="${esc(t.logo)}" onerror="${FB}" alt="" decoding="async"${f ? ` style="transform:${f[ctx]}"` : ''}>`; };
 /* Optical logo sizing: logos fill their square very differently (a round crest ~70%, a wordmark ~20%).
    Measure each logo's opaque area once and scale it toward the same visual weight. */
 const LOGO_FIT = {}, LOGO_PENDING = {};
@@ -479,13 +479,15 @@ function measureLogo(url) {
       for (let y = 0; y < N; y++) for (let X = 0; X < N; X++) if (d[(y * N + X) * 4 + 3] > 40) { n++; if (X < x0) x0 = X; if (X > x1) x1 = X; if (y < y0) y0 = y; if (y > y1) y1 = y; }
       if (x1 < 0) return res(null);
       const bw = (x1 - x0 + 1) / N, bh = (y1 - y0 + 1) / N, area = n / (N * N), cx = (x0 + x1 + 1) / 2 / N, cy = (y0 + y1 + 1) / 2 / N;
-      const sc = Math.min(Math.sqrt(.42 / area), 1.14 / Math.max(bw, bh), 1.6);
-      LOGO_FIT[url] = `scale(${sc.toFixed(3)}) translate(${((.5 - cx) * 100).toFixed(1)}%,${((.5 - cy) * 100).toFixed(1)}%)`; res(LOGO_FIT[url]);
+      // visual weight grows faster than area for solid crests, so use a 0.6 power; wide marks may use spare width
+      const want = Math.pow(.38 / area, .6), tr = `translate(${((.5 - cx) * 100).toFixed(1)}%,${((.5 - cy) * 100).toFixed(1)}%)`;
+      const mk = wcap => `scale(${Math.min(want, wcap / bw, 1.14 / bh, 1.7).toFixed(3)}) ${tr}`;
+      LOGO_FIT[url] = { std: mk(1.18), cal: mk(1.42) }; res(LOGO_FIT[url]);
     } catch (e) { res(null); } };
     im.onerror = () => res(null); im.src = url;
   });
 }
-function fitLogos(root) { (root || document).querySelectorAll('img.lgo:not([style])').forEach(img => { const u = img.getAttribute('src'); measureLogo(u).then(f => { if (f && img.isConnected && img.getAttribute('src') === u) img.style.transform = f; }); }); }
+function fitLogos(root) { (root || document).querySelectorAll('img.lgo:not([style])').forEach(img => { const u = img.getAttribute('src'); measureLogo(u).then(f => { if (f && img.isConnected && img.getAttribute('src') === u) img.style.transform = f[img.dataset.ctx || 'std']; }); }); }
 new MutationObserver(() => { clearTimeout(fitLogos.t); fitLogos.t = setTimeout(() => fitLogos(document), 30); }).observe(document.body, { childList: true, subtree: true });
 const FOOT = '<svg class="foot-ic" viewBox="0 0 16 10" aria-label="has the ball"><ellipse cx="8" cy="5" rx="7.2" ry="4.2" fill="#8b4a20" stroke="#fff" stroke-width="1"/><path d="M5 5h6M6.5 3.8v2.4M8 3.8v2.4M9.5 3.8v2.4" stroke="#fff" stroke-width=".9"/></svg>';
 
@@ -736,7 +738,7 @@ function habsCalendar(games, ab) {
     if (!g) { cells += `<div class="cd${tod}"><span class="dn">${d}</span></div>`; continue; }
     const home = g.home.abbr === ab; const opp = home ? g.away : g.home; const me = home ? g.home : g.away;
     let rs = ''; if (g.state === 'post') rs = me.winner ? 'W' : /(OT|SO)/.test(g.detail || '') ? 'O' : 'L';
-    cells += `<button class="cd${home ? '' : ' away'}${tod}${rs ? ' ' + rs : ''}" data-open="nhl:${g.id}" aria-label="${esc((home ? 'vs ' : 'at ') + opp.name + ', ' + fmtDay(g.date) + (rs ? ', ' + { W: 'win', L: 'loss', O: 'overtime loss' }[rs] : ''))}"><span class="dn">${d}</span>${home ? '' : '<span class="at">@</span>'}${logo(opp)}</button>`;
+    cells += `<button class="cd${home ? '' : ' away'}${tod}${rs ? ' ' + rs : ''}" data-open="nhl:${g.id}" aria-label="${esc((home ? 'vs ' : 'at ') + opp.name + ', ' + fmtDay(g.date) + (rs ? ', ' + { W: 'win', L: 'loss', O: 'overtime loss' }[rs] : ''))}"><span class="dn">${d}</span>${home ? '' : '<span class="at">@</span>'}${logo(opp, false, 'cal')}</button>`;
   }
   const label = first.toLocaleDateString('en-CA', { month: 'long', year: cur.y === now.getFullYear() ? undefined : 'numeric' });
   const chev = d => `<svg viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
