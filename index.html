@@ -253,12 +253,13 @@ button.hero:active{opacity:.85}
 .tl.ping{animation:tping .8s ease-in-out 3}
 @keyframes tping{50%{background:color-mix(in srgb,var(--c) 45%,transparent)}}
 /* post-game recap */
-.recap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.recap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.15fr);gap:4px}
 .recap .s{background:var(--well);border-radius:6px;padding:3px 6px;min-width:0}
 .recap .s b{display:block;font:700 13.5px/1.2 var(--bc);letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .recap .s.opp b{color:var(--fg2)}
 .recap .s small{display:block;font:500 11px/1.25 var(--ui);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .recap .s small i{font-style:normal;color:var(--amber);font-size:9.5px;letter-spacing:.5px;margin-right:3px}
+.recap .s small i.sv{font-size:11px;font-weight:700;letter-spacing:0}
 /* pull to refresh */
 .ptr{position:absolute;left:50%;z-index:5;width:34px;height:34px;margin-left:-17px;border-radius:50%;display:grid;place-items:center;background:rgba(30,34,42,.75);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.14);box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;pointer-events:none;transform:translateY(-40px)}
 .ptr svg{width:22px;height:22px}
@@ -748,7 +749,7 @@ async function habsRecap(g, ab) {
     const stars = ['firstStar', 'secondStar', 'thirdStar'].map(n => fa.find(f => f.name === n)).filter(Boolean);
     const gk = Object.values(line).filter(x => x.gk && x.team === ab && secs(x.toi) > 0).sort((x, y) => (+y.sa || 0) - (+x.sa || 0))[0];
     const cards = stars.map((f, i) => { const id = String(f.playerId || (f.athlete && f.athlete.id) || ''); const L = line[id] || {}; const nm = (f.athlete && (f.athlete.shortName || f.athlete.displayName)) || L.name || ''; const team = L.team || (f.team && f.team.abbreviation) || ''; const st = L.gk ? `${L.sv} SV` : [+L.g ? L.g + 'G' : '', +L.a ? L.a + 'A' : ''].filter(Boolean).join(' ') || ''; const opp = team && team !== ab; return `<div class="s${opp ? ' opp' : ''}"><b>${esc(nm.replace(/^\w\. /, ''))}</b><small><i>${'★'.repeat(i + 1)}</i>${esc([st, opp ? team : ''].filter(Boolean).join(' · '))}</small></div>`; });
-    if (gk) cards.push(`<div class="s"><b>${esc(gk.name.replace(/^\w\. /, ''))}</b><small><i>GK</i>${esc(gk.sv)}/${esc(gk.sa)} · ${esc(gk.svp)}</small></div>`);
+    if (gk) cards.push(`<div class="s"><b>${esc(gk.name.replace(/^\w\. /, ''))}</b><small><i class="sv">${esc(gk.svp)}</i>${esc(gk.sv)}/${esc(gk.sa)} SV</small></div>`);
     const h = cards.length ? `<div class="recap">${cards.join('')}</div>` : '';
     return h;
   } catch (e) { return ''; }
