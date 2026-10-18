@@ -914,7 +914,7 @@ function openSheet(mode, title, back) {
   $('#sheet').classList.add('open'); $('#shBody').innerHTML = '<div class="empty">Loading…</div>'; $('#shScroll').scrollTop = 0;
 }
 function closeSheet() { S.sheetMode = null; S.detail = null; S.fxKey = null; setSport(S.tab); $('#sheet').classList.remove('open'); refresh(true); }
-async function openGame(sp, id) { S.detail = { sp, id, tab: 'away' }; setSport(sp); openSheet('game', '', S.tab === 'nfl' ? 'Scores' : 'Habs'); await loadDetail(); }
+async function openGame(sp, id) { S.detail = { sp, id, tab: null }; setSport(sp); openSheet('game', '', S.tab === 'nfl' ? 'Scores' : 'Habs'); await loadDetail(); }
 function renderDetail() { const D = S.detail; if (!D || !D.g) return; const keep = $('#shScroll').scrollTop; $('#shBody').innerHTML = D.sp === 'nfl' ? nflDetail(D.g, D.s) : nhlDetail(D.g, D.s); $('#shScroll').scrollTop = keep; }
 async function loadDetail() {
   const D = S.detail; if (!D) return false;
@@ -1146,6 +1146,7 @@ function nhlDetail(g, s) {
   return h;
 }
 function playersNHL(g, s) {
+  if (!S.detail.tab) S.detail.tab = isFav('nhl', g.home.abbr) ? 'home' : 'away';
   const P = (s.boxscore && s.boxscore.players) || []; const side = S.detail.tab === 'home' ? g.home : g.away;
   const blk = P.find(p => String(p.team.id) === side.id); if (!blk) return '';
   const cats = blk.statistics || []; const sk = []; let gl = null;
