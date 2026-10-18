@@ -689,7 +689,7 @@ function watchPanel(g, s) {
   return `<section class="panel"><h3>Where to watch in Montréal</h3><div class="watch">
     ${tv.length ? `<div class="wrow"><span class="k">TV</span><div class="chips">${tv.map(x => chip(x) + (x.note ? ` <span class="small muted">${esc(x.note)}</span>` : '')).join('')}</div></div>` : ''}
     ${st.length ? `<div class="wrow"><span class="k">Stream</span><div class="chips">${st.map(x => chip(x) + (x.note ? ` <span class="small muted">${esc(x.note)}</span>` : '')).join('')}</div></div>` : ''}
-    ${usAll.length ? `<div class="wrow"><span class="k">US feed</span><div class="small muted" style="padding-top:3px">${usAll.map(esc).join(' · ')}${g.sp === 'nfl' ? ' (on Montréal cable, often replaced by the Canadian feed)' : ''}</div></div>` : ''}
+    ${usAll.length ? `<div class="wrow"><span class="k">US feed</span><div class="small muted" style="padding-top:3px">${usAll.map(esc).join(' · ')}${g.sp === 'nfl' && usAll.some(n => /^(CBS|FOX|NBC|ABC)$/i.test(n)) ? ' (US networks on Montréal cable; often replaced by the Canadian feed)' : ''}</div></div>` : ''}
     <p class="hint" style="margin:0">${esc(w.note)}${w.link ? ` <a href="${esc(w.link)}" target="_blank" rel="noopener">${esc(w.linkText)} ↗</a>` : ''}</p></div></section>`;
 }
 function compareRows(rows, g) {
