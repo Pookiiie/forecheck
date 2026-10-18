@@ -349,6 +349,22 @@ button.hero:active{opacity:.85}
 .tbl th:first-child,.tbl td:first-child{text-align:left;padding-left:0}
 .tbl td:first-child{font:500 13.5px var(--ui);max-width:44vw;overflow:hidden;text-overflow:ellipsis}
 .tbl tr.me td{background:color-mix(in srgb,var(--mine) 10%,transparent)}
+.yp{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px}
+.ypc{background:var(--well);border-radius:8px;padding:6px 8px 5px;min-width:0;display:grid;gap:3px;align-content:start}
+.ypc .hd{display:flex;align-items:baseline;gap:5px;min-width:0}
+.ypc .hd b{font:700 15px/1.2 var(--bc);letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ypc .hd small{font:600 10.5px var(--ui);color:var(--fg3);flex:none}
+.ypc .tt{display:flex;gap:10px}
+.ypc .tt span{display:flex;align-items:baseline;gap:4px}
+.ypc .tt em{font:800 20px/1 var(--bc);font-style:normal;font-variant-numeric:tabular-nums}
+.ypc .tt i{font:400 11px var(--ui);font-style:normal;color:var(--fg2)}
+.ypc table{width:100%;border-collapse:collapse;font:500 12px/1.3 var(--ui);font-variant-numeric:tabular-nums}
+.ypc td{padding:2px 0;border-top:1px solid var(--sep);white-space:nowrap}
+.ypc td+td{text-align:right;padding-left:6px;font:700 12.5px var(--bc);width:1%}
+.ypc td.z{color:var(--fg3);font-weight:500}
+.ypc td.neg{color:var(--red)}
+.ypc tr.oth td{color:var(--fg2)}
+.ypc .ln{font:400 11.5px/1.3 var(--ui);color:var(--fg2)}
 .cat{font:700 12px var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);margin:4px 0 -4px}
 svg text{font-family:var(--bc)}
 
@@ -659,7 +675,7 @@ const FX = { data: {}, byTeam: {}, ready: false };
 const lastName = n => { const p = String(n || '').replace(/ (Jr\.?|Sr\.?|II|III|IV)$/i, '').split(' '); return p.length > 1 ? p.slice(1).join(' ') : p[0]; };
 function buildByTeam() {
   const m = {};
-  [['sv', 'PFL'], ['cv', 'BELL']].forEach(([k, tag]) => { const d = FX.data[k]; if (!d || !d.me) return; d.me.rows.filter(r => r.st && r.team).forEach(r => { const a = nflAbbr(r.pos === 'DEF' ? r.team : r.team); (m[a] = m[a] || []).push({ tag, name: r.pos === 'DEF' ? r.team + ' D' : lastName(r.name), pts: r.pts }); }); });
+  [['sv', 'PFL'], ['cv', 'BELL']].forEach(([k, tag]) => { const d = FX.data[k]; if (!d || !d.me) return; d.me.rows.filter(r => r.st && r.team).forEach(r => { const a = nflAbbr(r.team); (m[a] = m[a] || []).push({ tag, k, name: r.pos === 'DEF' ? r.team + ' D' : lastName(r.name), full: r.name, pos: r.pos, team: a, pts: r.pts, proj: r.proj, sc: d.sc }); }); });
   FX.byTeam = m;
 }
 const minesIn = g => (FX.byTeam[g.home.abbr] || []).concat(FX.byTeam[g.away.abbr] || []);
@@ -1296,11 +1312,62 @@ function preInfo(g, s) {
   if (gi.weather && gi.weather.temperature != null) rows.push(['Weather', gi.weather.temperature + '°F' + (gi.weather.displayValue ? ' ' + gi.weather.displayValue : '')]);
   return `<section class="sec flush"><h2><span>Game info</span></h2><div>${rows.map(([k, v]) => `<div class="row"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`).join('')}</div></section>`;
 }
-function myPlayersSec(g) {
-  const mine = minesIn(g); if (!mine.length) return '';
-  return sec('Your players', '', `<div class="chips">${mine.map(p => `<span class="chip"><span class="mine">${p.tag}</span> ${esc(p.name)} ${g.state !== 'pre' ? fmtP(p.pts) : ''}</span>`).join('')}</div>`);
+/* ---------- your players: where each fantasy point came from ----------
+   Stat lines come from this game's ESPN box score; points per stat use each league's own
+   scoring (Sleeper's settings for PFL, the BELL rules for CBS). Anything the simple stats don't
+   explain (bonuses, two-point plays, return TDs, kicker distances) shows as "Other". */
+function boxLines(s) {
+  const out = {};
+  ((s.boxscore && s.boxscore.players) || []).forEach(b => (b.statistics || []).forEach(c => {
+    const lab = c.labels || c.keys || [];
+    (c.athletes || []).forEach(a => { const k = normName(a.athlete.displayName); const o = out[k] = out[k] || {}; const v = {}; lab.forEach((l, i) => { v[l] = a.stats[i]; }); o[c.name] = v; });
+  }));
+  return out;
 }
-function nflDetail(g, s) { return headBlock(g) + nflLive(g, s) + myPlayersSec(g) + preInfo(g, s) + wpChart(g, s) + scoringNFL(g, s) + recentNFL(g, s) + nflDrives(g, s) + teamStatsNFL(g, s) + playersNFL(g, s); }
+const num0 = v => { const n = parseFloat(String(v ?? '').replace(/,/g, '')); return isNaN(n) ? 0 : n; };
+function statItems(L) {
+  const it = [];
+  const P = L.passing, R = L.rushing, C = L.receiving, F = L.fumbles;
+  if (P) { const [cmp] = String(P['C/ATT'] || '0/0').split('/'); it.push([`${P['C/ATT'] || ''} pass, ${num0(P.YDS)} yds`, { pass_yd: num0(P.YDS) }], [`${num0(P.TD)} pass TD`, { pass_td: num0(P.TD) }], [`${num0(P.INT)} INT`, { pass_int: num0(P.INT) }]); it[0].cmp = +cmp || 0; }
+  if (R) it.push([`${num0(R.CAR)} car, ${num0(R.YDS)} yds`, { rush_yd: num0(R.YDS) }], [`${num0(R.TD)} rush TD`, { rush_td: num0(R.TD) }]);
+  if (C) it.push([`${num0(C.REC)} rec${C.TGTS != null ? ` (${num0(C.TGTS)} tgt)` : ''}`, { rec: num0(C.REC) }], [`${num0(C.YDS)} rec yds`, { rec_yd: num0(C.YDS) }], [`${num0(C.TD)} rec TD`, { rec_td: num0(C.TD) }]);
+  if (F && num0(F.LOST)) it.push([`${num0(F.LOST)} fumble lost`, { fum_lost: num0(F.LOST) }]);
+  return it.filter(([, st]) => Object.values(st).some(v => v));
+}
+const scoreOf = (st, sc) => Object.entries(st).reduce((a, [k, v]) => a + v * (+(sc || {})[k] || 0), 0);
+function myPlayersSec(g, s) {
+  const mine = minesIn(g); if (!mine.length) return '';
+  const pre = g.state === 'pre';
+  // one card per player, with a column for each league they're in
+  const by = {}; mine.forEach(p => { const key = p.pos === 'DEF' ? 'DEF|' + p.team : normName(p.full || p.name); (by[key] = by[key] || { p, lg: [] }).lg.push(p); });
+  const box = !pre && s ? boxLines(s) : {};
+  const cards = Object.values(by).map(({ p, lg }) => {
+    const tot = `<div class="tt">${lg.map(x => `<span><span class="mine">${x.tag}</span><em>${pre ? fmtP(x.proj) : fmtP(x.pts)}</em>${pre ? '<i>proj</i>' : ''}</span>`).join('')}</div>`;
+    const head = `<div class="hd"><b>${esc(p.pos === 'DEF' ? p.team + ' D/ST' : p.full || p.name)}</b><small>${esc(p.pos || '')}</small></div>`;
+    if (pre) return `<div class="ypc">${head}${tot}</div>`;
+    const L = box[normName(p.full || p.name)];
+    let body = '';
+    if (p.pos === 'K' && L && L.kicking) { const k = L.kicking; body = `<div class="ln">FG ${esc(k.FG || '0/0')}${k.LONG ? ` (long ${esc(k.LONG)})` : ''} · XP ${esc(k.XP || '0/0')}</div>`; }
+    else if (p.pos === 'DEF') {
+      const T = (s && s.boxscore && s.boxscore.teams) || []; const opp = T.find(t => t.team && t.team.abbreviation && nflAbbr(t.team.abbreviation) !== p.team);
+      const v = k => { const x = opp && (opp.statistics || []).find(z => z.name === k); return x ? x.displayValue : null; };
+      const oppTeam = g.home.abbr === p.team ? g.away : g.home;
+      const bits = [`${oppTeam.score} pts allowed`]; const sk = v('sacksYardsLost'); if (sk) bits.push(`${parseInt(sk) || 0} sacks`);
+      const ints = num0(v('interceptions')), fl = num0(v('fumblesLost')); if (ints) bits.push(`${ints} INT`); if (fl) bits.push(`${fl} fum rec`);
+      body = `<div class="ln">${esc(bits.join(' · '))}</div>`;
+    } else if (L) {
+      const items = statItems(L);
+      const rows = items.map(([label, st]) => `<tr><td>${esc(label)}</td>${lg.map(x => { const v = scoreOf(st, x.sc); return `<td class="${v === 0 ? 'z' : v < 0 ? 'neg' : ''}">${v === 0 ? '–' : (v > 0 ? '' : '−') + fmtP(Math.abs(v))}</td>`; }).join('')}</tr>`);
+      const other = lg.map(x => x.pts - items.reduce((a, [, st]) => a + scoreOf(st, x.sc), 0));
+      if (other.some(v => Math.abs(v) >= .05)) rows.push(`<tr class="oth"><td>Other</td>${other.map(v => `<td class="${Math.abs(v) < .05 ? 'z' : v < 0 ? 'neg' : ''}">${Math.abs(v) < .05 ? '–' : (v > 0 ? '+' : '−') + fmtP(Math.abs(v))}</td>`).join('')}</tr>`);
+      body = rows.length ? `<table>${rows.join('')}</table>` : `<div class="ln">No stats yet</div>`;
+    } else body = `<div class="ln">No stats yet</div>`;
+    return `<div class="ypc">${head}${tot}${body}</div>`;
+  });
+  return sec('Your players', lg2tags(mine), `<div class="yp">${cards.join('')}</div>`);
+}
+const lg2tags = mine => [...new Set(mine.map(p => p.tag))].length > 1 ? 'points by league' : '';
+function nflDetail(g, s) { return headBlock(g) + nflLive(g, s) + myPlayersSec(g, s) + preInfo(g, s) + wpChart(g, s) + scoringNFL(g, s) + recentNFL(g, s) + nflDrives(g, s) + teamStatsNFL(g, s) + playersNFL(g, s); }
 
 /* ---------- hockey detail ---------- */
 function rinkSVG(g, plays) {
@@ -1427,7 +1494,7 @@ async function sleeperData(nfl) {
   const me = meM && teamOf(meM), opp = oppM && teamOf(oppM);
   if (me) me.rows.forEach(r => addMine(r.name, 'PFL'));
   const pairs = {}; mus.forEach(m => { if (m.matchup_id != null) (pairs[m.matchup_id] = pairs[m.matchup_id] || []).push(m); });
-  return { key: 'sv', title: lg.name || 'Sleeper', short: lg.name || 'PFL', src: 'Sleeper', week: wk, me, opp, league: Object.values(pairs).map(arr => arr.map(teamOf)), nfl };
+  return { key: 'sv', sc: lg.scoring_settings || {}, title: lg.name || 'Sleeper', short: lg.name || 'PFL', src: 'Sleeper', week: wk, me, opp, league: Object.values(pairs).map(arr => arr.map(teamOf)), nfl };
 }
 /* Weekly projections from Sleeper; CBS live scoring has none, so CBS players are projected
    from the same stat lines using the BELL MIRABEL scoring (6-pt pass TD, -2 INT, no PPR). */
@@ -1491,7 +1558,7 @@ async function cbsData(nfl) {
   let league = [];
   if (T.some(t => t.opp != null)) { const seen = new Set(); T.forEach(t => { if (seen.has(t.rid)) return; const o = T.find(x => x.rid === oid(t)); seen.add(t.rid); if (o) { seen.add(o.rid); league.push([t, o]); } else league.push([t]); }); }
   else league = T.slice().sort((a, b) => b.pts - a.pts).map(t => [t]);
-  return { key: 'cv', title: 'BELL', short: 'BELL', src: 'CBS', week: wk, me, opp, league, nfl };
+  return { key: 'cv', sc: Object.assign({ rec: 0 }, CBS_SC), title: 'BELL', short: 'BELL', src: 'CBS', week: wk, me, opp, league, nfl };
 }
 const fmtP = v => v == null ? '–' : (Math.round(v * 10) / 10).toFixed(1);
 function ncdf(z) { const t = 1 / (1 + .3275911 * Math.abs(z) / Math.SQRT2); const e = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - .284496736) * t + .254829592) * t * Math.exp(-z * z / 2); return .5 * (1 + Math.sign(z) * e); }
