@@ -120,6 +120,8 @@ body[data-ice="light"] .cd.W{background:color-mix(in srgb,var(--green) 26%,#fff)
 body[data-ice="light"] .cd.L{background:color-mix(in srgb,var(--red) 22%,#fff)!important}
 body[data-ice="light"] .cd.O{background:color-mix(in srgb,var(--amber) 26%,#fff)!important}
 .cd .dn,.cd .at{z-index:1;text-shadow:0 0 3px rgba(0,0,0,.35)}
+.cd.W .dn,.cd.L .dn,.cd.O .dn,.cd.W .at,.cd.L .at,.cd.O .at{color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.7),0 0 1px rgba(0,0,0,.8)}
+body[data-ice="light"] .cd.W .dn,body[data-ice="light"] .cd.L .dn,body[data-ice="light"] .cd.O .dn,body[data-ice="light"] .cd.W .at,body[data-ice="light"] .cd.L .at,body[data-ice="light"] .cd.O .at{color:#0c1d2b;text-shadow:none}
 body[data-ice="light"] .cd .dn,body[data-ice="light"] .cd .at{text-shadow:none}
 .cd.today{box-shadow:inset 0 0 0 1.5px var(--tint)}
 button.cd:active{opacity:.7}
@@ -462,7 +464,29 @@ const isFav = (sp, abbr) => abbr && abbr === (sp === 'nfl' ? CFG.favNFL : CFG.fa
 const hasFav = g => isFav(g.sp, g.home.abbr) || isFav(g.sp, g.away.abbr);
 const FB = "this.onerror=null;this.src=this.dataset.fb";
 const lightIce = () => document.body.dataset.sport === 'nhl' && CFG.look === 'light';
-const logo = (t, onColour) => `<img src="${esc(!onColour && lightIce() ? t.logo : t.logoDark)}" data-fb="${esc(t.logo)}" onerror="${FB}" alt="" decoding="async">`;
+const logo = (t, onColour) => { const u = !onColour && lightIce() ? t.logo : t.logoDark; const f = LOGO_FIT[u]; return `<img class="lgo" src="${esc(u)}" data-fb="${esc(t.logo)}" onerror="${FB}" alt="" decoding="async"${f ? ` style="transform:${f}"` : ''}>`; };
+/* Optical logo sizing: logos fill their square very differently (a round crest ~70%, a wordmark ~20%).
+   Measure each logo's opaque area once and scale it toward the same visual weight. */
+const LOGO_FIT = {}, LOGO_PENDING = {};
+function measureLogo(url) {
+  if (LOGO_PENDING[url]) return LOGO_PENDING[url];
+  return LOGO_PENDING[url] = new Promise(res => {
+    const im = new Image(); im.crossOrigin = 'anonymous';
+    im.onload = () => { try {
+      const N = 96, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d', { willReadFrequently: true });
+      const r = Math.min(N / im.width, N / im.height), w = im.width * r, h = im.height * r; x.drawImage(im, (N - w) / 2, (N - h) / 2, w, h);
+      const d = x.getImageData(0, 0, N, N).data; let x0 = N, y0 = N, x1 = -1, y1 = -1, n = 0;
+      for (let y = 0; y < N; y++) for (let X = 0; X < N; X++) if (d[(y * N + X) * 4 + 3] > 40) { n++; if (X < x0) x0 = X; if (X > x1) x1 = X; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 < 0) return res(null);
+      const bw = (x1 - x0 + 1) / N, bh = (y1 - y0 + 1) / N, area = n / (N * N), cx = (x0 + x1 + 1) / 2 / N, cy = (y0 + y1 + 1) / 2 / N;
+      const sc = Math.min(Math.sqrt(.42 / area), 1.14 / Math.max(bw, bh), 1.6);
+      LOGO_FIT[url] = `scale(${sc.toFixed(3)}) translate(${((.5 - cx) * 100).toFixed(1)}%,${((.5 - cy) * 100).toFixed(1)}%)`; res(LOGO_FIT[url]);
+    } catch (e) { res(null); } };
+    im.onerror = () => res(null); im.src = url;
+  });
+}
+function fitLogos(root) { (root || document).querySelectorAll('img.lgo:not([style])').forEach(img => { const u = img.getAttribute('src'); measureLogo(u).then(f => { if (f && img.isConnected && img.getAttribute('src') === u) img.style.transform = f; }); }); }
+new MutationObserver(() => { clearTimeout(fitLogos.t); fitLogos.t = setTimeout(() => fitLogos(document), 30); }).observe(document.body, { childList: true, subtree: true });
 const FOOT = '<svg class="foot-ic" viewBox="0 0 16 10" aria-label="has the ball"><ellipse cx="8" cy="5" rx="7.2" ry="4.2" fill="#8b4a20" stroke="#fff" stroke-width="1"/><path d="M5 5h6M6.5 3.8v2.4M8 3.8v2.4M9.5 3.8v2.4" stroke="#fff" stroke-width=".9"/></svg>';
 
 /* ---------- where to watch the Habs in Montréal (2026-27 rights) ---------- */
