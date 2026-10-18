@@ -112,6 +112,10 @@ button.stc:active{opacity:.8}
 .stc-t span{font:400 12.5px var(--ui);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stc-t .in{color:var(--green)}.stc-t .out{color:var(--red)}
 .stc .go{color:var(--fg3);width:8px;height:13px;flex:none}
+/* standings strip slides out from under the score bug card, like a drawer */
+.hero:has(+ .stc){position:relative;z-index:2;box-shadow:0 1px 0 rgba(255,255,255,.10),0 8px 12px -4px rgba(0,0,0,.45)}
+.hero + .stc{margin:-8px 12px 0;width:auto;border-radius:0 0 10px 10px;padding:8px 10px 7px;background:color-mix(in srgb,var(--well) 85%,#000);border:1px solid rgba(255,255,255,.06);border-top:0;box-shadow:inset 0 10px 10px -8px rgba(0,0,0,.65);position:relative;z-index:1}
+body[data-ice="light"] .hero + .stc{background:var(--well);border-color:rgba(12,29,43,.08);box-shadow:inset 0 10px 10px -8px rgba(12,29,43,.25)}
 .stb{width:100%;border-collapse:collapse;font:700 14px var(--bc);font-variant-numeric:tabular-nums;white-space:nowrap}
 .stb th{font:600 10.5px var(--ui);color:var(--fg2);text-align:right;padding:0 5px 4px}
 .stb td{padding:4px 5px;text-align:right;border-top:1px solid var(--sep)}
