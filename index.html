@@ -1008,7 +1008,7 @@ function openSettings(banner) {
     <label class="row"><span class="k">Your team</span><select id="sfCbsTeam"><option value="${esc(CFG.cbsTeam)}">${CFG.cbsTeam ? 'Team ' + esc(CFG.cbsTeam) : 'Load teams first'}</option></select></label>
     <button class="row btn" id="sfCbsLoad">Load teams</button>
     <button class="row btn" id="sfCopyBm">Copy bookmark code</button></div></section>
-  <p class="foot">CBS has no public login for apps like this, so Forecheck uses the token CBS gives your own league page. On your Mac, make a bookmark whose address is the code below, open your CBS league while signed in, and click it. It copies the token; Universal Clipboard lets you paste it here. Tokens can expire; if CBS stops loading, repeat this.</p>
+  <p class="foot">CBS has no public login for apps like this, so Forecheck uses the token CBS gives your own league page. Easiest is right on this iPhone: tap Copy bookmark code, then in Safari bookmark any page, edit that bookmark and paste the code as its address. Open your CBS league in Safari while signed in, then tap the bookmark. It copies the token (or shows it for you to copy); paste it in the Token field above. If nothing is found, tap aA and choose Request Desktop Website, then try again. On a PC, the same bookmark works in Chrome or Edge; email or text the token to yourself and paste it here. Tokens can expire; if CBS stops loading, repeat this.</p>
   <code class="code" id="bmk">${esc(BOOKMARKLET)}</code>
   <section class="sec flush"><button class="row btn red" id="sfReset">Clear saved data</button></section>
   <p class="foot" id="sfMsg">Settings are stored only on this device.</p>`;
