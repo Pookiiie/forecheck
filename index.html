@@ -861,7 +861,7 @@ function nhlShotFlow(g, plays) {
   const ink = pairInk(g); const ev = plays.filter(p => p.team && /^(Shot|Goal)$/.test(p.type && p.type.text) && p.period && p.period.number <= 4);
   if (ev.length < 2) return '';
   const tmin = p => (p.period.number - 1) * 20 + secs(p.clock && p.clock.displayValue) / 60;
-  const maxT = Math.max(60, ...ev.map(tmin)); const W = 600, H = 180, pad = 14;
+  const maxT = Math.max(ev.some(p => p.period.number > 3) || g.period > 3 ? 65 : 60, ...ev.map(tmin)); const W = 600, H = 180, pad = 14;
   const series = [g.away, g.home].map(t => { let c = 0; const arr = [[0, 0]]; const goals = []; ev.filter(p => String(p.team.id) === t.id).forEach(p => { const x = tmin(p); arr.push([x, c]); c++; arr.push([x, c]); if (p.type.text === 'Goal') goals.push([x, c]); }); return { t, arr, goals, c }; });
   const maxY = Math.max(10, ...series.map(s => s.c)) * 1.08; const X = m => m / maxT * W, Y = v => H - pad - v / maxY * (H - 2 * pad);
   let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Shots on goal over time">`;
