@@ -230,6 +230,13 @@ button.hero:active{opacity:.85}
 .bc .c2{font-size:17px;letter-spacing:.03em}
 .bc.on .c1{color:var(--red)}
 .bug.nhl .bc{min-width:72px}
+.bc.w{padding:0;display:grid;grid-template-rows:1fr auto;align-items:stretch;justify-content:stretch}
+.bc.w .r1{display:flex;align-items:baseline;justify-content:center;gap:5px;padding:4px 9px 3px;align-self:center;white-space:nowrap}
+.bug.nhl .bc.w .c1{font-size:15px;letter-spacing:.06em}
+.bug.nhl .bc.w .c2{font-size:19px;letter-spacing:.02em}
+.bc.w .wbar{display:flex;align-items:center;justify-content:center;gap:4px;background:#2a2f37;padding:3px 6px;font:700 11px/1 var(--bc);letter-spacing:.1em;color:#fff;white-space:nowrap;text-transform:uppercase}
+.bc.w .wbar svg{width:7px;height:7px;flex:none}
+.bc.w .wbar small{font:600 9px var(--ui);color:rgba(255,255,255,.6);letter-spacing:.04em;text-transform:none}
 .bug.nhl .bc .c2{color:var(--amber);font-size:22px;text-shadow:0 0 6px rgba(255,176,32,.5)}
 .bug.nhl .bc .c1{color:#ffd27a}
 .bug.nhl .bc.on .c1{color:var(--red)}
@@ -633,11 +640,11 @@ const FOOT = '<svg class="foot-ic" viewBox="0 0 16 10" aria-label="has the ball"
 
 /* ---------- where to watch the Habs in Montréal (2026-27 rights) ---------- */
 const PROV = {
-  rds: { name: 'RDS', app: 'RDS app', short: 'RDS', tv: 'RDS', lang: 'FR' },
-  sn: { name: 'Sportsnet', app: 'Sportsnet+', short: 'SN+', tv: 'Sportsnet', lang: 'EN' },
-  tva: { name: 'TVA Sports', app: 'TVA Sports Direct', short: 'TVA', tv: 'TVA Sports', lang: 'FR' },
-  tsn: { name: 'TSN', app: 'TSN app', short: 'TSN', tv: 'TSN2', lang: 'EN' },
-  prime: { name: 'Prime Video', app: 'Prime Video', short: 'Prime', tv: '', lang: 'EN/FR' }
+  rds: { name: 'RDS', bug: 'RDS', app: 'RDS app', short: 'RDS', tv: 'RDS', lang: 'FR' },
+  sn: { name: 'Sportsnet', bug: 'Sportsnet+', app: 'Sportsnet+', short: 'SN+', tv: 'Sportsnet', lang: 'EN' },
+  tva: { name: 'TVA Sports', bug: 'TVA Direct', app: 'TVA Sports Direct', short: 'TVA', tv: 'TVA Sports', lang: 'FR' },
+  tsn: { name: 'TSN', bug: 'TSN', app: 'TSN app', short: 'TSN', tv: 'TSN2', lang: 'EN' },
+  prime: { name: 'Prime Video', bug: 'Prime', app: 'Prime Video', short: 'Prime', tv: '', lang: 'EN/FR' }
 };
 const PV = (p, note) => ({ p, note });
 function watchHabs(g) {
@@ -723,7 +730,7 @@ const tiles = (label, games, cls = '', grouped = false) => games.length ? `<div 
 function sec(title, right, body, cls = '') { return `<section class="sec ${cls}"><h2><span>${title}</span>${right ? `<span class="r">${right}</span>` : ''}</h2>${body}</section>`; }
 
 /* ---------- big score bug ---------- */
-function bug(G, { lg = false, sog = null } = {}) {
+function bug(G, { lg = false, sog = null, watch = null } = {}) {
   const pre = G.state === 'pre', live = G.state === 'in';
   const si = G.sp === 'nfl' && live ? nflSit(G) : null;
   const slab = t => { const lose = G.state === 'post' && !t.winner && (G.home.winner || G.away.winner); return `<div class="bt${lose ? ' lose' : ''}" style="--c:${slabColor(t)}">${logo(t, true)}<span class="stack"><span class="ab">${esc(t.abbr)}</span>${sog ? `<span class="sog">SOG ${esc(sog[t === G.home ? 'h' : 'a'])}</span>` : pre && t.rec ? `<span class="sog">${esc(t.rec)}</span>` : ''}</span>${si && si.off === t ? FOOT : ''}${pre ? '' : `<span class="bs">${esc(t.score)}</span>`}</div>`; };
@@ -731,6 +738,9 @@ function bug(G, { lg = false, sog = null } = {}) {
   if (live) { const d = G.detail || ''; c = /half|end|intermission/i.test(d) ? `<span class="c1">${esc(d.replace(/^End of /i, 'End '))}</span>` : `<span class="c1">${esc(G.sp === 'nfl' ? qLab(G.period) : pLab(G.period))}</span><span class="c2">${esc(G.clock || '')}</span>`; }
   else if (pre) c = `<span class="c1">${esc(shortDay(G.date))}</span><span class="c2">${esc(fmtTime(G.date))}</span>`;
   else { const ot = /(OT|SO)/.exec(G.detail || ''); c = `<span class="c1">Final</span>${ot ? `<span class="c2">${ot[1]}</span>` : ''}`; }
+  // where to watch rides along on a grey bar at the foot of the clock box, with day and time on one row above it
+  const w = watch && watch.main && watch.main[0];
+  if (w) { const P = PROV[w.p]; return `<div class="bug ${G.sp}${lg ? ' lg' : ''}">${slab(G.away)}${slab(G.home)}<div class="bc w${live ? ' on' : ''}"><span class="r1">${c}</span><span class="wbar">${PLAY}${esc(P.bug || P.name)}${P.lang ? ` <small>${esc(P.lang)}</small>` : ''}${w.note ? ` <small>${esc(w.note)}</small>` : ''}</span></div></div>`; }
   return `<div class="bug ${G.sp}${lg ? ' lg' : ''}">${slab(G.away)}${slab(G.home)}<div class="bc${live ? ' on' : ''}">${c}</div></div>`;
 }
 function flagUnder(G) {
@@ -809,8 +819,8 @@ async function heroHTML(sp, games, extra = {}) {
     const under = [flagUnder(g)];
     if (g.state === 'post' && next) under.push(`<div class="meta">Next: ${nextLine(next, ab)}</div>`);
     if (sp === 'nhl' && g.state === 'post') under.push(await habsRecap(g, ab));
-    if (showWatch(g)) under.push(watchChips(g));
-    return { html: `<button class="hero" data-open="${sp}:${g.id}">${bug(g)}${under.join('') ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: g.id, g };
+    const wg = showWatch(g) ? pickWatch(g) : null; if (wg && !wg.main.length) under.push(watchChips(g));
+    return { html: `<button class="hero" data-open="${sp}:${g.id}">${bug(g, { watch: wg })}${under.join('') ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: g.id, g };
   }
   if (sp === 'nfl' && extra.byes && extra.byes.includes(ab)) {
     const me = { abbr: ab, color: '#' + (team.color || '333'), alt: '#' + (team.alternateColor || team.color || '333'), logo: `https://a.espncdn.com/i/teamlogos/${sp}/500/${ab.toLowerCase()}.png` };
@@ -820,12 +830,12 @@ async function heroHTML(sp, games, extra = {}) {
   }
   if (next) {
     const under = [];
-    if (showWatch(next)) under.push(watchChips(next));
+    const wn = showWatch(next) ? pickWatch(next) : null; if (wn && !wn.main.length) under.push(watchChips(next));
     if (last) {
       const rc = sp === 'nhl' && Date.now() - last.date < 30 * 36e5 ? await habsRecap(last, ab) : '';
       under.push(`<div class="lastg" data-open="${sp}:${last.id}"><div class="lh"><b>Last game</b><span>${resultLine(last, ab)}</span><i>${esc(shortDay(last.date))}</i></div>${rc}</div>`);
     }
-    return { html: `<button class="hero" data-open="${sp}:${next.id}">${bug(next)}<div class="under">${under.join('')}</div></button>`, id: next.id, g: next };
+    return { html: `<button class="hero" data-open="${sp}:${next.id}">${bug(next, { watch: wn })}${under.length ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: next.id, g: next };
   }
   return { html: '', id: null };
 }
