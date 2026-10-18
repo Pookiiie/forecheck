@@ -878,8 +878,9 @@ function wpGraph(key, m) {
   const ln = P.map((q, i) => (i ? 'L' : 'M') + X(q.p).toFixed(1) + ' ' + Y(q.o).toFixed(1)).join('');
   const area = ln + `L${X(P[P.length - 1].p).toFixed(1)} ${H - pb}L${X(P[0].p).toFixed(1)} ${H - pb}Z`;
   // game-day ticks: where each slate starts, measured in finished games
-  const gs = slateGames(m.nfl).sort((a, b) => a.date - b.date); const N = gs.length; let ticks = '', lastDay = '', lastT = -1e12, lastX = -99;
-  gs.forEach((g, i) => { const d = et(g.date).wd; const t = +g.date; if (d !== lastDay || t - lastT > 2 * 36e5) { const x = X(i / N); if (x - lastX > 26) { const lab = d !== lastDay ? d : fmtTime(g.date).replace(/:00| /g, '').replace('PM', 'p').replace('AM', 'a'); ticks += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${pt}" y2="${H - pb}" stroke="var(--sep)"/><text x="${(x + 3).toFixed(1)}" y="${H - 4}" font-size="10" fill="var(--fg3)">${esc(lab)}</text>`; lastX = x; } lastDay = d; lastT = t; } });
+  const gs = slateGames(m.nfl).sort((a, b) => a.date - b.date); const N = gs.length; const tk = []; let lastDay = '', lastT = -1e12;
+  gs.forEach((g, i) => { const d = et(g.date).wd; const t = +g.date; if (d !== lastDay || t - lastT > 2 * 36e5) { const day = d !== lastDay; const x = X(i / N); const lab = day ? d : fmtTime(g.date).replace(/:00| /g, '').replace('PM', 'p').replace('AM', 'a'); const prev = tk[tk.length - 1]; if (prev && x - prev.x < 24) { if (day && !prev.day) tk[tk.length - 1] = { x: prev.x, lab, day }; else if (day && prev.day) tk.push({ x, tx: prev.x + 24, lab, day }); } else tk.push({ x, lab, day }); lastDay = d; } lastT = t; });
+  const ticks = tk.map(q => `<line x1="${q.x.toFixed(1)}" x2="${q.x.toFixed(1)}" y1="${pt}" y2="${H - pb}" stroke="var(--sep)"/><text x="${((q.tx || q.x) + 3).toFixed(1)}" y="${H - 4}" font-size="10" fill="var(--fg3)">${esc(q.lab)}</text>`).join('');
   const swings = P.filter(q => q.s).sort((a, b) => Math.abs(b.s.j) - Math.abs(a.s.j)).slice(0, 3);
   const marks = swings.map(q => { const x = X(q.p), y = Y(q.o), up = q.s.j > 0; const tx = clamp(x, 30, W - 30); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="var(--mine)" stroke="var(--card-solid,#1a1e25)" stroke-width="2"/><text x="${tx.toFixed(1)}" y="${(up ? y - 8 : y + 15).toFixed(1)}" font-size="10.5" text-anchor="middle" fill="var(--fg2)">${esc(q.s.n)} ${q.s.d > 0 ? '+' : ''}${fmtP(q.s.d)}</text>`; }).join('');
   const end = P[P.length - 1];
@@ -1637,7 +1638,7 @@ $('#settingsBtn').onclick = () => openSettings();
 $('#refreshBtn').onclick = () => { delete memo.nflnow; refresh(true); };
 
 /* ---------- gestures: pull to refresh, swipe between tabs / months, swipe back from a sheet ---------- */
-const PTR_ICON = { nfl: '<svg viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="12" rx="9.5" ry="5.6" transform="rotate(-35 12 12)" fill="#8b4a20" stroke="#fff" stroke-width="1.2"/><path d="M9.2 14.8l5.6-5.6M10.3 11.7l2 2M11.7 10.3l2 2" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>', nhl: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="14" rx="8" ry="3.4" fill="#0d0f12"/><rect x="4" y="10" width="16" height="4" fill="#0d0f12"/><ellipse cx="12" cy="10" rx="8" ry="3.4" fill="#2a2f37" stroke="rgba(255,255,255,.35)" stroke-width=".8"/></svg>' };
+const PTR_ICON = { nfl: '<svg viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="12" rx="9.5" ry="5.6" transform="rotate(-35 12 12)" fill="#8b4a20" stroke="#fff" stroke-width="1.2"/><path d="M9.2 14.8l5.6-5.6M10.3 11.7l2 2M11.7 10.3l2 2" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>', nhl: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#101215" stroke="rgba(255,255,255,.4)" stroke-width="1"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1"/><path d="M12 3.6v3.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><path d="M7.2 7.6a6 6 0 0 1 3.2-1.9" stroke="rgba(255,255,255,.5)" stroke-width="1" fill="none" stroke-linecap="round"/></svg>' };
 function gestures(scroller, ptr, mode) {
   let G = null;
   const place = () => { ptr.style.top = (scroller.offsetTop + 8) + 'px'; };
