@@ -448,7 +448,8 @@ function watchNHL(g) {
   const { wd } = et(g.date); const T = [g.home.abbr, g.away.abbr]; const out = []; let note = '', link = '', linkText = '';
   if (T.includes('MTL')) {
     link = 'https://www.nhl.com/canadiens/schedule'; linkText = 'Canadiens broadcast schedule';
-    if (wd === 'Sat') { out.push(TV('Sportsnet', 'EN', 'Saturday Night Hockey'), TV('TVA Sports', 'FR'), ST('Sportsnet+', 'EN'), ST('TVA Sports Direct', 'FR')); note = 'Saturday Habs games are usually national. If not, it’s TSN2 and RDS.'; }
+    if (/classic|stadium series/i.test(g.note || '')) { out.push(TV('Sportsnet', 'EN'), TV('TVA Sports', 'FR'), ST('Sportsnet+', 'EN'), ST('TVA Sports Direct', 'FR')); note = (g.note || 'Outdoor game') + ' is a national broadcast.'; }
+    else if (wd === 'Sat') { out.push(TV('Sportsnet', 'EN', 'Saturday Night Hockey'), TV('TVA Sports', 'FR'), ST('Sportsnet+', 'EN'), ST('TVA Sports Direct', 'FR')); note = 'Saturday Habs games are usually national. If not, it’s TSN2 and RDS.'; }
     else if (wd === 'Wed') { out.push(ST('Prime Video', 'EN/FR', 'if national'), TV('TSN2', 'EN'), TV('RDS', 'FR')); note = 'National Wednesday games are exclusive to Prime Video. Otherwise TSN2 and RDS.'; }
     else if (wd === 'Mon') { out.push(ST('Sportsnet+', 'EN', 'if Monday Night Hockey'), TV('TSN2', 'EN'), TV('RDS', 'FR')); note = 'Six Habs Monday games stream only on Sportsnet+. The rest are on TSN2 and RDS.'; }
     else { out.push(TV('TSN2', 'EN'), TV('RDS', 'FR'), ST('TSN app', 'EN'), ST('RDS app', 'FR')); note = 'Regional Habs game. A few are national instead (Sportsnet / TVA Sports).'; }
