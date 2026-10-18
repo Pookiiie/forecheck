@@ -44,7 +44,7 @@ body[data-sport="nhl"]{
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.42 var(--f-body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;transition:background-color .25s}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.42 var(--f-body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
 img{max-width:100%}
 [hidden]{display:none!important}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
@@ -53,7 +53,7 @@ a{color:inherit}
 .num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
 
 /* ---------- header ---------- */
-.top{position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top,0px);background:var(--bg2);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:20;padding-top:calc(env(safe-area-inset-top,0px) + 6px);background:var(--bg2);border-bottom:1px solid var(--line)}
 body[data-sport="nfl"] .top{background:repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 30px,transparent 30px 60px),var(--bg2)}
 body[data-sport="nhl"] .top{background:linear-gradient(90deg,transparent calc(50% - 1.5px),rgba(200,16,46,.28) calc(50% - 1.5px) calc(50% + 1.5px),transparent calc(50% + 1.5px)),linear-gradient(90deg,transparent 22%,rgba(29,79,145,.16) 22% calc(22% + 3px),transparent calc(22% + 3px) calc(78% - 3px),rgba(29,79,145,.16) calc(78% - 3px) 78%,transparent 78%),var(--bg2)}
 .top-in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -61,11 +61,11 @@ body[data-sport="nhl"] .top{background:linear-gradient(90deg,transparent calc(50
 .mark b{color:var(--accent);font-weight:900}
 .updated{margin-left:auto;font:600 12px var(--f-num);color:var(--muted);letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
-.dot.on{background:var(--live);box-shadow:0 0 0 0 var(--live);animation:pulse 1.8s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--live) 70%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.dot.on{background:var(--live);animation:blink 1.6s steps(2,jump-none) infinite}
+@keyframes blink{50%{opacity:.25}}
 .iconbtn{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--fg);background:var(--card2);border:1px solid var(--line)}
 .iconbtn svg{width:18px;height:18px}
-.iconbtn.spin svg{animation:spin .8s linear infinite}
+.iconbtn.spin{opacity:.6}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ---------- main ---------- */
@@ -157,7 +157,7 @@ main{max-width:760px;margin:0 auto;padding-top:14px;padding-bottom:calc(92px + e
 /* ---------- sheet (game detail / settings) ---------- */
 .sheet{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;transform:translateY(102%);transition:transform .3s cubic-bezier(.2,.8,.2,1);visibility:hidden}
 .sheet.open{transform:none;visibility:visible}
-.sh-top{position:sticky;top:0;z-index:5;padding-top:env(safe-area-inset-top,0px);background:var(--bg2);border-bottom:1px solid var(--line)}
+.sh-top{position:sticky;top:0;z-index:5;padding-top:calc(env(safe-area-inset-top,0px) + 6px);background:var(--bg2);border-bottom:1px solid var(--line)}
 .sh-top .top-in{padding-block:8px}
 .sh-title{font:800 18px/1 var(--f-disp);letter-spacing:.05em;text-transform:uppercase;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sh-body{max-width:760px;margin:0 auto;padding-top:14px;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
