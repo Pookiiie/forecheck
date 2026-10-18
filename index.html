@@ -262,6 +262,13 @@ button.hero:active{opacity:.85}
 .tl.ping{animation:tping .8s ease-in-out 3}
 @keyframes tping{50%{background:color-mix(in srgb,var(--c) 45%,transparent)}}
 /* post-game recap */
+.lastg{background:var(--well);border-radius:8px;padding:5px 6px 6px;display:grid;gap:5px;cursor:pointer}
+.lastg .lh{display:flex;align-items:baseline;gap:7px;padding:0 2px;font-size:12.5px;white-space:nowrap;min-width:0}
+.lastg .lh b{font:700 10.5px var(--bc);letter-spacing:.14em;text-transform:uppercase;color:var(--fg3)}
+.lastg .lh span{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.lastg .lh i{font-style:normal;color:var(--fg3);margin-left:auto}
+.lastg .recap .s{background:rgba(255,255,255,.06)}
+body[data-ice="light"] .lastg .recap .s{background:rgba(255,255,255,.6)}
 .recap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.15fr);gap:4px}
 .recap .s{background:var(--well);border-radius:6px;padding:3px 6px;min-width:0}
 .recap .s b{display:block;font:700 13.5px/1.2 var(--bc);letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -809,9 +816,12 @@ async function heroHTML(sp, games, extra = {}) {
       <div class="under"><div class="meta">${next ? 'Next: ' + nextLine(next, ab) : ''}${last ? ` · Last: ${resultLine(last, ab)}` : ''}</div></div></button>`, id: null };
   }
   if (next) {
-    const under = [`<div class="meta">${last ? 'Last: ' + resultLine(last, ab) : ''}</div>`];
-    if (sp === 'nhl' && last && Date.now() - last.date < 30 * 36e5) under.push(await habsRecap(last, ab));
+    const under = [];
     if (showWatch(next)) under.push(watchChips(next));
+    if (last) {
+      const rc = sp === 'nhl' && Date.now() - last.date < 30 * 36e5 ? await habsRecap(last, ab) : '';
+      under.push(`<div class="lastg" data-open="${sp}:${last.id}"><div class="lh"><b>Last game</b><span>${resultLine(last, ab)}</span><i>${esc(shortDay(last.date))}</i></div>${rc}</div>`);
+    }
     return { html: `<button class="hero" data-open="${sp}:${next.id}">${bug(next)}<div class="under">${under.join('')}</div></button>`, id: next.id, g: next };
   }
   return { html: '', id: null };
