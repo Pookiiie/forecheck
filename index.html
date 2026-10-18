@@ -226,6 +226,10 @@ button.hero:active{opacity:.85}
 .bt .stack{display:flex;flex-direction:column;line-height:1;gap:2px;min-width:0;white-space:nowrap}
 .bt .ab,.bt .bs,.bt .sog{white-space:nowrap}
 .bt .sog{font:600 11px var(--ui);opacity:.85;text-shadow:none}
+/* records sit beside the team name when they fit; fitBugs() stacks them if a slab would overflow */
+.bug.inl .bt{padding:0 7px;gap:5px}
+.bug.inl .bt .stack{flex-direction:row;align-items:baseline;gap:5px}
+.bug.inl.stk .bt .stack{flex-direction:column;align-items:flex-start;gap:2px}
 .bc{display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:64px;padding:0 8px;background:#000;color:#fff;font:700 13px/1.15 var(--bc);letter-spacing:.08em;text-transform:uppercase;font-variant-numeric:tabular-nums}
 .bc .c2{font-size:17px;letter-spacing:.03em}
 .bc.on .c1{color:var(--red)}
@@ -635,7 +639,15 @@ function measureLogo(url) {
   });
 }
 function fitLogos(root) { (root || document).querySelectorAll('img.lgo:not([style])').forEach(img => { const u = img.getAttribute('src'); measureLogo(u).then(f => { if (f && img.isConnected && img.getAttribute('src') === u) img.style.transform = f[img.dataset.ctx || 'std']; }); }); }
-new MutationObserver(() => { clearTimeout(fitLogos.t); fitLogos.t = setTimeout(() => fitLogos(document), 30); }).observe(document.body, { childList: true, subtree: true });
+function fitBugs() {
+  document.querySelectorAll('.bug.inl').forEach(b => {
+    b.classList.remove('stk');
+    if ([...b.querySelectorAll('.bt')].some(x => { const st = x.querySelector('.stack'); return x.scrollWidth > x.clientWidth + 1 || (st && st.scrollWidth > st.clientWidth + 1); })) b.classList.add('stk');
+  });
+}
+new MutationObserver(() => { clearTimeout(fitLogos.t); fitLogos.t = setTimeout(() => { fitLogos(document); fitBugs(); }, 30); }).observe(document.body, { childList: true, subtree: true });
+window.addEventListener('resize', () => fitBugs());
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitBugs);
 const FOOT = '<svg class="foot-ic" viewBox="0 0 16 10" aria-label="has the ball"><ellipse cx="8" cy="5" rx="7.2" ry="4.2" fill="#8b4a20" stroke="#fff" stroke-width="1"/><path d="M5 5h6M6.5 3.8v2.4M8 3.8v2.4M9.5 3.8v2.4" stroke="#fff" stroke-width=".9"/></svg>';
 
 /* ---------- where to watch the Habs in Montréal (2026-27 rights) ---------- */
@@ -740,8 +752,9 @@ function bug(G, { lg = false, sog = null, watch = null } = {}) {
   else { const ot = /(OT|SO)/.exec(G.detail || ''); c = `<span class="c1">Final</span>${ot ? `<span class="c2">${ot[1]}</span>` : ''}`; }
   // where to watch rides along on a grey bar at the foot of the clock box, with day and time on one row above it
   const w = watch && watch.main && watch.main[0];
-  if (w) { const P = PROV[w.p]; return `<div class="bug ${G.sp}${lg ? ' lg' : ''}">${slab(G.away)}${slab(G.home)}<div class="bc w${live ? ' on' : ''}"><span class="r1">${c}</span><span class="wbar">${PLAY}${esc(P.bug || P.name)}${P.lang ? ` <small>${esc(P.lang)}</small>` : ''}${w.note ? ` <small>${esc(w.note)}</small>` : ''}</span></div></div>`; }
-  return `<div class="bug ${G.sp}${lg ? ' lg' : ''}">${slab(G.away)}${slab(G.home)}<div class="bc${live ? ' on' : ''}">${c}</div></div>`;
+  const inl = pre && !sog && (G.home.rec || G.away.rec) ? ' inl' : '';
+  if (w) { const P = PROV[w.p]; return `<div class="bug ${G.sp}${lg ? ' lg' : ''}${inl}">${slab(G.away)}${slab(G.home)}<div class="bc w${live ? ' on' : ''}"><span class="r1">${c}</span><span class="wbar">${PLAY}${esc(P.bug || P.name)}${P.lang ? ` <small>${esc(P.lang)}</small>` : ''}${w.note ? ` <small>${esc(w.note)}</small>` : ''}</span></div></div>`; }
+  return `<div class="bug ${G.sp}${lg ? ' lg' : ''}${inl}">${slab(G.away)}${slab(G.home)}<div class="bc${live ? ' on' : ''}">${c}</div></div>`;
 }
 function flagUnder(G) {
   const si = G.sp === 'nfl' && G.state === 'in' ? nflSit(G) : null; if (!si) return '';
