@@ -157,6 +157,12 @@ button.hero:active{opacity:.85}
 .fxc:active{opacity:.8}
 .fxh{display:flex;align-items:baseline;gap:6px;font:700 12px var(--bc);letter-spacing:.12em;text-transform:uppercase;color:var(--fg2)}
 .fxh .pc{margin-left:auto;color:var(--mine);letter-spacing:.04em}
+.fxr{display:flex;align-items:baseline;gap:6px;min-width:0}
+.fxr .nm{flex:1;min-width:0;font:500 12px var(--ui);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fxr.me .nm{color:var(--fg)}
+.fxr .pj{font:600 13px var(--bc);color:var(--fg3);font-variant-numeric:tabular-nums}
+.fxr b{font:800 21px/1.1 var(--bc);font-variant-numeric:tabular-nums;min-width:3.2ch;text-align:right;color:var(--fg2)}
+.fxr.up b{color:var(--fg)}
 .fxs{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
 .fxs b{font:800 25px/1 var(--bc);font-variant-numeric:tabular-nums}
 .fxs span{font:700 17px/1 var(--bc);color:var(--fg2);font-variant-numeric:tabular-nums}
@@ -542,7 +548,8 @@ function fxCards() {
     const m = d[k];
     if (m && m.me) {
       const o = oddsOf(m); const lead = m.opp && m.me.pts >= m.opp.pts;
-      cards.push(`<button class="fxc" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span>${o != null ? `<span class="pc">${o}%</span>` : ''}</div><div class="fxs${lead ? ' lead' : ''}"><b>${fmtP(m.me.pts)}</b>${m.opp ? `<span>${fmtP(m.opp.pts)}</span>` : ''}</div>${o != null ? `<div class="bar"><u style="width:${o}%"></u></div>` : ''}<div class="fxm">${m.opp ? 'vs ' + esc(m.opp.name) : esc(m.me.name)}</div><div class="fxm">${m.me.left} left · proj ${fmtP(m.me.est)}</div></button>`);
+      const row = (t, cls) => `<div class="fxr ${cls}"><span class="nm">${esc(t.name)}</span><span class="pj">${fmtP(t.est)}</span><b>${fmtP(t.pts)}</b></div>`;
+      cards.push(`<button class="fxc" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span>${o != null ? `<span class="pc">Win ${o}%</span>` : ''}</div>${row(m.me, 'me' + (lead ? ' up' : ''))}${m.opp ? row(m.opp, 'them' + (!lead ? ' up' : '')) : ''}${o != null ? `<div class="bar"><u style="width:${o}%"></u></div>` : ''}<div class="fxm">${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} players left \u00b7 grey = projected</div></button>`);
     } else if (d[k + 'Err']) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">${esc(d[k + 'Err'])}</div><div class="fxm">Tap to fix in Settings</div></button>`);
     else if (m) cards.push(`<button class="fxc" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span></div><div class="fxm">Pick your team in Settings</div></button>`);
   });
