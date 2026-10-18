@@ -427,7 +427,7 @@ function gauge(si, g) {
 /* ---------- your fantasy players, by NFL team ---------- */
 const TEAM_FIX = { WAS: 'WSH', JAC: 'JAX', LA: 'LAR', OAK: 'LV', SD: 'LAC' };
 const nflAbbr = a => TEAM_FIX[a] || a;
-const FX = { data: {}, byTeam: {} };
+const FX = { data: {}, byTeam: {}, ready: false };
 const lastName = n => { const p = String(n || '').replace(/ (Jr\.?|Sr\.?|II|III|IV)$/i, '').split(' '); return p.length > 1 ? p.slice(1).join(' ') : p[0]; };
 function buildByTeam() {
   const m = {};
@@ -553,7 +553,9 @@ async function loadNFL() {
   const games = (j.events || []).map(e => mkGame('nfl', e));
   const byes = ((j.week && j.week.teamsOnBye) || []).map(t => t.abbreviation);
   const nfl = await nflNow(); FX.week = nfl.week;
-  const [hero] = await Promise.all([isCur ? heroHTML('nfl', games, { byes }) : { html: '', id: null }, loadFantasy(nfl).catch(() => {})]);
+  const fxP = loadFantasy(nfl).then(() => { if (!FX.ready) { FX.ready = true; if (S.tab === 'nfl' && !S.sheetMode) refresh(true); } }).catch(() => {});
+  const hero = isCur ? await heroHTML('nfl', games, { byes }) : { html: '', id: null };
+  if (FX.ready) await fxP;
   const live = games.some(g => g.state === 'in');
   if (S.tab !== 'nfl' || S.sheetMode) return live;
   const view = q || cur;
@@ -564,10 +566,11 @@ async function loadNFL() {
   const P = games.filter(g => g.state === 'pre').sort((a, b) => a.date - b.date || score(b) - score(a));
   const F = games.filter(g => g.state === 'post').sort((a, b) => score(b) - score(a) || b.date - a.date);
   let h = hero.html + (isCur ? fxCards() : '');
-  h += tiles(`Live · ${L.length}`, L.filter(g => g.id !== hero.id || true), 'live');
+  const notHero = g => g.id !== hero.id;
+  h += tiles(`Live · ${L.filter(notHero).length}`, L.filter(notHero), 'live');
   const slots = {}; P.forEach(g => { const k = dayWord(g.date) + ' · ' + fmtTime(g.date); (slots[k] = slots[k] || []).push(g); });
-  for (const [k, arr] of Object.entries(slots)) h += tiles(esc(k), arr.sort((a, b) => score(b) - score(a)));
-  h += tiles('Final', F);
+  for (const [k, arr] of Object.entries(slots)) h += tiles(esc(k), arr.filter(notHero).sort((a, b) => score(b) - score(a)));
+  h += tiles('Final', F.filter(notHero));
   if (byes.length) h += `<p class="foot">On bye: ${byes.map(esc).join(', ')}</p>`;
   if (!games.length) h += '<div class="empty">No games this week.</div>';
   $('#view').innerHTML = h;
