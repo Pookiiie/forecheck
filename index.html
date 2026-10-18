@@ -525,7 +525,7 @@ function setTab(tab) {
 function setUpdated(live) { S.live = live; $('#livedot').classList.toggle('on', !!live); $('#updtxt').textContent = fmtTime(new Date()); }
 
 /* ---------- Football (with fantasy) ---------- */
-function nflModel(j) { const map = {}; (j.events || []).forEach(e => { const g = mkGame('nfl', e); map[g.home.abbr] = g; map[g.away.abbr] = g; }); return { map, week: j.week && j.week.number, byes: ((j.week && j.week.teamsOnBye) || []).map(t => t.abbreviation) }; }
+function nflModel(j) { const map = {}; (j.events || []).forEach(e => { const g = mkGame('nfl', e); map[g.home.abbr] = g; map[g.away.abbr] = g; }); return { map, week: j.week && j.week.number, year: (j.season && j.season.year) || new Date().getFullYear(), byes: ((j.week && j.week.teamsOnBye) || []).map(t => t.abbreviation) }; }
 async function nflNow() { return cached('nflnow', 15e3, async () => nflModel(await espn('nfl', 'scoreboard'))); }
 async function loadFantasy(nfl) {
   const out = {}; const jobs = [];
@@ -890,7 +890,7 @@ async function sleeperData(nfl) {
   const mus = await SL(`league/${L}/matchups/${wk}`);
   const ids = [...new Set(rosters.flatMap(r => (r.players || []).concat(r.starters || [])).filter(x => x && x !== '0'))];
   const P = await sleeperPlayers(ids);
-  const proj = await cached(`slp:${st.season}:${wk}`, 20 * 60e3, async () => { const rows = await getJSON(`https://api.sleeper.app/projections/nfl/${st.season}/${wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF`); const m = {}; const rec = (lg.scoring_settings && lg.scoring_settings.rec) ?? 1; const key = rec >= 1 ? 'pts_ppr' : rec >= .5 ? 'pts_half_ppr' : 'pts_std'; rows.forEach(r => { const s = r.stats || {}; m[r.player_id] = s[key] ?? s.pts_ppr ?? 0; }); return m; }).catch(() => ({}));
+  const proj = await cached(`slp:${st.season}:${wk}`, 20 * 60e3, async () => { const rows = await projRows(st.season, wk); const m = {}; const rec = (lg.scoring_settings && lg.scoring_settings.rec) ?? 1; const key = rec >= 1 ? 'pts_ppr' : rec >= .5 ? 'pts_half_ppr' : 'pts_std'; rows.forEach(r => { const s = r.stats || {}; m[r.player_id] = s[key] ?? s.pts_ppr ?? 0; }); return m; }).catch(() => ({}));
   const uname = rid => { const r = rosters.find(x => x.roster_id === rid); const u = r && users.find(x => x.user_id === r.owner_id); return (u && ((u.metadata && u.metadata.team_name) || u.display_name)) || 'Team ' + rid; };
   const slots = (lg.roster_positions || []).filter(x => !['BN', 'IR', 'TAXI'].includes(x));
   const teamOf = m => {
@@ -908,19 +908,37 @@ async function sleeperData(nfl) {
   const pairs = {}; mus.forEach(m => { if (m.matchup_id != null) (pairs[m.matchup_id] = pairs[m.matchup_id] || []).push(m); });
   return { key: 'sv', title: lg.name || 'Sleeper', short: lg.name || 'PFL', src: 'Sleeper', week: wk, me, opp, league: Object.values(pairs).map(arr => arr.map(teamOf)), nfl };
 }
+/* Weekly projections from Sleeper; CBS live scoring has none, so CBS players are projected
+   from the same stat lines using the BELL MIRABEL scoring (6-pt pass TD, -2 INT, no PPR). */
+const projRows = (season, wk) => cached(`proj:${season}:${wk}`, 20 * 60e3, () => getJSON(`https://api.sleeper.app/projections/nfl/${season}/${wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF`));
+const CBS_SC = { pass_yd: .04, pass_td: 6, pass_int: -2, rush_yd: .1, rush_td: 6, rec_yd: .1, rec_td: 6, fum_lost: -2, pass_2pt: 2, rush_2pt: 2, rec_2pt: 2 };
+function cbsProjMap(rows) {
+  const k = {}, n = {};
+  (rows || []).forEach(r => {
+    const p = r.player || {}, s = r.stats || {}, pos = p.position; const team = nflAbbr(p.team || r.team || '');
+    let v; if (pos === 'K' || pos === 'DEF') v = +(s.pts_std || 0); else { v = 0; for (const [key, w] of Object.entries(CBS_SC)) v += (s[key] || 0) * w; }
+    if (pos === 'DEF') { k['DEF|' + team] = v; return; }
+    const nm = normName((p.first_name || '') + ' ' + (p.last_name || '')); k[nm + '|' + team] = v; if (!(nm in n)) n[nm] = v;
+  });
+  return { k, n };
+}
 async function cbsCall(path, extra = '') {
   const j = await getJSON(`https://api.cbssports.com/fantasy/${path}?version=3.0&response_format=JSON&access_token=${encodeURIComponent(CFG.cbsToken)}${extra}`);
   if (j && (j.error || (j.statusCode && j.statusCode >= 400))) throw new Error(typeof j.error === 'string' ? j.error : (j.statusMessage || 'CBS refused the request'));
   return (j && j.body) || {};
 }
 async function cbsData(nfl) {
-  const wk = nfl.week; const b = await cbsCall('league/scoring/live', '&period=' + wk);
+  const wk = nfl.week;
+  const [b, pm] = await Promise.all([cbsCall('league/scoring/live', '&period=' + wk), projRows(nfl.year, wk).then(cbsProjMap).catch(() => ({ k: {}, n: {} }))]);
   const ls = b.live_scoring || b; const teams = ls.teams || []; if (!teams.length) throw new Error('CBS returned no teams for week ' + wk);
   const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
   const T = teams.map(t => {
     const rows = (t.players || []).map(p => {
       const status = String(p.status || p.roster_status || p.roster_pos || '').toUpperCase(); const st = !/^(RS|BN|B|IR|RES)/.test(status);
-      const team = p.pro_team || p.team || ''; const pts = num(p.fpts ?? p.pts ?? p.points) || 0; const pj = num(p.proj_fpts ?? p.proj_pts ?? p.projected_points ?? p.fpts_proj);
+      const team = p.pro_team || p.team || ''; const pts = num(p.fpts ?? p.pts ?? p.points) || 0;
+      const nm = p.fullname || p.full_name || p.name || ''; const isD = /^(DST|DEF|D\/ST)$/i.test(p.position || '');
+      let pj = num(p.proj_fpts ?? p.proj_pts ?? p.projected_points ?? p.fpts_proj);
+      if (pj == null) pj = isD ? (pm.k['DEF|' + nflAbbr(team)] ?? null) : (pm.k[normName(nm) + '|' + nflAbbr(team)] ?? pm.n[normName(nm)] ?? null);
       const g = nfl.map[nflAbbr(team)]; const rem = nfl.byes.includes(nflAbbr(team)) ? 0 : remainFrac(g);
       return { name: p.fullname || p.full_name || p.name || '?', pos: p.position || '', team, slot: st ? (p.position || '') : 'BN', st, pts, proj: pj, est: pj != null ? pts + pj * rem : pts, left: rem > 0 && g && g.state !== 'post', inj: p.injury || p.injury_status || '' };
     }); rows.sort((a, b) => b.st - a.st);
