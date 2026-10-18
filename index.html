@@ -279,6 +279,12 @@ svg text{font-family:var(--f-num)}
 .hint code,.code{font:12px/1.45 ui-monospace,Menlo,monospace;word-break:break-all}
 .code{display:block;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px;user-select:all;-webkit-user-select:all}
 .ok{color:var(--good);font-weight:600}
+.no{color:var(--live);font-weight:600}
+.hint.no{color:var(--live)}
+#sfStatus{display:grid;gap:8px}
+.srow{display:grid;grid-template-columns:90px 1fr;gap:8px;font-size:14px;align-items:baseline}
+.srow .k{font:700 11px var(--f-num);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.banner{padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--good) 18%,var(--card));border:1px solid color-mix(in srgb,var(--good) 45%,transparent);font-weight:700}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:10px;font:600 14px var(--f-body);box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:calc(100% - 32px)}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
@@ -299,7 +305,7 @@ svg text{font-family:var(--f-num)}
 <nav class="tabs" aria-label="Sections">
   <div class="tabs-in" role="tablist">
     <button class="tab" role="tab" data-tab="nfl" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4.5 19.5c-1.6-5.2 1.2-11.4 6.4-13.6 2.9-1.2 6.1-1.3 8.6-.8.5 2.5.4 5.7-.8 8.6-2.2 5.2-8.4 8-13.6 6.4z"/><path d="M9 15l6-6M10.5 10.5l1.5 1.5M12.5 8.5L14 10M8.5 12.5L10 14"/></svg>Football</button>
-    <button class="tab" role="tab" data-tab="nhl" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 3l6.5 13.5c.4.9 1.3 1.5 2.3 1.5H20"/><path d="M14 18h6v2.5h-6.5c-1.7 0-3.2-1-4-2.5"/><ellipse cx="6.5" cy="19" rx="3.5" ry="1.6"/><path d="M3 19v1.4c0 .9 1.6 1.6 3.5 1.6s3.5-.7 3.5-1.6V19"/></svg>Hockey</button>
+    <button class="tab" role="tab" data-tab="nhl" aria-selected="false" id="nhlTab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 3l6.5 13.5c.4.9 1.3 1.5 2.3 1.5H20"/><path d="M14 18h6v2.5h-6.5c-1.7 0-3.2-1-4-2.5"/><ellipse cx="6.5" cy="19" rx="3.5" ry="1.6"/><path d="M3 19v1.4c0 .9 1.6 1.6 3.5 1.6s3.5-.7 3.5-1.6V19"/></svg>Hockey</button>
     <button class="tab" role="tab" data-tab="fx" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="16" cy="9" r="1.4"/></svg>Fantasy</button>
   </div>
 </nav>
@@ -459,6 +465,7 @@ function watchNHL(g) {
   return { items: out, note, link, linkText };
 }
 const watchFor = g => g.sp === 'nfl' ? watchNFL(g) : watchNHL(g);
+const showWatch = g => g.sp === 'nhl' && hasFav(g);
 const PLAY_SVG = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1l7 4-7 4z" fill="currentColor"/></svg>';
 function chip(x) { return `<span class="chip${x.kind === 'stream' ? ' stream' : ''}">${x.kind === 'stream' ? PLAY_SVG : ''}${esc(x.name)}${x.lang ? ` <span class="lng">${esc(x.lang)}</span>` : ''}</span>`; }
 function watchChips(g, max = 99) { return watchFor(g).items.slice(0, max).map(chip).join(''); }
@@ -505,7 +512,7 @@ function gameCard(g) {
     const si = nflSit(g);
     if (si) sit = `<div class="sit">${si.off ? `<div class="sit-line">${esc(si.off.abbr)} ball · ${esc(si.dd)}${si.rz ? ' <span class="rz">RED ZONE</span>' : ''}</div>${miniField(si, g)}` : ''}${si.text ? `<div class="lastplay">${esc(si.text)}</div>` : ''}</div>`;
   }
-  const w = g.state === 'post' ? '' : `<div class="g-watch">${watchFor(g).items.slice(0, 3).map(chip).join('')}</div>`;
+  const w = g.state === 'post' || !showWatch(g) ? '' : `<div class="g-watch">${watchFor(g).items.slice(0, 3).map(chip).join('')}</div>`;
   return `<button class="game${hasFav(g) ? ' fav' : ''}" data-open="${g.sp}:${g.id}"><div class="g-top">${statusHTML(g)}</div>${teamRow(g, g.away)}${teamRow(g, g.home)}${sit}${w}</button>`;
 }
 function groupGames(games) {
@@ -560,7 +567,7 @@ async function heroHTML(sp, games, extra = {}) {
       ${opp ? `<div class="hero-m"><div class="hero-t">${heroLogo(me)}<span class="ab">${esc(ab)}</span></div><div class="hero-sc"><span class="vs">${at.toUpperCase()}</span></div><div class="hero-t h"><span class="ab">${esc(opp.abbr)}</span>${heroLogo(opp)}</div></div>
       <div class="hero-st">Next: ${esc(whenLabel(ng.date))}</div>` : `<div class="hero-st">No upcoming games</div>`}
       ${lastLine ? `<div class="hero-sub">${lastLine}</div>` : ''}
-      ${ng ? `<div class="chips">${watchChips(ng, 4)}</div>` : ''}</button>`;
+      ${ng && showWatch(ng) ? `<div class="chips">${watchChips(ng, 4)}</div>` : ''}</button>`;
   }
   const G = show; const live = G.state === 'in', pre = G.state === 'pre';
   const si = G.sp === 'nfl' ? nflSit(G) : null;
@@ -574,7 +581,7 @@ async function heroHTML(sp, games, extra = {}) {
       <div class="hero-sc">${pre ? '<span class="vs">AT</span>' : `${sc(G.away)}<span class="vs">–</span>${sc(G.home)}`}</div>
       <div class="hero-t h"><span class="ab">${esc(G.home.abbr)}</span>${heroLogo(G.home)}</div></div>
     <div class="hero-st">${pre ? esc(whenLabel(G.date)) : esc(G.detail)}</div>${sub}
-    ${G.state !== 'post' ? `<div class="chips">${watchChips(G, 4)}</div>` : ''}</button>`;
+    ${G.state !== 'post' && showWatch(G) ? `<div class="chips">${watchChips(G, 4)}</div>` : ''}</button>`;
 }
 
 /* ---------- app state ---------- */
@@ -620,27 +627,29 @@ function shiftWeek(d) {
   refresh(true);
 }
 
-/* ---------- NHL view ---------- */
+/* ---------- NHL view: your team only ---------- */
 async function loadNHL() {
-  const d = S.nhl.date; const j = await espn('nhl', 'scoreboard' + (d ? '?dates=' + d : ''));
-  const day = (j.day && j.day.date) ? j.day.date.replace(/-/g, '') : ymd(new Date());
-  S.nhl.shown = day;
-  const games = (j.events || []).map(e => mkGame('nhl', e));
-  const isCur = !d;
-  const hero = isCur ? await heroHTML('nhl', games) : '';
-  if (S.tab !== 'nhl' || S.sheetMode) return games.some(g => g.state === 'in');
-  const dt = new Date(+day.slice(0, 4), +day.slice(4, 6) - 1, +day.slice(6, 8), 12);
+  const ab = CFG.favNHL || 'MTL';
+  const [sc, today] = await Promise.all([teamSchedule('nhl', ab), espn('nhl', 'scoreboard').catch(() => null)]);
+  const fresh = today ? (today.events || []).map(e => mkGame('nhl', e)).filter(g => g.home.abbr === ab || g.away.abbr === ab) : [];
+  const games = sc.games.slice();
+  fresh.forEach(g => { const i = games.findIndex(x => x.id === g.id); if (i >= 0) games[i] = g; else games.push(g); });
+  games.sort((x, y) => x.date - y.date);
+  const live = games.some(g => g.state === 'in');
+  if (live) delete memo['sched:nhl' + ab];
+  const hero = await heroHTML('nhl', fresh);
+  if (S.tab !== 'nhl' || S.sheetMode) return live;
+  const heroId = (fresh[0] && fresh[0].state !== 'post') ? fresh[0].id : null;
+  const upcoming = games.filter(g => g.state !== 'post' && g.id !== heroId && g.date > Date.now() - 6 * 36e5).slice(0, 6);
+  const results = games.filter(g => g.state === 'post').slice(-8).reverse();
+  const t = sc.team || {};
+  const sub = [t.recordSummary, t.standingSummary].filter(Boolean).join(' \u00b7 ');
   $('#view').innerHTML = `${hero}
-    <div class="nav"><button class="iconbtn" data-day="-1" aria-label="Previous day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <div class="lbl">${esc(isToday(dt) ? 'Tonight' : dt.toLocaleDateString('en-CA', { weekday: 'long' }))}<small>${esc(fmtDay(dt))}${isCur ? '' : ' · <u>back to today</u>'}</small></div>
-      <button class="iconbtn" data-day="1" aria-label="Next day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></button></div>
-    ${sectionsHTML(games, 'nhl')}`;
-  return games.some(g => g.state === 'in');
-}
-function shiftDay(n) {
-  const base = S.nhl.shown || ymd(new Date());
-  const dt = new Date(+base.slice(0, 4), +base.slice(4, 6) - 1, +base.slice(6, 8) + n, 12);
-  const v = ymd(dt); S.nhl.date = v === ymd(new Date()) ? null : v; refresh(true);
+    <div class="nav"><div class="lbl">${esc(t.displayName || ab)}${sub ? `<small>${esc(sub)}</small>` : ''}</div></div>
+    ${upcoming.length ? `<div class="sec-h"><p class="eyebrow">Coming up</p></div><div class="list">${upcoming.map(gameCard).join('')}</div>` : ''}
+    ${results.length ? `<div class="sec-h"><p class="eyebrow">Results</p></div><div class="list">${results.map(gameCard).join('')}</div>` : ''}
+    ${!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : ''}`;
+  return live;
 }
 
 /* =====================================================================
@@ -832,11 +841,10 @@ function preInfo(g, s) {
   return `<section class="panel"><h3>Kickoff</h3><div><b>${esc(whenLabel(g.date))}</b></div>${bits.length ? `<div class="small muted">${bits.join(' · ')}</div>` : ''}</section>`;
 }
 function nflDetail(g, s) {
-  return detailHead(g) + nflLive(g, s) + preInfo(g, s) + watchPanelIf(g, s, true) + wpChart(g, s) + scoringPanel(g, s) + nflDrives(g, s) + teamStatsNFL(g, s) +
+  return detailHead(g) + nflLive(g, s) + preInfo(g, s) + wpChart(g, s) + scoringPanel(g, s) + nflDrives(g, s) + teamStatsNFL(g, s) +
     playersPanel(g, s, [['passing', 'Passing', ['C/ATT', 'YDS', 'TD', 'INT', 'RTG']], ['rushing', 'Rushing', ['CAR', 'YDS', 'AVG', 'TD', 'LONG']], ['receiving', 'Receiving', ['REC', 'TGTS', 'YDS', 'TD', 'LONG']], ['kicking', 'Kicking', ['FG', 'XP', 'PTS']], ['defensive', 'Defence', ['TOT', 'SACKS', 'TFL', 'PD'], 6]]) +
-    recentPlays(g, s) + watchPanelIf(g, s, false);
+    recentPlays(g, s);
 }
-function watchPanelIf(g, s, top) { const show = g.state === 'post' ? !top : top; return show ? watchPanel(g, s) : ''; }
 
 /* ---------- NHL detail ---------- */
 function rinkSVG(g, plays) {
@@ -877,7 +885,7 @@ function nhlDetail(g, s) {
   const plays = s.plays || []; const ink = pairInk(g);
   let h = detailHead(g);
   if (g.state === 'pre') h += preInfo(g, s);
-  if (g.state !== 'post') h += watchPanel(g, s);
+  if (g.state !== 'post' && showWatch(g)) h += watchPanel(g, s);
   const shotN = plays.filter(p => p.coordinate && /^(Shot|Missed|Goal)$/.test(p.type && p.type.text)).length;
   if (shotN) h += `<section class="panel"><h3>Shot map <span class="r">attacking → the other team’s zone</span></h3>${rinkSVG(g, plays)}
     <div class="legend"><span><i class="sw" style="background:${ink.a}"></i>${esc(g.away.abbr)}</span><span><i class="sw" style="background:${ink.h}"></i>${esc(g.home.abbr)}</span><span>● on goal</span><span>○ missed</span><span>◉ goal</span></div></section>`;
@@ -898,7 +906,7 @@ function nhlDetail(g, s) {
     const keep = plays.filter(p => p.type && !/^(Stoppage|Face Off|Period Start|Period End)$/.test(p.type.text)).slice(-12).reverse();
     if (keep.length) h += `<section class="panel"><h3>Recent plays</h3><div class="plays">${keep.map(p => `<div class="play"><span class="t">P${esc(p.period.number)} ${esc(p.clock && p.clock.displayValue)}</span><div>${p.type.text === 'Goal' ? '<b>' : ''}${esc(p.text)}${p.type.text === 'Goal' ? '</b>' : ''}</div></div>`).join('')}</div></section>`;
   }
-  if (g.state === 'post') h += watchPanel(g, s);
+  if (g.state === 'post' && showWatch(g)) h += watchPanel(g, s);
   return h;
 }
 function nhlPlayers(g, s) {
@@ -1053,21 +1061,54 @@ async function warmMine() { // so box scores can flag your players without visit
    SETTINGS
    ===================================================================== */
 const BOOKMARKLET = "javascript:(()=>{const m=document.documentElement.outerHTML.match(/token[\"']?\\s*[:=]\\s*[\"']([A-Za-z0-9_\\-.]{20,})[\"']/);if(!m){alert('No CBS token on this page. Open your CBS league while signed in.');return}navigator.clipboard.writeText(m[1]).then(()=>alert('CBS token copied. Paste it into Forecheck Settings.'),()=>prompt('Copy this CBS token:',m[1]))})();";
-function openSettings() {
+function decodeSetup(raw) {
+  const clean = String(raw || '').replace(/\s+/g, '').replace(/^FC1/, '');
+  const j = JSON.parse(decodeURIComponent(escape(atob(clean))));
+  if (!j || typeof j !== 'object') throw new Error('bad');
+  return j;
+}
+async function renderStatus(banner) {
+  const box = $('#sfStatus'); if (!box) return;
+  const row = (k, ok, v) => `<div class="srow"><span class="k">${esc(k)}</span><span class="${ok === true ? 'ok' : ok === false ? 'no' : 'muted'}">${ok === true ? '✓ ' : ok === false ? '✕ ' : ''}${v}</span></div>`;
+  const favs = [CFG.favNFL, CFG.favNHL].filter(Boolean).join(' · ') || 'None';
+  let sl = CFG.sleeperLeague ? 'Checking…' : 'Not set up';
+  let cb = CFG.cbsToken ? (CFG.cbsTeam ? 'Token saved · team ' + esc(CFG.cbsTeam) : 'Token saved · pick your team') : (CFG.cbsTeam ? 'Team ' + esc(CFG.cbsTeam) + ' set · still needs your CBS token (below)' : 'Not set up');
+  const paint = (slOk) => { box.innerHTML = (banner ? `<div class="banner">${banner}</div>` : '') + row('Favourites', true, esc(favs)) + row('Sleeper', slOk, sl) + row('CBS', CFG.cbsToken ? true : (CFG.cbsTeam ? null : null), cb); };
+  paint(CFG.sleeperLeague ? null : null);
+  if (CFG.sleeperLeague) {
+    try {
+      const [lg, users, rosters] = await Promise.all([SL('league/' + CFG.sleeperLeague), SL('league/' + CFG.sleeperLeague + '/users'), SL('league/' + CFG.sleeperLeague + '/rosters')]);
+      if (!lg) throw new Error('League not found');
+      const r = rosters.find(x => String(x.roster_id) === String(CFG.sleeperRoster)); const u = r && users.find(x => x.user_id === r.owner_id);
+      const tn = u ? ((u.metadata && u.metadata.team_name) || u.display_name) : '';
+      sl = `${esc(lg.name)}${tn ? ' · ' + esc(tn) : ' · pick your team below'}`;
+      fillSleeperTeams(users, rosters);
+      paint(true);
+    } catch (e) { sl = 'Couldn’t reach that league (' + esc(e.message) + ')'; paint(false); }
+  }
+}
+function fillSleeperTeams(users, rosters) {
+  const sel = $('#sfSlTeam'); if (!sel) return;
+  sel.innerHTML = rosters.map(r => { const u = users.find(x => x.user_id === r.owner_id) || {}; const n = (u.metadata && u.metadata.team_name) || u.display_name || 'Roster ' + r.roster_id; return `<option value="${r.roster_id}" ${String(r.roster_id) === String(CFG.sleeperRoster) ? 'selected' : ''}>${esc(n)}${u.display_name && n !== u.display_name ? ' (' + esc(u.display_name) + ')' : ''}</option>`; }).join('');
+}
+function openSettings(banner) {
   openSheet('settings', 'Settings');
   const opt = (list, v) => list.map(a => `<option ${a === v ? 'selected' : ''}>${a}</option>`).join('');
   $('#shBody').innerHTML = `
+  <section class="panel"><h3>Status</h3><div id="sfStatus"></div></section>
+
+  <section class="panel"><h3>Setup code</h3><p class="hint" style="margin:0">Paste the code Claude gave you, then tap Apply. Your leagues fill in automatically.</p>
+    <div class="fld"><label for="sfCode">Code</label><textarea id="sfCode" placeholder="FC1…" autocapitalize="off" autocomplete="off" spellcheck="false"></textarea></div>
+    <button class="btn" id="sfApply">Apply code</button>
+    <p class="hint" style="margin:0" id="sfCodeMsg" role="status"></p></section>
+
   <section class="panel"><h3>Favourite teams</h3><div class="row2">
     <div class="fld"><label for="sfNfl">NFL</label><select id="sfNfl"><option value="">None</option>${opt(NFL_TEAMS, CFG.favNFL)}</select></div>
     <div class="fld"><label for="sfNhl">NHL</label><select id="sfNhl"><option value="">None</option>${opt(NHL_TEAMS, CFG.favNHL)}</select></div></div></section>
 
-  <section class="panel"><h3>Setup code</h3><p class="hint" style="margin:0">Paste the code Claude gave you to fill in your leagues in one go.</p>
-    <div class="fld"><label for="sfCode">Code</label><textarea id="sfCode" placeholder="FC1…" autocapitalize="off" autocomplete="off" spellcheck="false"></textarea></div>
-    <button class="btn ghost" id="sfApply">Apply code</button></section>
-
   <section class="panel"><h3>Sleeper</h3><div class="form">
     <div class="fld"><label for="sfSl">League ID</label><input id="sfSl" inputmode="numeric" autocomplete="off" value="${esc(CFG.sleeperLeague)}"></div>
-    <div class="fld"><label for="sfSlTeam">Your team</label><select id="sfSlTeam"><option value="${esc(CFG.sleeperRoster)}">${CFG.sleeperRoster ? 'Roster ' + esc(CFG.sleeperRoster) : 'Load teams first'}</option></select></div>
+    <div class="fld"><label for="sfSlTeam">Your team</label><select id="sfSlTeam"><option value="${esc(CFG.sleeperRoster)}">${CFG.sleeperRoster ? 'Loading…' : 'Load teams first'}</option></select></div>
     <button class="btn ghost" id="sfSlLoad">Load teams</button></div></section>
 
   <section class="panel"><h3>CBS</h3><div class="form">
@@ -1080,8 +1121,18 @@ function openSettings() {
 
   <section class="panel"><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="sfSave">Save</button><button class="btn ghost" id="sfReset">Clear saved data</button></div>
     <p class="hint" style="margin:0" id="sfMsg">Settings are stored only on this device.</p></section>`;
-  $('#sfApply').onclick = () => { const raw = $('#sfCode').value.trim(); try { const j = JSON.parse(decodeURIComponent(escape(atob(raw.replace(/^FC1/, ''))))); ['favNFL', 'favNHL', 'sleeperLeague', 'sleeperRoster', 'cbsToken', 'cbsTeam'].forEach(k => { if (j[k] != null && j[k] !== '') CFG[k] = String(j[k]); }); saveCfg(); for (const k in memo) delete memo[k]; toast('Setup code applied'); openSettings(); } catch (e) { $('#sfMsg').textContent = 'That code didn’t work. Check it was copied in full.'; } };
-  $('#sfSlLoad').onclick = async () => { const L = $('#sfSl').value.trim(); if (!L) return; try { const [users, rosters] = await Promise.all([SL('league/' + L + '/users'), SL('league/' + L + '/rosters')]); $('#sfSlTeam').innerHTML = rosters.map(r => { const u = users.find(x => x.user_id === r.owner_id) || {}; const n = (u.metadata && u.metadata.team_name) || u.display_name || 'Roster ' + r.roster_id; return `<option value="${r.roster_id}" ${String(r.roster_id) === String(CFG.sleeperRoster) ? 'selected' : ''}>${esc(n)}${u.display_name && n !== u.display_name ? ' (' + esc(u.display_name) + ')' : ''}</option>`; }).join(''); } catch (e) { $('#sfMsg').textContent = 'Sleeper: ' + e.message; } };
+  renderStatus(banner);
+  $('#sfApply').onclick = () => {
+    const msg = $('#sfCodeMsg'); const raw = $('#sfCode').value;
+    if (!raw.trim()) { msg.className = 'hint no'; msg.textContent = 'Paste the code first.'; return; }
+    let j; try { j = decodeSetup(raw); } catch (e) { msg.className = 'hint no'; msg.textContent = '✕ That code didn’t work. Make sure it was copied in full, starting with FC1.'; return; }
+    const changed = [];
+    ['favNFL', 'favNHL', 'sleeperLeague', 'sleeperRoster', 'cbsToken', 'cbsTeam'].forEach(k => { if (j[k] != null && j[k] !== '') { CFG[k] = String(j[k]); changed.push(k); } });
+    if (!changed.length) { msg.className = 'hint no'; msg.textContent = '✕ That code had nothing in it to apply.'; return; }
+    saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); warmMine();
+    openSettings('✓ Setup code applied and saved.');
+  };
+  $('#sfSlLoad').onclick = async () => { const L = $('#sfSl').value.trim(); if (!L) return; try { const [users, rosters] = await Promise.all([SL('league/' + L + '/users'), SL('league/' + L + '/rosters')]); fillSleeperTeams(users, rosters); } catch (e) { $('#sfMsg').textContent = 'Sleeper: ' + e.message; } };
   $('#sfCbsLoad').onclick = async () => { const tok = $('#sfCbs').value.trim(); if (!tok) return; const old = CFG.cbsToken; CFG.cbsToken = tok; try { const b = await cbsCall('league/teams'); const teams = b.teams || []; $('#sfCbsTeam').innerHTML = teams.map(t => `<option value="${esc(t.id)}" ${String(t.id) === String(CFG.cbsTeam) ? 'selected' : ''}>${esc(t.name)}${t.owners && t.owners[0] && t.owners[0].name ? ' (' + esc(t.owners[0].name) + ')' : ''}</option>`).join(''); } catch (e) { $('#sfMsg').textContent = 'CBS: ' + e.message; } finally { CFG.cbsToken = old; } };
   $('#sfCopyBm').onclick = async () => { try { await navigator.clipboard.writeText(BOOKMARKLET); toast('Bookmark code copied'); } catch (e) { const r = document.createRange(); r.selectNodeContents($('#bmk')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } };
   $('#sfSave').onclick = () => { CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); warmMine(); };
@@ -1115,14 +1166,13 @@ document.addEventListener('click', e => {
   const o = e.target.closest('[data-open]'); if (o) { const [sp, id] = o.dataset.open.split(':'); openGame(sp, id); return; }
   const t = e.target.closest('[data-tab]'); if (t) { if (S.sheetMode) closeSheet(); setTab(t.dataset.tab); return; }
   const w = e.target.closest('[data-wk]'); if (w) { shiftWeek(+w.dataset.wk); return; }
-  const d = e.target.closest('[data-day]'); if (d) { shiftDay(+d.dataset.day); return; }
-  if (e.target.closest('.nav .lbl u')) { if (S.tab === 'nfl') S.nfl.q = null; else S.nhl.date = null; refresh(true); return; }
+  if (e.target.closest('.nav .lbl u')) { S.nfl.q = null; refresh(true); return; }
   const p = e.target.closest('[data-ptab]'); if (p && S.detail) { S.detail.tab = p.dataset.ptab; const g = S.detail.g, s = S.detail.s; const keep = $('#sheet').scrollTop; $('#shBody').innerHTML = S.detail.sp === 'nfl' ? nflDetail(g, s) : nhlDetail(g, s); $('#sheet').scrollTop = keep; return; }
   const f = e.target.closest('[data-fx]'); if (f) { const [k, v] = f.dataset.fx.split(':'); S.fx[k] = v; refresh(true); return; }
   if (e.target.closest('[data-settings]')) { openSettings(); return; }
 });
 $('#sheetBack').onclick = closeSheet;
-$('#settingsBtn').onclick = openSettings;
+$('#settingsBtn').onclick = () => openSettings();
 $('#refreshBtn').onclick = () => { for (const k in memo) if (k === 'nflnow') delete memo[k]; refresh(true); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheetMode) closeSheet(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(true); });
