@@ -68,8 +68,51 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 .tab[aria-selected="true"]{color:var(--fg)}
 .tab[aria-selected="true"] svg{color:var(--tint)}
 
+/* ---------- themes (applied to the scrolling areas; header and tab bar stay broadcast-black) ---------- */
+.scroll{background:var(--bg)}
+body[data-sport="nfl"] .scroll{ /* Stadium night */
+  --card:rgba(255,255,255,.065);--card2:rgba(255,255,255,.11);--well:rgba(0,0,0,.28);--sep:rgba(255,255,255,.1);--fill:rgba(255,255,255,.08);
+  --fg2:#a9bfae;--fg3:#62806b;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.022) 0 34px,transparent 34px 68px),radial-gradient(140% 55% at 50% -8%,#22603a 0%,#0e2918 46%,#08140d 100%) #08140d}
+body[data-sport="nfl"] .tile,body[data-sport="nfl"] .hero,body[data-sport="nfl"] .sec,body[data-sport="nfl"] .fxc,body[data-sport="nfl"] .empty{border:1px solid rgba(255,255,255,.1)}
+body[data-sport="nhl"] .scroll{ /* Night rink */
+  --card:#122131;--card2:#193049;--well:#0d1925;--sep:rgba(170,205,235,.12);--fill:rgba(170,205,235,.09);--fg2:#9fb6cc;--fg3:#5f7790;--rink:#16222f;--rinkline:#2b3d50;
+  background:linear-gradient(90deg,transparent calc(50% - 1.5px),rgba(208,20,47,.3) calc(50% - 1.5px) calc(50% + 1.5px),transparent calc(50% + 1.5px)),
+    linear-gradient(90deg,transparent 21%,rgba(61,123,224,.24) 21% calc(21% + 4px),transparent calc(21% + 4px) calc(79% - 4px),rgba(61,123,224,.24) calc(79% - 4px) 79%,transparent 79%),
+    repeating-linear-gradient(163deg,transparent 0 13px,rgba(255,255,255,.03) 13px 14px,transparent 14px 29px),
+    repeating-linear-gradient(17deg,transparent 0 19px,rgba(255,255,255,.024) 19px 20px,transparent 20px 37px) #0b1622}
+body[data-sport="nhl"] .tile,body[data-sport="nhl"] .hero,body[data-sport="nhl"] .sec,body[data-sport="nhl"] .cal{border:1px solid rgba(170,205,235,.13)}
+body[data-sport="nhl"][data-ice="light"] .scroll{ /* Fresh sheet */
+  --card:#ffffff;--card2:#eef3f8;--well:#f1f5f9;--sep:rgba(12,29,43,.1);--fill:rgba(12,29,43,.06);--fg:#0c1d2b;--fg2:#4f6579;--fg3:#93a5b6;--rink:#f4f8fb;--rinkline:#c8d6e2;
+  color:var(--fg);color-scheme:light;
+  background:linear-gradient(90deg,transparent calc(50% - 1.5px),rgba(200,16,46,.28) calc(50% - 1.5px) calc(50% + 1.5px),transparent calc(50% + 1.5px)),
+    linear-gradient(90deg,transparent 21%,rgba(29,79,145,.2) 21% calc(21% + 4px),transparent calc(21% + 4px) calc(79% - 4px),rgba(29,79,145,.2) calc(79% - 4px) 79%,transparent 79%),
+    repeating-linear-gradient(163deg,transparent 0 13px,rgba(12,29,43,.025) 13px 14px,transparent 14px 29px) #e7eff5}
+body[data-sport="nhl"][data-ice="light"] .tile,body[data-sport="nhl"][data-ice="light"] .hero,body[data-sport="nhl"][data-ice="light"] .sec,body[data-sport="nhl"][data-ice="light"] .cal{border-color:rgba(12,29,43,.08);box-shadow:0 1px 2px rgba(12,29,43,.06)}
+
+/* ---------- Habs month calendar ---------- */
+.cal{background:var(--card);border-radius:10px;padding:5px 6px 6px}
+.cal-h{display:flex;align-items:center;justify-content:space-between;font:700 13px var(--bc);letter-spacing:.14em;text-transform:uppercase;color:var(--fg2);padding:0 0 3px}
+.cal-h button{width:32px;height:24px;color:var(--tint);display:grid;place-items:center}
+.cal-h button svg{width:8px;height:13px}
+.cal-dw,.cal-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.cal-dw span{font:600 10px var(--ui);color:var(--fg3);text-align:center;padding-bottom:2px}
+.cd{height:34px;border-radius:5px;position:relative;display:flex;align-items:center;justify-content:center;background:var(--well);min-width:0}
+.cd.x{background:transparent}
+.cd .dn{position:absolute;top:1px;right:3px;font:600 9px/1 var(--ui);color:var(--fg3)}
+.cd img{width:24px;height:24px;object-fit:contain}
+.cd.away img{width:18px;height:18px}
+.cd .at{position:absolute;top:1px;left:3px;font:700 9px/1 var(--ui);color:var(--fg3)}
+.cd .rs{position:absolute;left:22%;right:22%;bottom:2px;height:3px;border-radius:2px}
+.cd .rs.W{background:var(--green)}.cd .rs.L{background:var(--red)}.cd .rs.O{background:var(--amber)}
+.cd.today{box-shadow:inset 0 0 0 1.5px var(--tint)}
+button.cd:active{opacity:.7}
+.cal-k{display:flex;gap:10px;margin-top:5px;font:500 10.5px var(--ui);color:var(--fg3);flex-wrap:wrap}
+.cal-k i{display:inline-block;width:9px;height:3px;border-radius:2px;margin-right:4px;vertical-align:2px}
+
 /* ---------- section labels ---------- */
-.lbl{display:flex;align-items:baseline;gap:8px;margin:8px 4px -2px;font:700 12px var(--bc);letter-spacing:.14em;text-transform:uppercase;color:var(--fg2)}
+.lbl{display:flex;align-items:baseline;gap:8px;margin:8px 4px -2px;font:700 12px var(--bc);letter-spacing:.14em;text-transform:uppercase;color:var(--fg2);text-shadow:0 1px 2px rgba(0,0,0,.25)}
+body[data-ice="light"] .lbl{text-shadow:none}
 .lbl .r{margin-left:auto;letter-spacing:.04em;text-transform:none;font:500 12px var(--ui)}
 .lbl.live{color:var(--red)}
 .lbl.live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--red);align-self:center}
@@ -157,6 +200,13 @@ button.hero:active{opacity:.85}
 .fxc:active{opacity:.8}
 .fxh{display:flex;align-items:baseline;gap:6px;font:700 12px var(--bc);letter-spacing:.12em;text-transform:uppercase;color:var(--fg2)}
 .fxh .pc{margin-left:auto;color:var(--mine);letter-spacing:.04em}
+.fxv{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:4px}
+.fxt{display:flex;flex-direction:column;min-width:0}
+.fxt:last-child{align-items:flex-end}
+.fxt b{font:800 24px/1 var(--bc);font-variant-numeric:tabular-nums;color:var(--fg2)}
+.fxt.me b{color:var(--fg)}
+.fxt small{font:600 11.5px var(--bc);letter-spacing:.04em;color:var(--fg3);font-variant-numeric:tabular-nums}
+.fxv .vs{font:700 11px var(--bc);letter-spacing:.12em;color:var(--fg3);text-transform:uppercase;padding-bottom:16px}
 .fxr{display:flex;align-items:baseline;gap:6px;min-width:0}
 .fxr .nm{flex:1;min-width:0;font:500 12px var(--ui);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fxr.me .nm{color:var(--fg)}
@@ -327,7 +377,7 @@ const TZ = 'America/Toronto';
 const NFL_TEAMS = 'ARI ATL BAL BUF CAR CHI CIN CLE DAL DEN DET GB HOU IND JAX KC LAC LAR LV MIA MIN NE NO NYG NYJ PHI PIT SEA SF TB TEN WSH'.split(' ');
 const NHL_TEAMS = 'ANA BOS BUF CAR CBJ CGY CHI COL DAL DET EDM FLA LA MIN MTL NJ NSH NYI NYR OTT PHI PIT SEA SJ STL TB TOR UTA VAN VGK WPG WSH'.split(' ');
 const PATH = { nfl: 'football/nfl', nhl: 'hockey/nhl' };
-const CARD = '#161a20';
+const cardHex = () => document.body.dataset.sport === 'nhl' ? (CFG.ice === 'light' ? '#ffffff' : '#122131') : '#15281b';
 
 /* ---------- helpers ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -338,7 +388,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem('fc_' + k, JSON.stringify(v)); } catch (e) {} },
   del(k) { try { localStorage.removeItem('fc_' + k); } catch (e) {} }
 };
-const DEFAULTS = { favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '' };
+const DEFAULTS = { ice: 'dark', favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '' };
 let CFG = Object.assign({}, DEFAULTS, LS.get('cfg', {}));
 const saveCfg = () => LS.set('cfg', CFG);
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2400); }
@@ -374,8 +424,8 @@ const secs = s => { const m = String(s || '').match(/(\d+):(\d+)/); return m ? +
 function lum(hex) { const n = parseInt(String(hex).replace('#', '').padEnd(6, '0').slice(0, 6), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }).reduce((a, v, i) => a + v * [.2126, .7152, .0722][i], 0); }
 const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
 const onInk = c => lum(c) > .36 ? '#10161c' : '#ffffff';
-function teamInk(t) { const a = t.color, b = t.alt; if (contrast(a, CARD) >= 2.2) return a; if (contrast(b, CARD) >= 2.2) return b; return '#c8ced8'; }
-function pairInk(g) { let h = teamInk(g.home), a = teamInk(g.away); if (contrast(h, a) < 1.35) { const alt = g.away.alt; if (contrast(alt, CARD) >= 2 && contrast(alt, h) > contrast(a, h)) a = alt; else a = '#c8ced8'; } return { h, a }; }
+function teamInk(t) { const a = t.color, b = t.alt; if (contrast(a, cardHex()) >= 2.2) return a; if (contrast(b, cardHex()) >= 2.2) return b; return '#c8ced8'; }
+function pairInk(g) { let h = teamInk(g.home), a = teamInk(g.away); if (contrast(h, a) < 1.35) { const alt = g.away.alt; if (contrast(alt, cardHex()) >= 2 && contrast(alt, h) > contrast(a, h)) a = alt; else a = '#c8ced8'; } return { h, a }; }
 function slabColor(t) { for (const c of [t.color, t.alt]) if (c && contrast(c, '#ffffff') >= 3.2) return c; return '#2b3440'; }
 
 /* ---------- ESPN normalising ---------- */
@@ -395,7 +445,8 @@ function mkGame(sp, ev) {
 const isFav = (sp, abbr) => abbr && abbr === (sp === 'nfl' ? CFG.favNFL : CFG.favNHL);
 const hasFav = g => isFav(g.sp, g.home.abbr) || isFav(g.sp, g.away.abbr);
 const FB = "this.onerror=null;this.src=this.dataset.fb";
-const logo = t => `<img src="${esc(t.logoDark)}" data-fb="${esc(t.logo)}" onerror="${FB}" alt="" decoding="async">`;
+const lightIce = () => document.body.dataset.sport === 'nhl' && CFG.ice === 'light';
+const logo = (t, onColour) => `<img src="${esc(!onColour && lightIce() ? t.logo : t.logoDark)}" data-fb="${esc(t.logo)}" onerror="${FB}" alt="" decoding="async">`;
 const FOOT = '<svg class="foot-ic" viewBox="0 0 16 10" aria-label="has the ball"><ellipse cx="8" cy="5" rx="7.2" ry="4.2" fill="#8b4a20" stroke="#fff" stroke-width="1"/><path d="M5 5h6M6.5 3.8v2.4M8 3.8v2.4M9.5 3.8v2.4" stroke="#fff" stroke-width=".9"/></svg>';
 
 /* ---------- where to watch the Habs in Montréal (2026-27 rights) ---------- */
@@ -472,7 +523,7 @@ function sec(title, right, body, cls = '') { return `<section class="sec ${cls}"
 function bug(G, { lg = false, sog = null } = {}) {
   const pre = G.state === 'pre', live = G.state === 'in';
   const si = G.sp === 'nfl' && live ? nflSit(G) : null;
-  const slab = t => { const lose = G.state === 'post' && !t.winner && (G.home.winner || G.away.winner); return `<div class="bt${lose ? ' lose' : ''}" style="--c:${slabColor(t)}">${logo(t)}<span class="stack"><span class="ab">${esc(t.abbr)}</span>${sog ? `<span class="sog">SOG ${esc(sog[t === G.home ? 'h' : 'a'])}</span>` : ''}</span>${si && si.off === t ? FOOT : ''}<span class="bs">${pre ? `<small>${esc(t.rec)}</small>` : esc(t.score)}</span></div>`; };
+  const slab = t => { const lose = G.state === 'post' && !t.winner && (G.home.winner || G.away.winner); return `<div class="bt${lose ? ' lose' : ''}" style="--c:${slabColor(t)}">${logo(t, true)}<span class="stack"><span class="ab">${esc(t.abbr)}</span>${sog ? `<span class="sog">SOG ${esc(sog[t === G.home ? 'h' : 'a'])}</span>` : ''}</span>${si && si.off === t ? FOOT : ''}<span class="bs">${pre ? `<small>${esc(t.rec)}</small>` : esc(t.score)}</span></div>`; };
   let c;
   if (live) { const d = G.detail || ''; c = /half|end|intermission/i.test(d) ? `<span class="c1">${esc(d.replace(/^End of /i, 'End '))}</span>` : `<span class="c1">${esc(G.sp === 'nfl' ? qLab(G.period) : pLab(G.period))}</span><span class="c2">${esc(G.clock || '')}</span>`; }
   else if (pre) c = `<span class="c1">${esc(shortDay(G.date))}</span><span class="c2">${esc(fmtTime(G.date))}</span>`;
@@ -507,7 +558,7 @@ async function heroHTML(sp, games, extra = {}) {
   if (sp === 'nfl' && extra.byes && extra.byes.includes(ab)) {
     const me = { abbr: ab, color: '#' + (team.color || '333'), alt: '#' + (team.alternateColor || team.color || '333'), logo: `https://a.espncdn.com/i/teamlogos/${sp}/500/${ab.toLowerCase()}.png` };
     me.logoDark = me.logo.replace('/500/', '/500-dark/');
-    return { html: `<button class="hero" ${next ? `data-open="${sp}:${next.id}"` : ''}><div class="bug ${sp}"><div class="bt wide" style="--c:${slabColor(me)}">${logo(me)}<span class="ab">${esc(ab)}</span><span class="bye">Bye week</span></div><div class="bc"><span class="c1">${next ? 'Next' : ''}</span><span class="c2">${next ? esc(shortDay(next.date)) : ''}</span></div></div>
+    return { html: `<button class="hero" ${next ? `data-open="${sp}:${next.id}"` : ''}><div class="bug ${sp}"><div class="bt wide" style="--c:${slabColor(me)}">${logo(me, true)}<span class="ab">${esc(ab)}</span><span class="bye">Bye week</span></div><div class="bc"><span class="c1">${next ? 'Next' : ''}</span><span class="c2">${next ? esc(shortDay(next.date)) : ''}</span></div></div>
       <div class="under"><div class="meta">${next ? 'Next: ' + nextLine(next, ab) : ''}${last ? ` · Last: ${resultLine(last, ab)}` : ''}</div></div></button>`, id: null };
   }
   if (next) {
@@ -548,8 +599,8 @@ function fxCards() {
     const m = d[k];
     if (m && m.me) {
       const o = oddsOf(m); const lead = m.opp && m.me.pts >= m.opp.pts;
-      const row = (t, cls) => `<div class="fxr ${cls}"><span class="nm">${esc(t.name)}</span><span class="pj">${fmtP(t.est)}</span><b>${fmtP(t.pts)}</b></div>`;
-      cards.push(`<button class="fxc" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span>${o != null ? `<span class="pc">Win ${o}%</span>` : ''}</div>${row(m.me, 'me' + (lead ? ' up' : ''))}${m.opp ? row(m.opp, 'them' + (!lead ? ' up' : '')) : ''}${o != null ? `<div class="bar"><u style="width:${o}%"></u></div>` : ''}<div class="fxm">${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} players left \u00b7 grey = projected</div></button>`);
+      const side = (t, me) => `<div class="fxt${me ? ' me' : ''}"><b>${fmtP(t.pts)}</b><small>proj ${fmtP(t.est)}</small></div>`;
+      cards.push(`<button class="fxc" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span>${o != null ? `<span class="pc">Win ${o}%</span>` : ''}</div><div class="fxv">${side(m.me, true)}${m.opp ? `<span class="vs">vs</span>${side(m.opp, false)}` : ''}</div>${o != null ? `<div class="bar"><u style="width:${o}%"></u></div>` : ''}<div class="fxm">${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} players left</div></button>`);
     } else if (d[k + 'Err']) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">${esc(d[k + 'Err'])}</div><div class="fxm">Tap to fix in Settings</div></button>`);
     else if (m) cards.push(`<button class="fxc" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span></div><div class="fxm">Pick your team in Settings</div></button>`);
   });
@@ -595,6 +646,29 @@ function shiftWeek(d) {
   $('#scroller').scrollTop = 0; refresh(true);
 }
 
+/* ---------- Canadiens month calendar ---------- */
+function habsCalendar(games, ab) {
+  const now = new Date(); const cur = S.cal || { y: +ymd(now).slice(0, 4), m: +ymd(now).slice(4, 6) - 1 };
+  const first = new Date(cur.y, cur.m, 1), days = new Date(cur.y, cur.m + 1, 0).getDate();
+  const byDay = {}; games.forEach(g => { const k = ymd(g.date); if (k.slice(0, 6) === `${cur.y}${String(cur.m + 1).padStart(2, '0')}`) byDay[+k.slice(6, 8)] = g; });
+  const today = ymd(now);
+  let cells = '';
+  for (let i = 0; i < first.getDay(); i++) cells += '<div class="cd x"></div>';
+  for (let d = 1; d <= days; d++) {
+    const g = byDay[d]; const key = `${cur.y}${String(cur.m + 1).padStart(2, '0')}${String(d).padStart(2, '0')}`; const tod = key === today ? ' today' : '';
+    if (!g) { cells += `<div class="cd${tod}"><span class="dn">${d}</span></div>`; continue; }
+    const home = g.home.abbr === ab; const opp = home ? g.away : g.home; const me = home ? g.home : g.away;
+    let rs = ''; if (g.state === 'post') rs = me.winner ? 'W' : /(OT|SO)/.test(g.detail || '') ? 'O' : 'L';
+    cells += `<button class="cd${home ? '' : ' away'}${tod}" data-open="nhl:${g.id}" aria-label="${esc((home ? 'vs ' : 'at ') + opp.name + ', ' + fmtDay(g.date))}"><span class="dn">${d}</span>${home ? '' : '<span class="at">@</span>'}${logo(opp)}${rs ? `<i class="rs ${rs}"></i>` : ''}</button>`;
+  }
+  const label = first.toLocaleDateString('en-CA', { month: 'long', year: cur.y === now.getFullYear() ? undefined : 'numeric' });
+  const chev = d => `<svg viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+  return `<div class="cal"><div class="cal-h"><button data-cal="-1" aria-label="Previous month">${chev('M6.5 1.5L1.5 6.5l5 5')}</button><span>${esc(label)}</span><button data-cal="1" aria-label="Next month">${chev('M1.5 1.5l5 5-5 5')}</button></div>
+    <div class="cal-dw"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div class="cal-g">${cells}</div>
+    <div class="cal-k"><span><i style="background:var(--green)"></i>Win</span><span><i style="background:var(--red)"></i>Loss</span><span><i style="background:var(--amber)"></i>OT loss</span><span>@ away</span></div></div>`;
+}
+function shiftMonth(d) { const n = new Date(); const c = S.cal || { y: +ymd(n).slice(0, 4), m: +ymd(n).slice(4, 6) - 1 }; const t = new Date(c.y, c.m + d, 1); S.cal = { y: t.getFullYear(), m: t.getMonth() }; refresh(true); }
+
 /* ---------- Canadiens ---------- */
 async function loadNHL() {
   const ab = CFG.favNHL || 'MTL';
@@ -611,7 +685,7 @@ async function loadNHL() {
   const shown = hero.id || (fresh[0] && fresh[0].id);
   const upcoming = games.filter(g => g.state !== 'post' && g.id !== shown && g.date > Date.now() - 6 * 36e5).slice(0, 8);
   const results = games.filter(g => g.state === 'post' && g.id !== shown).slice(-8).reverse();
-  $('#view').innerHTML = hero.html + tiles('Coming up', upcoming) + tiles('Results', results) + (!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : '');
+  $('#view').innerHTML = hero.html + habsCalendar(games, ab) + tiles('Coming up', upcoming.slice(0, 4)) + tiles('Results', results.slice(0, 4)) + (!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : '');
   return live;
 }
 
@@ -795,18 +869,18 @@ function nflDetail(g, s) { return headBlock(g) + nflLive(g, s) + myPlayersSec(g)
 function rinkSVG(g, plays) {
   const ink = pairInk(g);
   let s = `<svg viewBox="-100 -42.5 200 85" width="100%" role="img" aria-label="Shot map" style="display:block">`;
-  s += `<rect x="-99.5" y="-42" width="199" height="84" rx="27" fill="#18222d" stroke="#2c3b4a" stroke-width=".8"/>`;
+  s += `<rect x="-99.5" y="-42" width="199" height="84" rx="27" fill="var(--rink)" stroke="var(--rinkline)" stroke-width=".8"/>`;
   s += `<line x1="0" y1="-42" x2="0" y2="42" stroke="#d0142f" stroke-opacity=".8" stroke-width="1"/><line x1="-25" y1="-42" x2="-25" y2="42" stroke="#3d7be0" stroke-opacity=".8" stroke-width="1"/><line x1="25" y1="-42" x2="25" y2="42" stroke="#3d7be0" stroke-opacity=".8" stroke-width="1"/>`;
   s += `<line x1="-89" y1="-38" x2="-89" y2="38" stroke="#d0142f" stroke-opacity=".6" stroke-width=".4"/><line x1="89" y1="-38" x2="89" y2="38" stroke="#d0142f" stroke-opacity=".6" stroke-width=".4"/>`;
   s += `<circle r="15" fill="none" stroke="#3d7be0" stroke-opacity=".5" stroke-width=".4"/>`;
   [[-69, -22], [-69, 22], [69, -22], [69, 22]].forEach(([x, y]) => s += `<circle cx="${x}" cy="${y}" r="15" fill="none" stroke="#d0142f" stroke-opacity=".45" stroke-width=".4"/><circle cx="${x}" cy="${y}" r=".9" fill="#d0142f"/>`);
   s += `<path d="M-89 -4 A4 4 0 0 1 -89 4 Z" fill="#5a8fd0" fill-opacity=".4"/><path d="M89 -4 A4 4 0 0 0 89 4 Z" fill="#5a8fd0" fill-opacity=".4"/>`;
   s += `<rect x="-92.5" y="-3" width="3.5" height="6" fill="none" stroke="#d0142f" stroke-width=".6"/><rect x="89" y="-3" width="3.5" height="6" fill="none" stroke="#d0142f" stroke-width=".6"/>`;
-  s += `<text x="-62" y="39.5" font-size="4.6" text-anchor="middle" fill="#8f99a8" font-weight="700">${esc(g.home.abbr)} END</text><text x="62" y="39.5" font-size="4.6" text-anchor="middle" fill="#8f99a8" font-weight="700">${esc(g.away.abbr)} END</text>`;
+  s += `<text x="-62" y="39.5" font-size="4.6" text-anchor="middle" fill="var(--fg2)" font-weight="700">${esc(g.home.abbr)} END</text><text x="62" y="39.5" font-size="4.6" text-anchor="middle" fill="var(--fg2)" font-weight="700">${esc(g.away.abbr)} END</text>`;
   const ev = plays.filter(p => p.coordinate && p.team && /^(Shot|Missed|Goal)$/.test(p.type && p.type.text) && p.period && p.period.number <= 4);
   const pts = ev.map(p => { const home = String(p.team.id) === g.home.id; let { x, y } = p.coordinate; if (home ? x < 0 : x > 0) { x = -x; y = -y; } return { x, y, home, t: p.type.text }; });
   pts.sort((a, b) => (a.t === 'Goal') - (b.t === 'Goal'));
-  pts.forEach(p => { const c = p.home ? ink.h : ink.a; if (p.t === 'Goal') s += `<circle cx="${p.x}" cy="${-p.y}" r="3.3" fill="${c}" stroke="#fff" stroke-width=".9"/><circle cx="${p.x}" cy="${-p.y}" r="1" fill="#18222d"/>`; else if (p.t === 'Shot') s += `<circle cx="${p.x}" cy="${-p.y}" r="1.7" fill="${c}" fill-opacity=".9"/>`; else s += `<circle cx="${p.x}" cy="${-p.y}" r="1.5" fill="none" stroke="${c}" stroke-width=".55" stroke-opacity=".85"/>`; });
+  pts.forEach(p => { const c = p.home ? ink.h : ink.a; if (p.t === 'Goal') s += `<circle cx="${p.x}" cy="${-p.y}" r="3.3" fill="${c}" stroke="var(--fg)" stroke-width=".9"/><circle cx="${p.x}" cy="${-p.y}" r="1" fill="var(--rink)"/>`; else if (p.t === 'Shot') s += `<circle cx="${p.x}" cy="${-p.y}" r="1.7" fill="${c}" fill-opacity=".9"/>`; else s += `<circle cx="${p.x}" cy="${-p.y}" r="1.5" fill="none" stroke="${c}" stroke-width=".55" stroke-opacity=".85"/>`; });
   return s + '</svg>';
 }
 function nhlFlow(g, plays) {
@@ -817,15 +891,15 @@ function nhlFlow(g, plays) {
   const series = [g.away, g.home].map(t => { let c = 0; const arr = [[0, 0]]; const goals = []; ev.filter(p => String(p.team.id) === t.id).forEach(p => { const x = tmin(p); arr.push([x, c]); c++; arr.push([x, c]); if (p.type.text === 'Goal') goals.push([x, c]); }); return { t, arr, goals, c }; });
   const maxY = Math.max(10, ...series.map(s => s.c)) * 1.1; const X = m => m / maxT * W, Y = v => H - pad - v / maxY * (H - 2 * pad);
   let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Shots on goal over time">`;
-  for (let p = 20; p < maxT; p += 20) s += `<line x1="${X(p)}" x2="${X(p)}" y1="0" y2="${H}" stroke="rgba(255,255,255,.09)" stroke-width="1.5"/>`;
-  for (let p = 0; p < Math.ceil(maxT / 20); p++) if (X(p * 20) + 30 < W) s += `<text x="${X(p * 20) + 5}" y="${H - 2}" font-size="13" fill="#8f99a8">${p < 3 ? 'P' + (p + 1) : 'OT'}</text>`;
+  for (let p = 20; p < maxT; p += 20) s += `<line x1="${X(p)}" x2="${X(p)}" y1="0" y2="${H}" stroke="var(--sep)" stroke-width="1.5"/>`;
+  for (let p = 0; p < Math.ceil(maxT / 20); p++) if (X(p * 20) + 30 < W) s += `<text x="${X(p * 20) + 5}" y="${H - 2}" font-size="13" fill="var(--fg2)">${p < 3 ? 'P' + (p + 1) : 'OT'}</text>`;
   const lastT = Math.max(...series.map(x => x.arr[x.arr.length - 1][0]));
   const yA = Y(series[0].c), yH = Y(series[1].c); const close = Math.abs(yA - yH) < 16;
   series.forEach(({ t, arr, goals, c }, si) => {
     const col = t === g.home ? ink.h : ink.a; const end = Math.min(maxT, g.state === 'in' ? lastT : maxT); arr.push([end, c]);
     const ly = close ? (Y(c) - 7 + ((si === 0) === (yA <= yH) ? -12 : 12)) : Y(c) - 7;
     s += `<path d="${arr.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="${col}" stroke-width="2.6" stroke-linejoin="round"/>`;
-    goals.forEach(([x, y]) => s += `<circle cx="${X(x)}" cy="${Y(y)}" r="5" fill="${col}" stroke="${CARD}" stroke-width="2"/>`);
+    goals.forEach(([x, y]) => s += `<circle cx="${X(x)}" cy="${Y(y)}" r="5" fill="${col}" stroke="var(--card)" stroke-width="2"/>`);
     s += `<text x="${X(end) - 4}" y="${clamp(ly, 13, H - 16)}" font-size="14" font-weight="700" text-anchor="end" fill="${col}">${esc(t.abbr)} ${c}</text>`;
   });
   return s + '</svg>';
@@ -1044,7 +1118,8 @@ function openSettings(banner) {
   <p class="foot" id="sfCodeMsg" role="status">Fills in your teams and leagues in one go.</p>
   <section class="sec flush"><h2><span>Favourite teams</span></h2><div>
     <label class="row"><span class="k">NFL</span><select id="sfNfl"><option value="">None</option>${opt(NFL_TEAMS, CFG.favNFL)}</select></label>
-    <label class="row"><span class="k">NHL</span><select id="sfNhl">${opt(NHL_TEAMS, CFG.favNHL)}</select></label></div></section>
+    <label class="row"><span class="k">NHL</span><select id="sfNhl">${opt(NHL_TEAMS, CFG.favNHL)}</select></label>
+    <label class="row"><span class="k">Canadiens look</span><select id="sfIce"><option value="dark" ${CFG.ice !== 'light' ? 'selected' : ''}>Night rink</option><option value="light" ${CFG.ice === 'light' ? 'selected' : ''}>Fresh sheet</option></select></label></div></section>
   <section class="sec flush"><h2><span>Sleeper</span></h2><div>
     <label class="row"><span class="k">League ID</span><input id="sfSl" inputmode="numeric" autocomplete="off" value="${esc(CFG.sleeperLeague)}" placeholder="Required"></label>
     <label class="row"><span class="k">Your team</span><select id="sfSlTeam"><option value="${esc(CFG.sleeperRoster)}">${CFG.sleeperRoster ? 'Loading…' : 'Load teams first'}</option></select></label>
@@ -1071,7 +1146,7 @@ function openSettings(banner) {
   $('#sfSlLoad').onclick = async () => { const L = $('#sfSl').value.trim(); if (!L) return; try { const [users, rosters] = await Promise.all([SL('league/' + L + '/users'), SL('league/' + L + '/rosters')]); fillSleeperTeams(users, rosters); toast('Teams loaded'); } catch (e) { $('#sfMsg').textContent = 'Sleeper: ' + e.message; } };
   $('#sfCbsLoad').onclick = async () => { const tok = $('#sfCbs').value.trim(); if (!tok) return; const old = CFG.cbsToken; CFG.cbsToken = tok; try { const b = await cbsCall('league/teams'); $('#sfCbsTeam').innerHTML = (b.teams || []).map(t => `<option value="${esc(t.id)}" ${String(t.id) === String(CFG.cbsTeam) ? 'selected' : ''}>${esc(t.name)}</option>`).join(''); toast('Teams loaded'); } catch (e) { $('#sfMsg').textContent = 'CBS: ' + e.message; } finally { CFG.cbsToken = old; } };
   $('#sfCbsDiag').onclick = async () => { if (!CFG.cbsToken) { toast('Add your CBS token first'); return; } const txt = await cbsDiagnostics(); try { await navigator.clipboard.writeText(txt); toast('Copied (field names only, no scores or token)'); } catch (e) { $('#sfMsg').textContent = txt; } };
-  $('#sfSave').onclick = () => { CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
+  $('#sfSave').onclick = () => { CFG.ice = $('#sfIce').value; document.body.dataset.ice = CFG.ice; CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
   $('#sfReset').onclick = () => { const b = $('#sfReset'); if (b.dataset.armed) { LS.del('cfg'); LS.del('sp_players'); CFG = Object.assign({}, DEFAULTS); MY_NAMES.clear(); FX.data = {}; FX.byTeam = {}; toast('Cleared'); closeSheet(); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to clear everything'; } };
 }
 
@@ -1103,6 +1178,7 @@ document.addEventListener('click', e => {
   const fo = e.target.closest('[data-fxopen]'); if (fo) { openFx(fo.dataset.fxopen); return; }
   const t = e.target.closest('[data-tab]'); if (t) { if (S.sheetMode) { S.sheetMode = null; S.detail = null; $('#sheet').classList.remove('open'); } setTab(t.dataset.tab); return; }
   if (e.target.closest('[data-now]')) { S.nfl.q = null; refresh(true); return; }
+  const cm = e.target.closest('[data-cal]'); if (cm) { shiftMonth(+cm.dataset.cal); return; }
   const p = e.target.closest('[data-ptab]'); if (p && S.detail) { S.detail.tab = p.dataset.ptab; renderDetail(); return; }
   const f = e.target.closest('[data-fx]'); if (f) { const [k, v] = f.dataset.fx.split(':'); S.fx[k] = v; const m = FX.data[k]; if (m && S.sheetMode === 'fx') { const keep = $('#shScroll').scrollTop; $('#shBody').innerHTML = renderFx(m); $('#shScroll').scrollTop = keep; } return; }
   if (e.target.closest('[data-settings]')) { openSettings(); return; }
@@ -1116,6 +1192,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheetMod
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(true); });
 window.addEventListener('online', () => refresh(true));
 
+document.body.dataset.ice = CFG.ice || 'dark';
 setTab(S.tab === 'nhl' ? 'nhl' : 'nfl');
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
