@@ -929,6 +929,24 @@ async function cbsCall(path, extra = '') {
   if (j && (j.error || (j.statusCode && j.statusCode >= 400))) throw new Error(typeof j.error === 'string' ? j.error : (j.statusMessage || 'CBS refused the request'));
   return (j && j.body) || {};
 }
+/* Live scoring has no opponents, so read this week's matchups from the league schedule. */
+async function cbsOpponents(wk) {
+  const b = await cached('cbsSched', 6 * 36e5, () => cbsCall('league/schedules'));
+  const out = {};
+  const idOf = x => x == null ? null : typeof x === 'object' ? (x.id ?? x.team_id ?? null) : x;
+  const pair = m => { const h = idOf(m.home_team ?? m.home ?? m.team1), a = idOf(m.away_team ?? m.away ?? m.team2); if (h != null && a != null) { out[String(h)] = String(a); out[String(a)] = String(h); } };
+  const periods = (b.schedule && b.schedule.periods) || b.periods || (b.schedule && Array.isArray(b.schedule) ? b.schedule : []);
+  const per = periods.find(p => String(p.id) === String(wk) || String(p.period) === String(wk) || new RegExp('\\b' + wk + '\\b').test(p.label || p.name || ''));
+  if (per) (per.matchups || per.games || []).forEach(pair);
+  return out;
+}
+function shapeOf(v, d = 0) { if (Array.isArray(v)) return v.length ? [shapeOf(v[0], d + 1), '\u00d7' + v.length] : []; if (v && typeof v === 'object') { if (d > 5) return '{\u2026}'; const o = {}; for (const k of Object.keys(v).slice(0, 40)) o[k] = shapeOf(v[k], d + 1); return o; } return typeof v; }
+async function cbsDiagnostics() {
+  const wk = (await nflNow()).week; const out = { week: wk };
+  try { out.live = shapeOf(await cbsCall('league/scoring/live', '&period=' + wk)); } catch (e) { out.liveErr = e.message; }
+  try { out.schedules = shapeOf(await cbsCall('league/schedules')); } catch (e) { out.schedErr = e.message; }
+  return JSON.stringify(out);
+}
 async function cbsData(nfl) {
   const wk = nfl.week;
   const [b, pm] = await Promise.all([cbsCall('league/scoring/live', '&period=' + wk), projRows(nfl.year, wk).then(cbsProjMap).catch(() => ({ k: {}, n: {} }))]);
@@ -947,6 +965,7 @@ async function cbsData(nfl) {
     const sp = rows.filter(r => r.st);
     return { rid: String(t.id), name: t.name || t.long_name || 'Team ' + t.id, pts: num(t.pts ?? t.points ?? t.fpts) ?? sp.reduce((a, r) => a + r.pts, 0), est: sp.reduce((a, r) => a + r.est, 0), rows, left: sp.filter(r => r.left).length, opp: t.opponent || t.opponent_id || (t.matchup && t.matchup.opponent_id) };
   });
+  if (!T.some(t => t.opp != null)) { try { const om = await cbsOpponents(wk); T.forEach(t => { if (om[t.rid]) t.opp = om[t.rid]; }); } catch (e) {} }
   const oid = t => String(typeof t.opp === 'object' ? t.opp.id : t.opp);
   const me = T.find(t => t.rid === String(CFG.cbsTeam)); const opp = me && me.opp != null ? T.find(t => t.rid === oid(me)) : null;
   if (me) me.rows.forEach(r => addMine(r.name, 'CBS'));
@@ -983,7 +1002,7 @@ async function warmMine() { try { const nfl = await nflNow(); FX.week = nfl.week
 /* =====================================================================
    SETTINGS
    ===================================================================== */
-const BOOKMARKLET = "javascript:(()=>{const m=document.documentElement.outerHTML.match(/token[\"']?\\s*[:=]\\s*[\"']([A-Za-z0-9_\\-.]{20,})[\"']/);if(!m){alert('No CBS token on this page. Open your CBS league while signed in.');return}navigator.clipboard.writeText(m[1]).then(()=>alert('CBS token copied. Paste it into Forecheck Settings.'),()=>prompt('Copy this CBS token:',m[1]))})();";
+const CONSOLE_LINE = "m=document.documentElement.outerHTML.match(/token[\"']?\\s*[:=]\\s*[\"']([A-Za-z0-9_\\-.]{20,})[\"']/); m ? (copy(m[1]), 'Copied: ' + m[1].length + ' characters') : 'No token found'";
 function decodeSetup(raw) { const j = JSON.parse(decodeURIComponent(escape(atob(String(raw || '').replace(/\s+/g, '').replace(/^FC1/, ''))))); if (!j || typeof j !== 'object') throw new Error('bad'); return j; }
 function fillSleeperTeams(users, rosters) {
   const sel = $('#sfSlTeam'); if (!sel) return;
@@ -1027,9 +1046,9 @@ function openSettings(banner) {
     <label class="row"><span class="k">Token</span><input id="sfCbs" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(CFG.cbsToken)}" placeholder="Paste token"></label>
     <label class="row"><span class="k">Your team</span><select id="sfCbsTeam"><option value="${esc(CFG.cbsTeam)}">${CFG.cbsTeam ? 'Team ' + esc(CFG.cbsTeam) : 'Load teams first'}</option></select></label>
     <button class="row btn" id="sfCbsLoad">Load teams</button>
-    <button class="row btn" id="sfCopyBm">Copy bookmark code</button></div></section>
-  <p class="foot">CBS has no public login for apps like this, so Forecheck uses the token CBS gives your own league page. Easiest is right on this iPhone: tap Copy bookmark code, then in Safari bookmark any page, edit that bookmark and paste the code as its address. Open your CBS league in Safari while signed in, then tap the bookmark. It copies the token (or shows it for you to copy); paste it in the Token field above. If nothing is found, tap aA and choose Request Desktop Website, then try again. On a PC, the same bookmark works in Chrome or Edge; email or text the token to yourself and paste it here. Tokens can expire; if CBS stops loading, repeat this.</p>
-  <code class="code" id="bmk">${esc(BOOKMARKLET)}</code>
+    <button class="row btn" id="sfCbsDiag">Copy CBS diagnostics</button></div></section>
+  <p class="foot">CBS has no public login for apps like this, so Forecheck uses the token CBS gives your own league page. On a computer, open your league\u2019s rules page in Chrome or Edge while signed in, press F12, open Console, paste the line below and press Enter. It copies the token; send it to your phone and paste it above. Tokens can expire; if CBS stops loading, repeat this.</p>
+  <code class="code">${esc(CONSOLE_LINE)}</code>
   <section class="sec flush"><button class="row btn red" id="sfReset">Clear saved data</button></section>
   <p class="foot" id="sfMsg">Settings are stored only on this device.</p>`;
   renderStatus(banner);
@@ -1044,7 +1063,7 @@ function openSettings(banner) {
   };
   $('#sfSlLoad').onclick = async () => { const L = $('#sfSl').value.trim(); if (!L) return; try { const [users, rosters] = await Promise.all([SL('league/' + L + '/users'), SL('league/' + L + '/rosters')]); fillSleeperTeams(users, rosters); toast('Teams loaded'); } catch (e) { $('#sfMsg').textContent = 'Sleeper: ' + e.message; } };
   $('#sfCbsLoad').onclick = async () => { const tok = $('#sfCbs').value.trim(); if (!tok) return; const old = CFG.cbsToken; CFG.cbsToken = tok; try { const b = await cbsCall('league/teams'); $('#sfCbsTeam').innerHTML = (b.teams || []).map(t => `<option value="${esc(t.id)}" ${String(t.id) === String(CFG.cbsTeam) ? 'selected' : ''}>${esc(t.name)}</option>`).join(''); toast('Teams loaded'); } catch (e) { $('#sfMsg').textContent = 'CBS: ' + e.message; } finally { CFG.cbsToken = old; } };
-  $('#sfCopyBm').onclick = async () => { try { await navigator.clipboard.writeText(BOOKMARKLET); toast('Bookmark code copied'); } catch (e) { const r = document.createRange(); r.selectNodeContents($('#bmk')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } };
+  $('#sfCbsDiag').onclick = async () => { if (!CFG.cbsToken) { toast('Add your CBS token first'); return; } const txt = await cbsDiagnostics(); try { await navigator.clipboard.writeText(txt); toast('Copied (field names only, no scores or token)'); } catch (e) { $('#sfMsg').textContent = txt; } };
   $('#sfSave').onclick = () => { CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
   $('#sfReset').onclick = () => { const b = $('#sfReset'); if (b.dataset.armed) { LS.del('cfg'); LS.del('sp_players'); CFG = Object.assign({}, DEFAULTS); MY_NAMES.clear(); FX.data = {}; FX.byTeam = {}; toast('Cleared'); closeSheet(); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to clear everything'; } };
 }
