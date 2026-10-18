@@ -673,9 +673,10 @@ const TEAM_FIX = { WAS: 'WSH', JAC: 'JAX', LA: 'LAR', OAK: 'LV', SD: 'LAC' };
 const nflAbbr = a => TEAM_FIX[a] || a;
 const FX = { data: {}, byTeam: {}, ready: false };
 const lastName = n => { const p = String(n || '').replace(/ (Jr\.?|Sr\.?|II|III|IV)$/i, '').split(' '); return p.length > 1 ? p.slice(1).join(' ') : p[0]; };
+const isDef = pos => /^(DEF|DST|D\/ST|D|TD)$/i.test(String(pos || '').trim());
 function buildByTeam() {
   const m = {};
-  [['sv', 'PFL'], ['cv', 'BELL']].forEach(([k, tag]) => { const d = FX.data[k]; if (!d || !d.me) return; d.me.rows.filter(r => r.st && r.team).forEach(r => { const a = nflAbbr(r.team); (m[a] = m[a] || []).push({ tag, k, name: r.pos === 'DEF' ? r.team + ' D' : lastName(r.name), full: r.name, pos: r.pos, team: a, pts: r.pts, proj: r.proj, sc: d.sc }); }); });
+  [['sv', 'PFL'], ['cv', 'BELL']].forEach(([k, tag]) => { const d = FX.data[k]; if (!d || !d.me) return; d.me.rows.filter(r => r.st && r.team).forEach(r => { const a = nflAbbr(r.team); const D = isDef(r.pos); (m[a] = m[a] || []).push({ tag, k, name: D ? a + ' D' : lastName(r.name), full: D ? a + ' D' : r.name, pos: D ? 'DEF' : r.pos, team: a, pts: r.pts, proj: r.proj, sc: d.sc }); }); });
   FX.byTeam = m;
 }
 const minesIn = g => (FX.byTeam[g.home.abbr] || []).concat(FX.byTeam[g.away.abbr] || []);
@@ -1343,18 +1344,23 @@ function myPlayersSec(g, s) {
   const box = !pre && s ? boxLines(s) : {};
   const cards = Object.values(by).map(({ p, lg }) => {
     const tot = `<div class="tt">${lg.map(x => `<span><span class="mine">${x.tag}</span><em>${pre ? fmtP(x.proj) : fmtP(x.pts)}</em>${pre ? '<i>proj</i>' : ''}</span>`).join('')}</div>`;
-    const head = `<div class="hd"><b>${esc(p.pos === 'DEF' ? p.team + ' D/ST' : p.full || p.name)}</b><small>${esc(p.pos || '')}</small></div>`;
+    const head = `<div class="hd"><b>${esc(p.pos === 'DEF' ? p.team + ' D' : p.full || p.name)}</b><small>${esc(p.pos || '')}</small></div>`;
     if (pre) return `<div class="ypc">${head}${tot}</div>`;
     const L = box[normName(p.full || p.name)];
     let body = '';
     if (p.pos === 'K' && L && L.kicking) { const k = L.kicking; body = `<div class="ln">FG ${esc(k.FG || '0/0')}${k.LONG ? ` (long ${esc(k.LONG)})` : ''} · XP ${esc(k.XP || '0/0')}</div>`; }
     else if (p.pos === 'DEF') {
+      // team defence: read the opponent's offence from the box score
       const T = (s && s.boxscore && s.boxscore.teams) || []; const opp = T.find(t => t.team && t.team.abbreviation && nflAbbr(t.team.abbreviation) !== p.team);
       const v = k => { const x = opp && (opp.statistics || []).find(z => z.name === k); return x ? x.displayValue : null; };
-      const oppTeam = g.home.abbr === p.team ? g.away : g.home;
-      const bits = [`${oppTeam.score} pts allowed`]; const sk = v('sacksYardsLost'); if (sk) bits.push(`${parseInt(sk) || 0} sacks`);
-      const ints = num0(v('interceptions')), fl = num0(v('fumblesLost')); if (ints) bits.push(`${ints} INT`); if (fl) bits.push(`${fl} fum rec`);
-      body = `<div class="ln">${esc(bits.join(' · '))}</div>`;
+      const oppTeam = g.home.abbr === p.team ? g.away : g.home; const pa = num0(oppTeam.score);
+      const sk = parseInt(v('sacksYardsLost')) || 0, ints = num0(v('interceptions')), fr = num0(v('fumblesLost'));
+      const tier = pa === 0 ? 'pts_allow_0' : pa <= 6 ? 'pts_allow_1_6' : pa <= 13 ? 'pts_allow_7_13' : pa <= 20 ? 'pts_allow_14_20' : pa <= 27 ? 'pts_allow_21_27' : pa <= 34 ? 'pts_allow_28_34' : 'pts_allow_35p';
+      const items = [[`${sk} sack${sk === 1 ? '' : 's'}`, { sack: sk }], [`${ints} INT`, { int: ints }], [`${fr} fumble rec`, { fum_rec: fr }], [`${pa} pts allowed`, { [tier]: 1 }]].filter(([l, st]) => Object.values(st).some(x => x) || /pts allowed/.test(l));
+      const rows = items.map(([label, st]) => `<tr><td>${esc(label)}</td>${lg.map(x => { const val = scoreOf(st, x.sc); return `<td class="${val === 0 ? 'z' : val < 0 ? 'neg' : ''}">${val === 0 ? '–' : (val > 0 ? '' : '−') + fmtP(Math.abs(val))}</td>`; }).join('')}</tr>`);
+      const other = lg.map(x => x.pts - items.reduce((a, [, st]) => a + scoreOf(st, x.sc), 0));
+      if (other.some(x => Math.abs(x) >= .05)) rows.push(`<tr class="oth"><td>Other</td>${other.map(x => `<td class="${Math.abs(x) < .05 ? 'z' : x < 0 ? 'neg' : ''}">${Math.abs(x) < .05 ? '–' : (x > 0 ? '+' : '−') + fmtP(Math.abs(x))}</td>`).join('')}</tr>`);
+      body = `<table>${rows.join('')}</table>`;
     } else if (L) {
       const items = statItems(L);
       const rows = items.map(([label, st]) => `<tr><td>${esc(label)}</td>${lg.map(x => { const v = scoreOf(st, x.sc); return `<td class="${v === 0 ? 'z' : v < 0 ? 'neg' : ''}">${v === 0 ? '–' : (v > 0 ? '' : '−') + fmtP(Math.abs(v))}</td>`; }).join('')}</tr>`);
