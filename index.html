@@ -369,7 +369,10 @@ const ymd = d => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric
 const fmtTime = d => d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }).replace(/\./g, '').toUpperCase();
 const fmtDay = d => d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }).replace(/\./g, '');
 const isToday = d => ymd(d) === ymd(new Date());
+function dayWord(d) { const tom = new Date(Date.now() + 864e5); return isToday(d) ? 'Today' : ymd(d) === ymd(tom) ? 'Tomorrow' : fmtDay(d); }
 function whenLabel(d) { const tom = new Date(Date.now() + 864e5); return (isToday(d) ? 'Today' : ymd(d) === ymd(tom) ? 'Tomorrow' : fmtDay(d)) + ' · ' + fmtTime(d); }
+const qLab = n => (+n > 4 ? 'OT' : 'Q' + (n || ''));
+const onInk = c => lum(c) > .36 ? '#10161c' : '#ffffff';
 const secs = s => { const m = String(s || '').match(/(\d+):(\d+)/); return m ? +m[1] * 60 + +m[2] : 0; };
 
 /* colour */
@@ -516,7 +519,7 @@ function sectionsHTML(games, sp) {
   const { live, pre, post } = groupGames(games); let h = '';
   if (live.length) h += `<div class="sec-h"><p class="eyebrow live">Live now · ${live.length}</p></div><div class="list">${live.map(gameCard).join('')}</div>`;
   if (pre.length) {
-    const byDay = {}; pre.forEach(g => { const k = sp === 'nfl' ? (isToday(g.date) ? 'Today' : fmtDay(g.date)) : 'Upcoming'; (byDay[k] = byDay[k] || []).push(g); });
+    const byDay = {}; pre.forEach(g => { const k = sp === 'nfl' ? dayWord(g.date) : 'Upcoming'; (byDay[k] = byDay[k] || []).push(g); });
     for (const [k, arr] of Object.entries(byDay)) h += `<div class="sec-h"><p class="eyebrow">${esc(k)}</p></div><div class="list">${arr.map(gameCard).join('')}</div>`;
   }
   if (post.length) h += `<div class="sec-h"><p class="eyebrow">Final</p></div><div class="list">${post.map(gameCard).join('')}</div>`;
@@ -543,7 +546,9 @@ async function heroHTML(sp, games, extra = {}) {
     } catch (e) {}
   }
   const show = g || last; if (!show && !next) return '';
-  const base = show || next; const me = base.home.abbr === ab ? base.home : base.away;
+  const base = show || next; const me = Object.assign({}, base.home.abbr === ab ? base.home : base.away);
+  if (teamInfo && teamInfo.color) { me.color = '#' + teamInfo.color; me.alt = '#' + (teamInfo.alternateColor || teamInfo.color); }
+  if (teamInfo && teamInfo.displayName && !me.name) me.name = teamInfo.shortDisplayName || teamInfo.name;
   const tc = heroColor(me);
   const wm = `<img class="wm" src="${esc(me.logoDark)}" data-fb="${esc(me.logo)}" onerror="${FB}" alt="">`;
   const nm = me.name || ab;
@@ -778,14 +783,14 @@ function nflDrives(g, s) {
     const lo = clamp(Math.min(a, b), 0, 100), hi = clamp(Math.max(a, b), 0, 100);
     const cls = d.isScore ? 'score' : /intercept|fumble|downs|safety|turnover/i.test(res) ? 'bad' : '';
     return `<div class="dr"><span class="dr-ab">${esc(t.abbr)}</span><div class="dr-track"><i class="dr-bar" style="left:${lo}%;width:${Math.max(hi - lo, 1.2)}%;background:${col};${b < a ? 'opacity:.6' : ''}"></i></div>
-      <div class="dr-meta"><span class="dr-res ${cls}">${esc(res)}</span><span>${esc(d.description || '')}</span><span>${esc(d.start && d.start.period ? 'Q' + d.start.period.number : '')}</span></div></div>`;
+      <div class="dr-meta"><span class="dr-res ${cls}">${esc(res)}</span><span>${esc(d.description || '')}</span><span>${esc(d.start && d.start.period ? qLab(d.start.period.number) : '')}</span></div></div>`;
   }).join('');
   return `<section class="panel"><h3>Drive chart <span class="r">own goal line → end zone</span></h3><div class="drives">${rows}</div></section>`;
 }
 function scoringPanel(g, s) {
   const sp = s.scoringPlays || []; if (!sp.length) return '';
   const ink = pairInk(g);
-  return `<section class="panel"><h3>Scoring</h3><div class="plays">${sp.map(p => { const t = p.team && String(p.team.id) === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a; return `<div class="play"><span class="t">Q${esc(p.period && p.period.number)} ${esc(p.clock && p.clock.displayValue)}</span><div><span class="tag" style="background:${col}">${esc(t.abbr)}</span><b>${esc((p.type && p.type.abbreviation) || '')}</b> ${esc(p.text)} <span class="muted num">${esc(p.awayScore)}–${esc(p.homeScore)}</span></div></div>`; }).join('')}</div></section>`;
+  return `<section class="panel"><h3>Scoring</h3><div class="plays">${sp.map(p => { const t = p.team && String(p.team.id) === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a; return `<div class="play"><span class="t">${esc(qLab(p.period && p.period.number))} ${esc(p.clock && p.clock.displayValue)}</span><div><span class="tag" style="background:${col};color:${onInk(col)}">${esc(t.abbr)}</span><b>${esc((p.type && p.type.abbreviation) || '')}</b> ${esc(p.text)} <span class="muted num">${esc(p.awayScore)}–${esc(p.homeScore)}</span></div></div>`; }).join('')}</div></section>`;
 }
 function teamStatsNFL(g, s) {
   const T = (s.boxscore && s.boxscore.teams) || []; if (T.length < 2) return '';
@@ -815,7 +820,7 @@ function recentPlays(g, s) {
   const cur = s.drives && s.drives.current; const prev = (s.drives && s.drives.previous) || [];
   let plays = []; if (cur) plays = plays.concat(cur.plays || []); if (plays.length < 10 && prev.length) plays = (prev[prev.length - 1].plays || []).concat(plays);
   plays = plays.slice(-12).reverse(); if (!plays.length) return '';
-  return `<section class="panel"><h3>Recent plays</h3><div class="plays">${plays.map(p => `<div class="play"><span class="t">${esc(p.start && p.start.shortDownDistanceText || '')}<br>Q${esc(p.period && p.period.number)} ${esc(p.clock && p.clock.displayValue)}</span><div>${p.scoringPlay ? '<b>' : ''}${esc(p.text)}${p.scoringPlay ? '</b>' : ''}</div></div>`).join('')}</div></section>`;
+  return `<section class="panel"><h3>Recent plays</h3><div class="plays">${plays.map(p => `<div class="play"><span class="t">${esc(p.start && p.start.shortDownDistanceText || '')}<br>${esc(qLab(p.period && p.period.number))} ${esc(p.clock && p.clock.displayValue)}</span><div>${p.scoringPlay ? '<b>' : ''}${esc(p.text)}${p.scoringPlay ? '</b>' : ''}</div></div>`).join('')}</div></section>`;
 }
 function preInfo(g, s) {
   if (g.state !== 'pre') return '';
@@ -862,7 +867,10 @@ function nhlShotFlow(g, plays) {
   let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Shots on goal over time">`;
   for (let p = 20; p < maxT; p += 20) s += `<line x1="${X(p)}" x2="${X(p)}" y1="0" y2="${H}" stroke="var(--line)" stroke-width="1.5"/>`;
   for (let p = 0; p < Math.ceil(maxT / 20); p++) s += `<text x="${X(p * 20) + 6}" y="${H - 2}" font-size="13" fill="var(--muted)">${p < 3 ? 'P' + (p + 1) : 'OT'}</text>`;
-  series.forEach(({ t, arr, goals, c }) => { const col = t === g.home ? ink.h : ink.a; const end = Math.min(maxT, g.state === 'in' ? Math.max(arr[arr.length - 1][0], 0) : maxT); arr.push([end, c]); s += `<path d="${arr.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round"/>`; goals.forEach(([x, y]) => s += `<circle cx="${X(x)}" cy="${Y(y)}" r="5.5" fill="${col}" stroke="var(--card)" stroke-width="2"/>`); s += `<text x="${X(end) - 4}" y="${Y(c) - 8}" font-size="14" font-weight="700" text-anchor="end" fill="${col}">${esc(t.abbr)} ${c}</text>`; });
+  const lastT = Math.max(...series.map(x => x.arr[x.arr.length - 1][0]));
+  const yA = Y(series[0].c), yH = Y(series[1].c); const close = Math.abs(yA - yH) < 18;
+  series.forEach(({ t, arr, goals, c }, si) => { const col = t === g.home ? ink.h : ink.a; const end = Math.min(maxT, g.state === 'in' ? lastT : maxT); arr.push([end, c]);
+    const ly = close ? (Y(c) - 8 + ((si === 0) === (yA <= yH) ? -14 : 14)) : Y(c) - 8; s += `<path d="${arr.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round"/>`; goals.forEach(([x, y]) => s += `<circle cx="${X(x)}" cy="${Y(y)}" r="5.5" fill="${col}" stroke="var(--card)" stroke-width="2"/>`); s += `<text x="${X(end) - 4}" y="${clamp(ly, 14, H - 18)}" font-size="14" font-weight="700" text-anchor="end" fill="${col}">${esc(t.abbr)} ${c}</text>`; });
   return s + '</svg>';
 }
 function nhlDetail(g, s) {
@@ -875,7 +883,7 @@ function nhlDetail(g, s) {
     <div class="legend"><span><i class="sw" style="background:${ink.a}"></i>${esc(g.away.abbr)}</span><span><i class="sw" style="background:${ink.h}"></i>${esc(g.home.abbr)}</span><span>● on goal</span><span>○ missed</span><span>◉ goal</span></div></section>`;
   const flow = nhlShotFlow(g, plays); if (flow) h += `<section class="panel"><h3>Shots on goal, game flow <span class="r">dots are goals</span></h3>${flow}</section>`;
   const goals = plays.filter(p => p.type && p.type.text === 'Goal');
-  if (goals.length) h += `<section class="panel"><h3>Goals</h3><div class="plays">${goals.map(p => { const t = String(p.team && p.team.id) === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a; const str = p.strength && p.strength.abbreviation !== 'even-strength' ? `<span class="chip" style="margin-left:4px">${esc(p.strength.text === 'Power Play' ? 'PP' : p.strength.text === 'Shorthanded' ? 'SH' : p.strength.text)}</span>` : ''; return `<div class="play"><span class="t">${esc(p.period.number > 3 ? (p.period.number > 4 ? 'SO' : 'OT') : 'P' + p.period.number)} ${esc(p.clock && p.clock.displayValue)}</span><div><span class="tag" style="background:${col}">${esc(t.abbr)}</span>${esc(p.text)}${str} <span class="muted num">${esc(p.awayScore)}–${esc(p.homeScore)}</span></div></div>`; }).join('')}</div></section>`;
+  if (goals.length) h += `<section class="panel"><h3>Goals</h3><div class="plays">${goals.map(p => { const t = String(p.team && p.team.id) === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a; const str = p.strength && p.strength.abbreviation !== 'even-strength' ? `<span class="chip" style="margin-left:4px">${esc(p.strength.text === 'Power Play' ? 'PP' : p.strength.text === 'Shorthanded' ? 'SH' : p.strength.text)}</span>` : ''; return `<div class="play"><span class="t">${esc(p.period.number > 3 ? (p.period.number > 4 ? 'SO' : 'OT') : 'P' + p.period.number)} ${esc(p.clock && p.clock.displayValue)}</span><div><span class="tag" style="background:${col};color:${onInk(col)}">${esc(t.abbr)}</span>${esc(p.text)}${str} <span class="muted num">${esc(p.awayScore)}–${esc(p.homeScore)}</span></div></div>`; }).join('')}</div></section>`;
   const T = (s.boxscore && s.boxscore.teams) || [];
   const A = T.find(t => String(t.team.id) === g.away.id), Hm = T.find(t => String(t.team.id) === g.home.id);
   if (A && Hm) {
@@ -997,6 +1005,7 @@ async function cbsBlock(nfl) {
   else league = T.slice().sort((a, b) => b.pts - a.pts).map(t => [t]);
   return renderFx({ key: 'cv', title: 'CBS league', src: 'CBS', week: wk, me, opp, league });
 }
+function ncdf(z) { const t = 1 / (1 + .3275911 * Math.abs(z) / Math.SQRT2); const e = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - .284496736) * t + .254829592) * t * Math.exp(-z * z / 2); return .5 * (1 + Math.sign(z) * e); }
 function fmtP(v) { return v == null ? '–' : (Math.round(v * 10) / 10).toFixed(1); }
 function renderFx({ key, title, src, week, me, opp, league }) {
   const view = S.fx[key];
@@ -1004,7 +1013,7 @@ function renderFx({ key, title, src, week, me, opp, league }) {
   if (me) {
     if (opp) {
       const tot = Math.max(1, me.est + opp.est); const share = me.est / tot;
-      const odds = Math.round(clamp(.5 + (me.est - opp.est) / (2 * Math.max(12, Math.sqrt(me.left + opp.left + 1) * 9)), .01, .99) * 100);
+      const sd = Math.max(4, Math.sqrt(me.left + opp.left) * 7.5); const odds = Math.round(clamp(ncdf((me.est - opp.est) / sd), .01, .99) * 100);
       h += `<div class="fx-vs"><div class="fx-tm"><div class="n">${esc(me.name)}</div><div class="p">${fmtP(me.pts)}</div><div class="pj">proj ${fmtP(me.est)} · ${me.left} to play</div></div><div class="fx-mid">VS</div><div class="fx-tm r"><div class="n">${esc(opp.name)}</div><div class="p">${fmtP(opp.pts)}</div><div class="pj">proj ${fmtP(opp.est)} · ${opp.left} to play</div></div></div>
         <div class="fx-bar" aria-hidden="true"><i style="width:${(share * 100).toFixed(1)}%;background:var(--accent)"></i><i style="flex:1;background:var(--muted);opacity:.5"></i></div><div class="fx-odds"><span>Rough win chance ${odds}%</span><span>${100 - odds}%</span></div>`;
     } else {
