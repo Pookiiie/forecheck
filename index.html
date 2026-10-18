@@ -1046,7 +1046,7 @@ function nhlStand(div, ab) {
   else if (wc.includes(me)) { const first = rest[2]; cls = 'in'; status = `Wild card ${wc.indexOf(me) + 1}` + (first ? ` \u00b7 ${me.pts - first.pts} pt${me.pts - first.pts === 1 ? '' : 's'} up on ${first.t.abbr}` : ''); }
   else { const w2 = wc[1]; const back = w2.pts - me.pts, gih = w2.gp - me.gp; cls = 'out'; status = `${back} pt${back === 1 ? '' : 's'} out of a wild card` + (gih > 0 ? ` \u00b7 ${gih} game${gih === 1 ? '' : 's'} in hand` : ''); }
   if (late && opp && cls === 'in') status += ` \u00b7 plays ${opp.t.abbr}`;
-  return { sp: 'nhl', conf: conf.name.replace(' Conference', ''), divs, myDiv, me, rank, rankLbl: ord(rank), group: myDiv.name, wc, rest, pairs, late, status, cls };
+  return { sp: 'nhl', conf: conf.name.replace(' Conference', ''), divs, myDiv, me, rank, rankLbl: ord(rank), group: ({ Atlantic: 'ATL', Metropolitan: 'METRO', Central: 'CEN', Pacific: 'PAC' })[myDiv.name] || myDiv.name, wc, rest, pairs, late, status, cls };
 }
 function nflStand(conf, div, ab, week, stype) {
   const row = e => ({ t: stTeam('nfl', e), seed: stv(e, 'playoffSeed') || 99, w: stv(e, 'wins') || 0, l: stv(e, 'losses') || 0, tie: stv(e, 'ties') || 0, pct: std(e, 'winPercent'), div: std(e, 'vs. Div.') || std(e, 'divisionRecord'), strk: std(e, 'streak') });
