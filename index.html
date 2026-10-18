@@ -95,7 +95,8 @@ main{max-width:760px;margin:0 auto;padding-top:14px;padding-bottom:calc(92px + e
 .st{font:700 13px var(--f-num);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 .st.in{color:var(--live)}
 .livetag{display:inline-flex;align-items:center;gap:5px;font:800 11px var(--f-num);letter-spacing:.12em;color:#fff;background:var(--live);border-radius:4px;padding:2px 6px}
-.g-watch{margin-left:auto;display:flex;gap:4px;overflow:hidden;flex-wrap:nowrap;min-width:0;justify-content:flex-end}
+.g-watch{display:flex;gap:5px;flex-wrap:wrap;min-width:0;padding-top:7px;border-top:1px solid var(--line)}
+.sit+.g-watch{border-top:0;padding-top:0}
 .tr{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:10px}
 .tr.lose{opacity:.55}
 .lg{width:30px;height:30px;object-fit:contain;display:block}
@@ -462,7 +463,9 @@ function watchChips(g, max = 99) { return watchFor(g).items.slice(0, max).map(ch
 /* ---------- shared bits ---------- */
 const darkUI = () => g_sport() === 'nfl' || matchMedia('(prefers-color-scheme: dark)').matches;
 function g_sport() { return document.body.dataset.sport; }
-function logoImg(t, cls = 'lg') { return `<img class="${cls}" src="${esc(darkUI() ? t.logoDark : t.logo)}" alt="" loading="lazy" decoding="async">`; }
+const FB = "this.onerror=null;this.src=this.dataset.fb";
+function logoImg(t, cls = 'lg', forceDark) { const d = forceDark || darkUI(); return `<img class="${cls}" src="${esc(d ? t.logoDark : t.logo)}" data-fb="${esc(t.logo)}" onerror="${FB}" alt="" decoding="async">`; }
+const heroLogo = t => `<img src="${esc(t.logoDark)}" data-fb="${esc(t.logo)}" onerror="${FB}" alt="">`;
 function statusHTML(g) {
   if (g.state === 'in') return `<span class="livetag">LIVE</span><span class="st in">${esc(g.detail)}</span>`;
   if (g.state === 'pre') return `<span class="st">${esc(whenLabel(g.date))}</span>`;
@@ -499,8 +502,8 @@ function gameCard(g) {
     const si = nflSit(g);
     if (si) sit = `<div class="sit">${si.off ? `<div class="sit-line">${esc(si.off.abbr)} ball · ${esc(si.dd)}${si.rz ? ' <span class="rz">RED ZONE</span>' : ''}</div>${miniField(si, g)}` : ''}${si.text ? `<div class="lastplay">${esc(si.text)}</div>` : ''}</div>`;
   }
-  const w = g.state === 'post' ? '' : `<div class="g-watch">${watchFor(g).items.slice(0, 2).map(chip).join('')}</div>`;
-  return `<button class="game${hasFav(g) ? ' fav' : ''}" data-open="${g.sp}:${g.id}"><div class="g-top">${statusHTML(g)}${w}</div>${teamRow(g, g.away)}${teamRow(g, g.home)}${sit}</button>`;
+  const w = g.state === 'post' ? '' : `<div class="g-watch">${watchFor(g).items.slice(0, 3).map(chip).join('')}</div>`;
+  return `<button class="game${hasFav(g) ? ' fav' : ''}" data-open="${g.sp}:${g.id}"><div class="g-top">${statusHTML(g)}</div>${teamRow(g, g.away)}${teamRow(g, g.home)}${sit}${w}</button>`;
 }
 function groupGames(games) {
   const rank = g => (hasFav(g) ? 0 : 1);
@@ -542,14 +545,14 @@ async function heroHTML(sp, games, extra = {}) {
   const show = g || last; if (!show && !next) return '';
   const base = show || next; const me = base.home.abbr === ab ? base.home : base.away;
   const tc = heroColor(me);
-  const wm = `<img class="wm" src="${esc(me.logoDark)}" alt="">`;
+  const wm = `<img class="wm" src="${esc(me.logoDark)}" data-fb="${esc(me.logo)}" onerror="${FB}" alt="">`;
   const nm = me.name || ab;
   if (!show || (!g && next)) { // no game in view: bye / off day
     const ng = next; const opp = ng ? (ng.home.abbr === ab ? ng.away : ng.home) : null; const at = ng && ng.home.abbr === ab ? 'vs' : '@';
     const bye = sp === 'nfl' && extra.byes && extra.byes.includes(ab);
     const lastLine = last ? (() => { const mine = last.home.abbr === ab ? last.home : last.away, o = mine === last.home ? last.away : last.home; const wl = mine.winner ? 'W' : (o.winner ? 'L' : 'T'); return `Last: ${wl} ${esc(mine.score)}–${esc(o.score)} ${mine === last.home ? 'vs' : '@'} ${esc(o.abbr)}`; })() : '';
     return `<button class="hero" style="--tc:${tc}" ${ng ? `data-open="${sp}:${ng.id}"` : ''}>${wm}<div class="hero-eb">★ ${esc(nm)}${bye ? ' · bye week' : ''}</div>
-      ${opp ? `<div class="hero-m"><div class="hero-t">${`<img src="${esc(me.logoDark)}" alt="">`}<span class="ab">${esc(ab)}</span></div><div class="hero-sc"><span class="vs">${at.toUpperCase()}</span></div><div class="hero-t h"><span class="ab">${esc(opp.abbr)}</span><img src="${esc(opp.logoDark)}" alt=""></div></div>
+      ${opp ? `<div class="hero-m"><div class="hero-t">${heroLogo(me)}<span class="ab">${esc(ab)}</span></div><div class="hero-sc"><span class="vs">${at.toUpperCase()}</span></div><div class="hero-t h"><span class="ab">${esc(opp.abbr)}</span>${heroLogo(opp)}</div></div>
       <div class="hero-st">Next: ${esc(whenLabel(ng.date))}</div>` : `<div class="hero-st">No upcoming games</div>`}
       ${lastLine ? `<div class="hero-sub">${lastLine}</div>` : ''}
       ${ng ? `<div class="chips">${watchChips(ng, 4)}</div>` : ''}</button>`;
@@ -562,9 +565,9 @@ async function heroHTML(sp, games, extra = {}) {
   if (G.state === 'post' && next) { const o = next.home.abbr === ab ? next.away : next.home; sub = `<div class="hero-sub">Next: ${next.home.abbr === ab ? 'vs' : '@'} ${esc(o.abbr)} · ${esc(whenLabel(next.date))}</div>`; }
   return `<button class="hero" style="--tc:${tc}" data-open="${G.sp}:${G.id}">${wm}
     <div class="hero-eb">${live ? '<span class="livetag">LIVE</span>' : ''}★ ${esc(nm)}${G.note ? ' · ' + esc(G.note) : ''}</div>
-    <div class="hero-m"><div class="hero-t"><img src="${esc(G.away.logoDark)}" alt=""><span class="ab">${esc(G.away.abbr)}</span></div>
+    <div class="hero-m"><div class="hero-t">${heroLogo(G.away)}<span class="ab">${esc(G.away.abbr)}</span></div>
       <div class="hero-sc">${pre ? '<span class="vs">AT</span>' : `${sc(G.away)}<span class="vs">–</span>${sc(G.home)}`}</div>
-      <div class="hero-t h"><span class="ab">${esc(G.home.abbr)}</span><img src="${esc(G.home.logoDark)}" alt=""></div></div>
+      <div class="hero-t h"><span class="ab">${esc(G.home.abbr)}</span>${heroLogo(G.home)}</div></div>
     <div class="hero-st">${pre ? esc(whenLabel(G.date)) : esc(G.detail)}</div>${sub}
     ${G.state !== 'post' ? `<div class="chips">${watchChips(G, 4)}</div>` : ''}</button>`;
 }
