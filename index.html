@@ -827,7 +827,7 @@ function standDetail(M) {
     const head = '<tr><th></th><th></th><th>GP</th><th>PTS</th><th>P%</th><th>L10</th><th>STK</th></tr>';
     h += sec(esc(M.myDiv.name), 'top 3 make it', `<div class="scroll-x"><table class="stb">${head}${M.myDiv.teams.map((t, i) => trow(t, i + 1, i === 3 ? 'cut' : '')).join('')}</table></div>`);
     const race = M.rest.slice(0, Math.max(6, M.rest.indexOf(M.me) + 1));
-    h += sec('Wild card race', esc(M.conf), `<div class="scroll-x"><table class="stb">${head}${race.map((t, i) => trow(t, i < 2 ? 'WC' + (i + 1) : i + 1 - 2, i === 2 ? 'cut' : '')).join('')}</table></div>`);
+    h += sec('Wild card race', esc(M.conf), `<div class="scroll-x"><table class="stb">${head}${race.map((t, i) => trow(t, i < 2 ? 'WC' + (i + 1) : '', i === 2 ? 'cut' : '')).join('')}</table></div>`);
     if (M.late) h += sec('If the playoffs started today', esc(M.conf), `<div class="brk">${M.pairs.map(([a, b, sa, sb]) => `<div class="mt${a === M.me || b === M.me ? ' me' : ''}"><div>${tLogo(a.t)}${esc(a.t.abbr)}<b>${sa}</b></div><div>${tLogo(b.t)}${esc(b.t.abbr)}<b>${sb}</b></div></div>`).join('')}</div>`);
     else h += `<p class="foot">The first-round bracket shows up here once teams reach about 60 games.</p>`;
   } else {
