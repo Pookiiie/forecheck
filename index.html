@@ -100,6 +100,34 @@ body[data-sport="nhl"][data-ice="glass"]{--icebase:#0b2135}
 body[data-sport="nhl"][data-ice="dark"]{--icebase:#0c1824}
 body[data-sport="nhl"][data-ice="light"]{--icebase:#d3e1ec}
 
+/* ---------- standings ---------- */
+.stc{display:flex;align-items:center;gap:10px;width:100%;background:var(--card);border-radius:10px;padding:7px 10px;min-width:0}
+button.stc:active{opacity:.8}
+.stc-rk{font:800 24px/1 var(--bc);min-width:42px;text-align:center}
+.stc-rk small{display:block;font:700 10px var(--bc);letter-spacing:.12em;color:var(--fg2);margin-top:2px;text-transform:uppercase}
+.stc-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.stc-t b{font:700 14px var(--bc);letter-spacing:.1em;text-transform:uppercase}
+.stc-t span{font:400 12.5px var(--ui);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stc-t .in{color:var(--green)}.stc-t .out{color:var(--red)}
+.stc .go{color:var(--fg3);width:8px;height:13px;flex:none}
+.stb{width:100%;border-collapse:collapse;font:700 14px var(--bc);font-variant-numeric:tabular-nums;white-space:nowrap}
+.stb th{font:600 10.5px var(--ui);color:var(--fg2);text-align:right;padding:0 5px 4px}
+.stb td{padding:4px 5px;text-align:right;border-top:1px solid var(--sep)}
+.stb th:nth-child(-n+2),.stb td:nth-child(-n+2){text-align:left}
+.stb td:first-child{width:16px;color:var(--fg3);font-size:12px;padding-left:2px}
+.stb td img{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin-right:6px}
+.stb tr.me td{background:color-mix(in srgb,var(--tint) 16%,transparent)}
+.stb tr.cut td{border-top:2px solid color-mix(in srgb,var(--fg) 55%,transparent)}
+.stb tr.wc td{border-top:2px dashed color-mix(in srgb,var(--fg) 35%,transparent)}
+.stb .sub{color:var(--fg2);font-weight:600}
+.brk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.mt{background:var(--well);border-radius:7px;padding:4px 6px;display:grid;gap:2px}
+.mt.me{box-shadow:inset 0 0 0 1.5px var(--tint)}
+.mt div{display:flex;align-items:center;gap:6px;font:700 14px var(--bc)}
+.mt img{width:18px;height:18px;object-fit:contain}
+.mt b{margin-left:auto;font:600 11px var(--bc);letter-spacing:.06em;color:var(--fg2)}
+.mt .bye{font:500 11.5px var(--ui);color:var(--fg2)}
+
 /* ---------- Habs month calendar ---------- */
 .cal{background:var(--card);border-radius:10px;padding:5px 6px 6px}
 .cal-h{display:flex;align-items:center;justify-content:space-between;font:700 13px var(--bc);letter-spacing:.14em;text-transform:uppercase;color:var(--fg2);padding:0 0 3px}
@@ -678,7 +706,8 @@ async function loadNFL() {
   const L = games.filter(g => g.state === 'in').sort((a, b) => score(b) - score(a));
   const P = games.filter(g => g.state === 'pre').sort((a, b) => a.date - b.date || score(b) - score(a));
   const F = games.filter(g => g.state === 'post').sort((a, b) => score(b) - score(a) || b.date - a.date);
-  let h = hero.html + (isCur ? fxCards() : '');
+  const stM = isCur ? await standModel('nfl').catch(() => null) : null;
+  let h = hero.html + (isCur ? standCard(stM) + fxCards() : '');
   const notHero = g => g.id !== hero.id;
   h += tiles(`Live · ${L.filter(notHero).length}`, L.filter(notHero), 'live');
   const slots = {}; P.forEach(g => { const k = dayWord(g.date) + ' · ' + fmtTime(g.date); (slots[k] = slots[k] || []).push(g); });
@@ -733,6 +762,87 @@ function iceTexture(look) {
 }
 async function applyIce() { const look = CFG.look || 'glass'; document.body.dataset.ice = look; try { if (!ICE[look]) ICE[look] = await iceTexture(look); if ((CFG.look || 'glass') === look) document.body.style.setProperty('--habsbg', `url("${ICE[look]}")`); } catch (e) {} }
 
+/* ---------- standings + playoff picture ---------- */
+const espnV2 = (sp, p) => getJSON(`https://site.api.espn.com/apis/v2/sports/${PATH[sp]}/${p}`);
+const standings = sp => cached('stand:' + sp, 10 * 60e3, async () => { const [conf, div] = await Promise.all([espnV2(sp, 'standings'), espnV2(sp, 'standings?level=3')]); return { conf, div }; });
+const stv = (e, k) => { const s = (e.stats || []).find(x => x.name === k || x.type === k); return s ? (s.value ?? parseFloat(s.displayValue)) : null; };
+const std = (e, k) => { const s = (e.stats || []).find(x => x.name === k || x.type === k); return s ? (s.displayValue ?? String(s.value)) : ''; };
+function stTeam(sp, e) { const t = e.team || {}; const ab = t.abbreviation || ''; const l = (t.logos && t.logos[0] && t.logos[0].href) || `https://a.espncdn.com/i/teamlogos/${sp}/500/${ab.toLowerCase()}.png`; return { abbr: ab, name: t.shortDisplayName || t.name || ab, logo: l, logoDark: l.replace('/500/', '/500-dark/') }; }
+const ord = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
+const nhlSort = (a, b) => b.pts - a.pts || a.gp - b.gp || b.rw - a.rw || b.row - a.row || b.w - a.w;
+function nhlStand(div, ab) {
+  const row = e => ({ t: stTeam('nhl', e), gp: stv(e, 'gamesPlayed') || 0, pts: stv(e, 'points') || 0, w: stv(e, 'wins') || 0, l: stv(e, 'losses') || 0, otl: stv(e, 'otLosses') ?? stv(e, 'overtimeLosses') ?? 0, rw: stv(e, 'regWins') || 0, row: stv(e, 'rotWins') || 0, l10: (std(e, 'Last Ten Games') || std(e, 'lasttengames')).split(',')[0], strk: std(e, 'streak') });
+  const conf = (div.children || []).find(c => (c.children || []).some(d => d.standings.entries.some(e => e.team.abbreviation === ab))); if (!conf) return null;
+  const divs = conf.children.map(d => ({ name: d.name.replace(' Division', ''), teams: d.standings.entries.map(row).sort(nhlSort) }));
+  const rest = divs.flatMap(d => d.teams.slice(3)).sort(nhlSort); const wc = rest.slice(0, 2);
+  const leaders = divs.map(d => d.teams[0]).sort(nhlSort);
+  const dOf = t => divs.find(d => d.teams.includes(t));
+  const pairs = [[leaders[0], wc[1], 'WC2'], [leaders[1], wc[0], 'WC1']].flatMap(([L, W, wl]) => { const D = dOf(L); return [[L, W, D.name[0] + '1', wl], [D.teams[1], D.teams[2], D.name[0] + '2', D.name[0] + '3']]; });
+  const myDiv = divs.find(d => d.teams.some(t => t.t.abbr === ab)); const me = myDiv.teams.find(t => t.t.abbr === ab); const rank = myDiv.teams.indexOf(me) + 1;
+  const late = Math.max(...divs.flatMap(d => d.teams.map(t => t.gp))) >= 60;
+  let status, cls, opp = null;
+  const pair = pairs.find(p => p[0] === me || p[1] === me); if (pair) opp = pair[0] === me ? pair[1] : pair[0];
+  if (rank <= 3) { const next = myDiv.teams[3]; cls = 'in'; status = `In a playoff spot` + (rank === 3 && next ? ` \u00b7 ${me.pts - next.pts} pt${me.pts - next.pts === 1 ? '' : 's'} up on ${next.t.abbr}` : ''); }
+  else if (wc.includes(me)) { const first = rest[2]; cls = 'in'; status = `Wild card ${wc.indexOf(me) + 1}` + (first ? ` \u00b7 ${me.pts - first.pts} pt${me.pts - first.pts === 1 ? '' : 's'} up on ${first.t.abbr}` : ''); }
+  else { const w2 = wc[1]; const back = w2.pts - me.pts, gih = w2.gp - me.gp; cls = 'out'; status = `${back} pt${back === 1 ? '' : 's'} out of a wild card` + (gih > 0 ? ` \u00b7 ${gih} game${gih === 1 ? '' : 's'} in hand` : ''); }
+  if (late && opp && cls === 'in') status += ` \u00b7 plays ${opp.t.abbr}`;
+  return { sp: 'nhl', conf: conf.name.replace(' Conference', ''), divs, myDiv, me, rank, rankLbl: ord(rank), group: myDiv.name, wc, rest, pairs, late, status, cls };
+}
+function nflStand(conf, div, ab, week, stype) {
+  const row = e => ({ t: stTeam('nfl', e), seed: stv(e, 'playoffSeed') || 99, w: stv(e, 'wins') || 0, l: stv(e, 'losses') || 0, tie: stv(e, 'ties') || 0, pct: std(e, 'winPercent'), div: std(e, 'vs. Div.') || std(e, 'divisionRecord'), strk: std(e, 'streak') });
+  const c = (conf.children || []).find(x => x.standings.entries.some(e => e.team.abbreviation === ab)); if (!c) return null;
+  const rows = c.standings.entries.map(row).sort((a, b) => a.seed - b.seed);
+  const dc = (div.children || []).find(x => x.name === c.name) || { children: [] };
+  const d = (dc.children || []).find(x => x.standings.entries.some(e => e.team.abbreviation === ab));
+  const dteams = d ? d.standings.entries.map(row).sort((a, b) => a.seed - b.seed) : [];
+  const me = rows.find(r => r.t.abbr === ab); const s7 = rows.find(r => r.seed === 7);
+  const gb = x => s7 ? ((s7.w - x.w) + (x.l - s7.l)) / 2 : 0;
+  const cn = c.name.includes('National') ? 'NFC' : 'AFC'; const dn = d ? d.name : '';
+  let status, cls;
+  if (me.seed <= 4) { cls = 'in'; status = `${ord(me.seed)} seed \u00b7 leads the ${dn}`; }
+  else if (me.seed <= 7) { cls = 'in'; status = `${ord(me.seed)} seed \u00b7 wild card`; }
+  else { cls = 'out'; const g = gb(me); status = `${g % 1 ? g.toFixed(1) : g} game${g === 1 ? '' : 's'} out of the 7 seed`; }
+  const late = +stype === 3 || (+stype === 2 && +week >= 12);
+  const pairs = [[rows[1], rows[6], '2', '7'], [rows[2], rows[5], '3', '6'], [rows[3], rows[4], '4', '5']];
+  return { sp: 'nfl', conf: cn, rows, dteams, dname: dn, me, rank: me.seed, rankLbl: me.seed <= 16 ? ord(rows.indexOf(me) + 1) : '', group: cn, s7, gb, pairs, late, status, cls };
+}
+async function standModel(sp) {
+  const ab = sp === 'nfl' ? CFG.favNFL : CFG.favNHL; if (!ab) return null;
+  const { conf, div } = await standings(sp);
+  if (sp === 'nhl') return nhlStand(div, ab);
+  const c = S.nfl.cur || {}; return nflStand(conf, div, ab, c.week, c.st);
+}
+const GO = '<svg class="go" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l5 5-5 5"/></svg>';
+function standCard(M, button = true) {
+  if (!M) return '';
+  const inner = `<div class="stc-rk">${esc(M.rankLbl)}<small>${esc(M.group)}</small></div><div class="stc-t"><b>${M.sp === 'nhl' ? 'Standings' : 'Playoff picture'}</b><span class="${M.cls}">${esc(M.status)}</span></div>`;
+  return button ? `<button class="stc" data-stand="${M.sp}">${inner}${GO}</button>` : `<div class="stc">${inner}</div>`;
+}
+const tLogo = t => logo(t);
+function standDetail(M) {
+  if (!M) return '<div class="empty">Standings aren\u2019t available right now.</div>';
+  let h = standCard(M, false);
+  if (M.sp === 'nhl') {
+    const trow = (t, i, cls) => `<tr class="${[cls, t === M.me ? 'me' : ''].join(' ')}"><td>${i}</td><td>${tLogo(t.t)}${esc(t.t.abbr)}</td><td>${t.gp}</td><td>${t.pts}</td><td class="sub">${t.gp ? (t.pts / (2 * t.gp)).toFixed(3).replace(/^0/, '') : '\u2013'}</td><td class="sub">${esc(t.l10)}</td><td class="sub">${esc(t.strk)}</td></tr>`;
+    const head = '<tr><th></th><th></th><th>GP</th><th>PTS</th><th>P%</th><th>L10</th><th>STK</th></tr>';
+    h += sec(esc(M.myDiv.name), 'top 3 make it', `<div class="scroll-x"><table class="stb">${head}${M.myDiv.teams.map((t, i) => trow(t, i + 1, i === 3 ? 'cut' : '')).join('')}</table></div>`);
+    const race = M.rest.slice(0, Math.max(6, M.rest.indexOf(M.me) + 1));
+    h += sec('Wild card race', esc(M.conf), `<div class="scroll-x"><table class="stb">${head}${race.map((t, i) => trow(t, i < 2 ? 'WC' + (i + 1) : i + 1 - 2, i === 2 ? 'cut' : '')).join('')}</table></div>`);
+    if (M.late) h += sec('If the playoffs started today', esc(M.conf), `<div class="brk">${M.pairs.map(([a, b, sa, sb]) => `<div class="mt${a === M.me || b === M.me ? ' me' : ''}"><div>${tLogo(a.t)}${esc(a.t.abbr)}<b>${sa}</b></div><div>${tLogo(b.t)}${esc(b.t.abbr)}<b>${sb}</b></div></div>`).join('')}</div>`);
+    else h += `<p class="foot">The first-round bracket shows up here once teams reach about 60 games.</p>`;
+  } else {
+    const rec = t => `${t.w}-${t.l}${t.tie ? '-' + t.tie : ''}`;
+    h += sec(esc(M.dname), '', `<div class="scroll-x"><table class="stb"><tr><th></th><th></th><th>W-L</th><th>PCT</th><th>DIV</th><th>STK</th></tr>${M.dteams.map((t, i) => `<tr class="${t === M.me || t.t.abbr === M.me.t.abbr ? 'me' : ''}"><td>${i + 1}</td><td>${tLogo(t.t)}${esc(t.t.abbr)}</td><td>${rec(t)}</td><td class="sub">${esc(t.pct)}</td><td class="sub">${esc(t.div)}</td><td class="sub">${esc(t.strk)}</td></tr>`).join('')}</table></div>`);
+    const hunt = M.rows.filter(r => r.seed >= 5).slice(0, Math.max(6, M.rows.filter(r => r.seed >= 5).indexOf(M.me) + 1));
+    h += sec('Wild card hunt', esc(M.conf), `<div class="scroll-x"><table class="stb"><tr><th></th><th></th><th>W-L</th><th>PCT</th><th>GB</th><th>STK</th></tr>${hunt.map(t => { const g = M.gb(t); return `<tr class="${[t.seed === 8 ? 'cut' : '', t === M.me ? 'me' : ''].join(' ')}"><td>${t.seed}</td><td>${tLogo(t.t)}${esc(t.t.abbr)}</td><td>${rec(t)}</td><td class="sub">${esc(t.pct)}</td><td class="sub">${t.seed <= 7 ? '\u2013' : (g % 1 ? g.toFixed(1) : g)}</td><td class="sub">${esc(t.strk)}</td></tr>`; }).join('')}</table></div>`);
+    if (M.late) h += sec('If the season ended today', esc(M.conf), `<div class="brk"><div class="mt${M.rows[0] === M.me ? ' me' : ''}"><div>${tLogo(M.rows[0].t)}${esc(M.rows[0].t.abbr)}<b>1</b></div><div class="bye">First-round bye</div></div>${M.pairs.map(([a, b, sa, sb]) => `<div class="mt${a === M.me || b === M.me ? ' me' : ''}"><div>${tLogo(a.t)}${esc(a.t.abbr)}<b>${sa}</b></div><div>${tLogo(b.t)}${esc(b.t.abbr)}<b>${sb}</b></div></div>`).join('')}</div>`);
+    else h += `<p class="foot">The playoff bracket shows up here from Week 12.</p>`;
+  }
+  return h;
+}
+async function openStand(sp) { S.standSp = sp; setSport(sp); openSheet('stand', 'Standings', sp === 'nfl' ? 'Scores' : 'Habs'); await loadStandSheet(); }
+async function loadStandSheet() { const M = await standModel(S.standSp).catch(() => null); if (S.sheetMode !== 'stand') return false; const keep = $('#shScroll').scrollTop; $('#shBody').innerHTML = standDetail(M); $('#shScroll').scrollTop = keep; return false; }
+
 /* ---------- Canadiens month calendar ---------- */
 function habsCalendar(games, ab) {
   const now = new Date(); const cur = S.cal || { y: +ymd(now).slice(0, 4), m: +ymd(now).slice(4, 6) - 1 };
@@ -772,7 +882,8 @@ async function loadNHL() {
   const shown = hero.id || (fresh[0] && fresh[0].id);
   const upcoming = games.filter(g => g.state !== 'post' && g.id !== shown && g.date > Date.now() - 6 * 36e5).slice(0, 8);
   const results = games.filter(g => g.state === 'post' && g.id !== shown).slice(-8).reverse();
-  $('#view').innerHTML = hero.html + habsCalendar(games, ab) + tiles('Coming up', upcoming.slice(0, 4)) + tiles('Results', results.slice(0, 4)) + (!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : '');
+  const stM = await standModel('nhl').catch(() => null);
+  $('#view').innerHTML = hero.html + standCard(stM) + habsCalendar(games, ab) + tiles('Coming up', upcoming.slice(0, 4)) + tiles('Results', results.slice(0, 4)) + (!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : '');
   return live;
 }
 
@@ -1248,6 +1359,7 @@ async function refresh(force) {
   try {
     if (S.sheetMode === 'game') live = await loadDetail();
     else if (S.sheetMode === 'fx') live = await loadFxSheet();
+    else if (S.sheetMode === 'stand') live = await loadStandSheet();
     else if (S.sheetMode === 'settings') live = S.live;
     else if (S.tab === 'nhl') live = await loadNHL();
     else live = await loadNFL();
@@ -1263,6 +1375,7 @@ async function refresh(force) {
 document.addEventListener('click', e => {
   const o = e.target.closest('[data-open]'); if (o) { const [sp, id] = o.dataset.open.split(':'); openGame(sp, id); return; }
   const fo = e.target.closest('[data-fxopen]'); if (fo) { openFx(fo.dataset.fxopen); return; }
+  const so = e.target.closest('[data-stand]'); if (so) { openStand(so.dataset.stand); return; }
   const t = e.target.closest('[data-tab]'); if (t) { if (S.sheetMode) { S.sheetMode = null; S.detail = null; $('#sheet').classList.remove('open'); } setTab(t.dataset.tab); return; }
   if (e.target.closest('[data-now]')) { S.nfl.q = null; refresh(true); return; }
   const cm = e.target.closest('[data-cal]'); if (cm) { shiftMonth(+cm.dataset.cal); return; }
