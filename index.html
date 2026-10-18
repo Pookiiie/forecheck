@@ -533,7 +533,9 @@ async function loadFantasy(nfl) {
   if (CFG.cbsToken) jobs.push(cbsData(nfl).then(m => out.cv = m).catch(e => out.cvErr = e.message));
   await Promise.all(jobs); FX.data = out; buildByTeam(); return out;
 }
-function oddsOf(m) { if (!m || !m.me || !m.opp) return null; const sd = Math.max(4, Math.sqrt(m.me.left + m.opp.left) * 7.5); return Math.round(clamp(ncdf((m.me.est - m.opp.est) / sd), .01, .99) * 100); }
+/* Rough win chance: projected margin over its uncertainty. ~12 pts of spread per player still to
+   play (projection error + game variance), which lines up with Sleeper's own numbers in testing. */
+function oddsOf(m) { if (!m || !m.me || !m.opp) return null; const sd = Math.max(5, Math.sqrt(m.me.left + m.opp.left) * 12); return Math.round(clamp(ncdf((m.me.est - m.opp.est) / sd), .01, .99) * 100); }
 function fxCards() {
   const d = FX.data; const cards = [];
   [['sv', 'PFL'], ['cv', 'CBS']].forEach(([k, def]) => {
