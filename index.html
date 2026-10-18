@@ -70,6 +70,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 .tab[aria-selected="true"]{color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
 .tab[aria-selected="true"] svg{color:var(--tint)}
 
+/* corner radii: 10px cards, 6px boxes inside cards (score bugs, chips), 4px small marks (calendar days, tags) */
 /* ---------- themes (applied to the scrolling areas; header and tab bar stay broadcast-black) ---------- */
 .scroll{background:var(--bg)}
 body[data-sport="nfl"] .scroll{ /* Stadium night */
@@ -132,7 +133,7 @@ body[data-ice="light"] .hero + .stc{background:var(--well);border-color:rgba(12,
 .stb tr.wc td{border-top:2px dashed color-mix(in srgb,var(--fg) 35%,transparent)}
 .stb .sub{color:var(--fg2);font-weight:600}
 .brk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-.mt{background:var(--well);border-radius:7px;padding:4px 6px;display:grid;gap:2px}
+.mt{background:var(--well);border-radius:6px;padding:4px 6px;display:grid;gap:2px}
 .mt.me{box-shadow:inset 0 0 0 1.5px var(--tint)}
 .mt div{display:flex;align-items:center;gap:6px;font:700 14px var(--bc)}
 .mt img{width:18px;height:18px;object-fit:contain}
@@ -146,7 +147,7 @@ body[data-ice="light"] .hero + .stc{background:var(--well);border-color:rgba(12,
 .cal-h button svg{width:8px;height:13px}
 .cal-dw,.cal-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
 .cal-dw span{font:600 10px var(--ui);color:var(--fg3);text-align:center;padding-bottom:2px}
-.cd{height:38px;border-radius:5px;position:relative;display:flex;align-items:center;justify-content:center;background:var(--well);min-width:0}
+.cd{height:38px;border-radius:4px;position:relative;display:flex;align-items:center;justify-content:center;background:var(--well);min-width:0}
 .cd.x{background:transparent}
 .cd .dn{position:absolute;top:1px;right:3px;font:600 9px/1 var(--ui);color:var(--fg3)}
 .cd img{width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
@@ -164,7 +165,7 @@ body[data-ice="light"] .cd.W .dn,body[data-ice="light"] .cd.L .dn,body[data-ice=
 .cd.today{box-shadow:inset 0 0 0 1.5px var(--tint)}
 button.cd:active{opacity:.7}
 .cal-k{display:flex;gap:10px;margin-top:5px;font:500 10.5px var(--ui);color:var(--fg3);flex-wrap:wrap}
-.cal-k i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.cal-k i{display:inline-block;width:10px;height:10px;border-radius:4px;margin-right:4px;vertical-align:-1px}
 
 /* ---------- section labels ---------- */
 .lbl{display:flex;align-items:baseline;gap:8px;margin:8px 4px -2px;font:700 12px var(--bc);letter-spacing:.14em;text-transform:uppercase;color:var(--fg2);text-shadow:0 1px 2px rgba(0,0,0,.25)}
@@ -179,7 +180,7 @@ body[data-ice="light"] .lbl{text-shadow:none}
 /* ---------- two-up game tiles (mini score bugs) ---------- */
 .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 @media (min-width:640px){.g2.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
-.tile{display:flex;flex-direction:column;background:var(--card);border-radius:9px;overflow:hidden;min-width:0;width:100%}
+.tile{display:flex;flex-direction:column;background:var(--card);border-radius:10px;overflow:hidden;min-width:0;width:100%}
 .tile:active{opacity:.8}
 .tile.fav{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tint) 70%,transparent)}
 .tl{display:flex;align-items:center;gap:6px;height:27px;padding:0 8px 0 6px;border-left:4px solid var(--c);min-width:0}
@@ -210,9 +211,9 @@ body[data-ice="light"] .lbl{text-shadow:none}
 .gauge .ball{position:absolute;top:50%;width:9px;height:6px;margin:-3px 0 0 -4.5px;border-radius:50%;background:#8b4a20;border:1px solid #fff}
 
 /* ---------- big score bug ---------- */
-.hero{display:grid;gap:7px;width:100%;background:var(--card);border-radius:12px;padding:8px}
+.hero{display:grid;gap:7px;width:100%;background:var(--card);border-radius:10px;padding:8px}
 button.hero:active{opacity:.85}
-.bug{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;border-radius:7px;overflow:hidden;min-height:48px}
+.bug{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;border-radius:6px;overflow:hidden;min-height:48px}
 /* logos fill the slab height (44px in a 48px bug), no drop shadows */
 .bt{display:flex;align-items:center;gap:5px;padding:0 9px 0 5px;color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 86%,#fff) 0%,var(--c) 52%,color-mix(in srgb,var(--c) 78%,#000) 100%);min-width:0}
 .bt+.bt{border-left:1px solid rgba(0,0,0,.35)}
@@ -245,7 +246,7 @@ button.hero:active{opacity:.85}
 .bug.nhl .bc .c2{color:var(--amber);font-size:22px;text-shadow:0 0 6px rgba(255,176,32,.5)}
 .bug.nhl .bc .c1{color:#ffd27a}
 .bug.nhl .bc.on .c1{color:var(--red)}
-.bug.lg{min-height:56px;border-radius:9px}
+.bug.lg{min-height:56px;border-radius:6px}
 .bug.lg .bt img,.bug.nfl .bt img{width:40px;height:40px}
 .bt .bs{padding-left:6px}
 .bug.lg .bt .ab{font-size:23px}
@@ -253,7 +254,7 @@ button.hero:active{opacity:.85}
 .bug.lg .bc{min-width:78px}
 .under{display:grid;gap:6px;padding:0 2px}
 .flag{display:flex;align-items:center;gap:7px;font:600 13px var(--ui);flex-wrap:wrap}
-.flag b{background:var(--yellow);color:#111;border-radius:3px;padding:1px 6px;font:800 14px/1.2 var(--bc);letter-spacing:.05em;text-transform:uppercase}
+.flag b{background:var(--yellow);color:#111;border-radius:4px;padding:1px 6px;font:800 14px/1.2 var(--bc);letter-spacing:.05em;text-transform:uppercase}
 .flag .rzb{background:var(--red);color:#fff}
 .under .play{font-size:13px;color:var(--fg2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .under .meta{font-size:12.5px;color:var(--fg2)}
@@ -275,15 +276,22 @@ button.hero:active{opacity:.85}
 .tl.ping{animation:tping .8s ease-in-out 3}
 @keyframes tping{50%{background:color-mix(in srgb,var(--c) 45%,transparent)}}
 /* post-game recap */
-.lastg{background:var(--well);border-radius:8px;padding:5px 6px 6px;display:grid;gap:5px;cursor:pointer}
-.lastg .lh{display:flex;align-items:baseline;gap:7px;padding:0 2px;font-size:12.5px;white-space:nowrap;min-width:0}
-.lastg .lh b{font:700 10.5px var(--bc);letter-spacing:.14em;text-transform:uppercase;color:var(--fg3)}
-.lastg .lh span{font-weight:600;overflow:hidden;text-overflow:ellipsis}
-.lastg .lh i{font-style:normal;color:var(--fg3);margin-left:auto}
-.lastg .recap .s{background:rgba(255,255,255,.06)}
-body[data-ice="light"] .lastg .recap .s{background:rgba(255,255,255,.6)}
-.recap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.15fr);gap:4px}
-.recap .s{background:var(--well);border-radius:6px;padding:3px 6px;min-width:0}
+.lastg{display:grid;gap:6px;border-top:1px solid var(--sep);padding:7px 2px 1px;cursor:pointer}
+.lastg .rs{display:flex;align-items:center;gap:6px;font:700 15px/1 var(--bc);letter-spacing:.04em;white-space:nowrap;min-width:0}
+.lastg .rs .k{font:700 10.5px var(--bc);letter-spacing:.14em;color:var(--fg3);margin-right:1px}
+.lastg .rs .wl{width:18px;height:18px;border-radius:4px;display:grid;place-items:center;font:800 11.5px var(--bc);color:#fff}
+.lastg .rs .wl.W{background:color-mix(in srgb,var(--green) 34%,transparent)}
+.lastg .rs .wl.L{background:color-mix(in srgb,var(--red) 34%,transparent)}
+.lastg .rs .wl.O{background:color-mix(in srgb,var(--amber) 36%,transparent)}
+.lastg .rs img{width:16px;height:16px;object-fit:contain;opacity:.75}
+.lastg .rs em{font-style:normal;font-size:16px;font-variant-numeric:tabular-nums}
+.lastg .rs .lo{color:var(--fg2)}
+.lastg .rs .ot{font-size:10.5px;color:var(--fg3);letter-spacing:.1em}
+.lastg .rs .dt{margin-left:auto;font:700 10.5px var(--bc);letter-spacing:.1em;color:var(--fg3)}
+.under > .recap{border-top:1px solid var(--sep);padding-top:7px}
+.recap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.15fr)}
+.recap .s{padding:0 7px;min-width:0}
+.recap .s + .s{border-left:1px solid var(--sep)}
 .recap .s b{display:block;font:700 13.5px/1.2 var(--bc);letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .recap .s.opp b{color:var(--fg2)}
 .recap .s small{display:block;font:500 11px/1.25 var(--ui);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -303,7 +311,7 @@ body[data-ice="light"] .lastg .recap .s{background:rgba(255,255,255,.6)}
 .fxw.q{color:var(--amber)}
 .fxc.warn{border-top-color:var(--red)}
 .fxc.warnq{border-top-color:var(--amber)}
-.lc{display:grid;gap:3px;padding:7px 9px;border-radius:7px;background:color-mix(in srgb,var(--red) 14%,transparent);font-size:13px}
+.lc{display:grid;gap:3px;padding:7px 9px;border-radius:6px;background:color-mix(in srgb,var(--red) 14%,transparent);font-size:13px}
 .lc b{font:700 12px var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
 .lc.q{background:color-mix(in srgb,var(--amber) 14%,transparent)}.lc.q b{color:var(--amber)}
 .lc span em{font-style:normal;color:var(--fg2)}
@@ -311,7 +319,7 @@ body[data-ice="light"] .lastg .recap .s{background:rgba(255,255,255,.6)}
 .wpg{position:relative;touch-action:pan-y}
 .wpg svg{display:block}
 .wpg .rd{position:absolute;top:0;left:0;font:700 12px var(--bc);letter-spacing:.06em;color:var(--fg);background:var(--well);padding:1px 6px;border-radius:4px;pointer-events:none;white-space:nowrap}
-.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;background:var(--fill);font:700 13px/1.2 var(--bc);letter-spacing:.04em;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;background:var(--fill);font:700 13px/1.2 var(--bc);letter-spacing:.04em;white-space:nowrap}
 .chip .lng{font:600 10px var(--ui);color:var(--fg2)}
 .chip svg{width:9px;height:9px;color:var(--fg2)}
 .chip.dim{color:var(--fg2);font-weight:600}
@@ -321,10 +329,10 @@ body[data-ice="light"] .lastg .recap .s{background:rgba(255,255,255,.6)}
 .svc.on .n{background:var(--tint);border-color:var(--tint);color:#fff}
 .svc .k small{display:block;font-size:12px;color:var(--fg2)}
 .svc:active{background:var(--fill)}
-.mine{display:inline-block;padding:0 4px;border-radius:3px;background:color-mix(in srgb,var(--mine) 20%,transparent);color:var(--mine);font:700 9.5px/15px var(--ui);letter-spacing:.04em;vertical-align:1px}
+.mine{display:inline-block;padding:0 4px;border-radius:4px;background:color-mix(in srgb,var(--mine) 20%,transparent);color:var(--mine);font:700 9.5px/15px var(--ui);letter-spacing:.04em;vertical-align:1px}
 
 /* ---------- fantasy matchup cards ---------- */
-.fxc{display:grid;gap:3px;background:var(--card);border-radius:9px;padding:7px 9px 8px;min-width:0;width:100%;border-top:3px solid var(--mine)}
+.fxc{display:grid;gap:3px;background:var(--card);border-radius:10px;padding:7px 9px 8px;min-width:0;width:100%;border-top:3px solid var(--mine)}
 .fxc:active{opacity:.8}
 .fxh{display:flex;align-items:baseline;gap:6px;font:700 12px var(--bc);letter-spacing:.12em;text-transform:uppercase;color:var(--fg2)}
 .fxh .pc{margin-left:auto;color:var(--mine);letter-spacing:.04em}
@@ -379,7 +387,7 @@ body[data-ice="light"] .lastg .recap .s{background:rgba(255,255,255,.6)}
 .tbl td:first-child{font:500 13.5px var(--ui);max-width:44vw;overflow:hidden;text-overflow:ellipsis}
 .tbl tr.me td{background:color-mix(in srgb,var(--mine) 10%,transparent)}
 .yp{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px}
-.ypc{background:var(--well);border-radius:8px;padding:6px 8px 5px;min-width:0;display:grid;gap:3px;align-content:start}
+.ypc{background:var(--well);border-radius:6px;padding:6px 8px 5px;min-width:0;display:grid;gap:3px;align-content:start}
 .ypc .hd{display:flex;align-items:baseline;gap:5px;min-width:0}
 .ypc .hd b{font:700 15px/1.2 var(--bc);letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .ypc .hd small{font:600 10.5px var(--ui);color:var(--fg3);flex:none}
@@ -398,8 +406,8 @@ body[data-ice="light"] .lastg .recap .s{background:rgba(255,255,255,.6)}
 svg text{font-family:var(--bc)}
 
 /* segmented */
-.seg{display:flex;background:var(--well);border-radius:7px;padding:2px;gap:2px}
-.seg button{flex:1;padding:6px;border-radius:5px;font:700 13px var(--bc);letter-spacing:.08em;text-transform:uppercase;text-align:center;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg{display:flex;background:var(--well);border-radius:6px;padding:2px;gap:2px}
+.seg button{flex:1;padding:6px;border-radius:4px;font:700 13px var(--bc);letter-spacing:.08em;text-transform:uppercase;text-align:center;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .seg button[aria-pressed="true"]{background:var(--card2);color:var(--fg)}
 
 /* compare bars */
@@ -422,7 +430,7 @@ svg text{font-family:var(--bc)}
 .play{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:6px 0;font-size:13.5px}
 .play+.play{border-top:1px solid var(--sep)}
 .play .t{font:700 12.5px var(--bc);color:var(--fg2);letter-spacing:.03em;padding-top:1px}
-.tag{display:inline-block;font:700 11px/16px var(--bc);letter-spacing:.06em;padding:0 5px;border-radius:3px;margin-right:5px}
+.tag{display:inline-block;font:700 11px/16px var(--bc);letter-spacing:.06em;padding:0 5px;border-radius:4px;margin-right:5px}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font:400 11.5px var(--ui);color:var(--fg2)}
 .legend span{display:inline-flex;align-items:center;gap:4px}
 .sw{width:9px;height:9px;border-radius:50%;display:inline-block}
@@ -470,7 +478,7 @@ svg text{font-family:var(--bc)}
 .row.btn:active{background:var(--fill)}
 textarea{display:block;width:100%;min-height:76px;border:0;background:none;color:var(--fg);font:13px/1.4 ui-monospace,Menlo,monospace;padding:11px 12px;resize:vertical}
 .banner{padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--green) 16%,var(--card));color:var(--green);font:600 14px var(--ui)}
-.code{display:block;padding:9px 11px;border-radius:8px;background:var(--well);font:11.5px/1.45 ui-monospace,Menlo,monospace;word-break:break-all;user-select:all;-webkit-user-select:all;color:var(--fg)}
+.code{display:block;padding:9px 11px;border-radius:6px;background:var(--well);font:11.5px/1.45 ui-monospace,Menlo,monospace;word-break:break-all;user-select:all;-webkit-user-select:all;color:var(--fg)}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 54px);transform:translateX(-50%);z-index:40;background:var(--card2);color:var(--fg);padding:9px 16px;border-radius:999px;font:600 14px var(--ui);box-shadow:0 6px 24px rgba(0,0,0,.5);max-width:calc(100% - 32px)}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
@@ -813,6 +821,17 @@ async function habsRecap(g, ab) {
   } catch (e) { return ''; }
 }
 
+/* ---------- last game: one quiet scoreboard line (result tint as on the calendar), then the stars ---------- */
+function lastLine(g, ab, rc) {
+  const me = g.home.abbr === ab ? g.home : g.away, o = me === g.home ? g.away : g.home;
+  const rs = me.winner ? 'W' : o.winner && /(OT|SO)/.test(g.detail || '') && g.sp === 'nhl' ? 'O' : o.winner ? 'L' : 'T';
+  const ot = /(OT|SO)/.exec(g.detail || '');
+  const side = t => { const lo = !t.winner && (g.home.winner || g.away.winner) ? ' class="lo"' : ''; return [`<img src="${esc(t.logo)}" alt="">`, `<span${lo}>${esc(t.abbr)}</span>`, `<em${lo}>${esc(t.score)}</em>`]; };
+  const a = side(g.away), h = side(g.home);
+  const day = g.date.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', timeZone: TZ }).replace(/[.,]/g, '').toUpperCase();
+  return `<div class="lastg" data-open="${g.sp}:${g.id}"><div class="rs"><span class="k">LAST</span><span class="wl ${rs}">${rs === 'O' ? 'L' : rs}</span>${a.join('')}${h[2]}${h[1]}${h[0]}${ot ? `<span class="ot">${ot[1]}</span>` : ''}<span class="dt">${esc(day)}</span></div>${rc}</div>`;
+}
+
 /* ---------- favourite team ---------- */
 async function teamSchedule(sp, abbr) {
   return cached('sched:' + sp + abbr, 10 * 60e3, async () => {
@@ -848,7 +867,7 @@ async function heroHTML(sp, games, extra = {}) {
     const wn = showWatch(next) ? pickWatch(next) : null; if (wn && !wn.main.length) under.push(watchChips(next));
     if (last) {
       const rc = sp === 'nhl' && Date.now() - last.date < 30 * 36e5 ? await habsRecap(last, ab) : '';
-      under.push(`<div class="lastg" data-open="${sp}:${last.id}"><div class="lh"><b>Last game</b><span>${resultLine(last, ab)}</span><i>${esc(shortDay(last.date))}</i></div>${rc}</div>`);
+      under.push(lastLine(last, ab, rc));
     }
     return { html: `<button class="hero" data-open="${sp}:${next.id}">${bug(next, { watch: wn })}${under.length ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: next.id, g: next };
   }
