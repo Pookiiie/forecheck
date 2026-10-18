@@ -1,6 +1,6 @@
 // Forecheck service worker: opens instantly and works offline for the app itself.
 // Scores, fantasy data and CBS calls always go to the network (never cached here).
-const V = 'fc-v1';
+const V = 'fc-v2';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V && k !== 'fc-img').map(k => caches.delete(k)))).then(() => self.clients.claim())); });
