@@ -1,12 +1,14 @@
 // Forecheck service worker: opens instantly and works offline for the app itself.
 // Scores, fantasy data and CBS calls always go to the network (never cached here).
-const V = 'fc-v7';
+const V = 'fc-v8';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V && k !== 'fc-img').map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (e.request.method !== 'GET') return;
+  // CORS reads (logo measuring) must go to the network: a cached opaque copy would break them
+  if (e.request.mode === 'cors' && u.hostname === 'a.espncdn.com') return;
   // fonts and team logos: cache first
   if (/fonts\.(googleapis|gstatic)\.com$/.test(u.hostname) || (u.hostname === 'a.espncdn.com' && /teamlogos/.test(u.pathname))) {
     e.respondWith(caches.open('fc-img').then(async c => (await c.match(e.request)) || fetch(e.request).then(r => { if (r.ok || r.type === 'opaque') c.put(e.request, r.clone()); return r; })));

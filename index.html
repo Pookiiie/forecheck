@@ -492,7 +492,7 @@ function measureLogo(url) {
       const mk = wcap => `scale(${Math.min(want, wcap / bw, 1.14 / bh, 1.7).toFixed(3)}) ${tr}`;
       LOGO_FIT[url] = { std: mk(1.18), cal: mk(1.42) }; res(LOGO_FIT[url]);
     } catch (e) { res(null); } };
-    im.onerror = () => res(null); im.src = url;
+    im.onerror = () => res(null); im.src = url + (url.includes('?') ? '&' : '?') + 'fcm=1'; // separate fetch so Safari doesn't reuse a non-CORS cached copy
   });
 }
 function fitLogos(root) { (root || document).querySelectorAll('img.lgo:not([style])').forEach(img => { const u = img.getAttribute('src'); measureLogo(u).then(f => { if (f && img.isConnected && img.getAttribute('src') === u) img.style.transform = f[img.dataset.ctx || 'std']; }); }); }
