@@ -90,6 +90,25 @@ body[data-sport="nhl"][data-ice="light"] .scroll{ /* Fresh sheet */
     repeating-linear-gradient(163deg,transparent 0 13px,rgba(12,29,43,.025) 13px 14px,transparent 14px 29px) #e7eff5}
 body[data-sport="nhl"][data-ice="light"] .tile,body[data-sport="nhl"][data-ice="light"] .hero,body[data-sport="nhl"][data-ice="light"] .sec,body[data-sport="nhl"][data-ice="light"] .cal{border-color:rgba(12,29,43,.08);box-shadow:0 1px 2px rgba(12,29,43,.06)}
 
+body[data-sport="nhl"][data-ice="glass"] .scroll{ /* Glacier glass */
+  --card:rgba(205,236,255,.10);--card2:rgba(205,236,255,.17);--well:rgba(6,20,36,.38);--sep:rgba(215,242,255,.16);--fill:rgba(215,242,255,.1);
+  --fg2:#b6d5ec;--fg3:#7398b8;--rink:rgba(6,20,36,.55);--rinkline:rgba(190,230,255,.35);--tint:#8fe3ff;
+  background:
+    radial-gradient(150px 120px at 0 0,rgba(232,248,255,.5),transparent 70%),
+    radial-gradient(170px 100px at 100% 0,rgba(232,248,255,.32),transparent 70%),
+    radial-gradient(1.3px 1.3px at 12% 18%,#fff,transparent),radial-gradient(1px 1px at 36% 9%,rgba(255,255,255,.8),transparent),
+    radial-gradient(1.4px 1.4px at 63% 22%,rgba(255,255,255,.75),transparent),radial-gradient(1px 1px at 88% 14%,rgba(255,255,255,.8),transparent),
+    radial-gradient(1.2px 1.2px at 22% 46%,rgba(255,255,255,.6),transparent),radial-gradient(1px 1px at 77% 52%,rgba(255,255,255,.6),transparent),
+    radial-gradient(1.3px 1.3px at 47% 71%,rgba(255,255,255,.55),transparent),radial-gradient(1px 1px at 9% 83%,rgba(255,255,255,.5),transparent),
+    radial-gradient(1.2px 1.2px at 92% 88%,rgba(255,255,255,.5),transparent),
+    repeating-linear-gradient(118deg,transparent 0 30px,rgba(191,234,255,.05) 30px 31px,transparent 31px 55px),
+    repeating-linear-gradient(62deg,transparent 0 44px,rgba(191,234,255,.035) 44px 45px,transparent 45px 83px),
+    radial-gradient(120% 60% at 20% 0%,#2a6f9e 0%,#11324f 45%,#081627 100%) #081627}
+body[data-sport="nhl"][data-ice="glass"] .tile,body[data-sport="nhl"][data-ice="glass"] .hero,body[data-sport="nhl"][data-ice="glass"] .sec,body[data-sport="nhl"][data-ice="glass"] .cal{
+  border:1px solid rgba(215,242,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 16px rgba(120,210,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+body[data-sport="nhl"][data-ice="glass"] .cd{background:rgba(220,244,255,.07)}
+body[data-sport="nhl"][data-ice="glass"] .cd.x{background:transparent}
+
 /* ---------- Habs month calendar ---------- */
 .cal{background:var(--card);border-radius:10px;padding:5px 6px 6px}
 .cal-h{display:flex;align-items:center;justify-content:space-between;font:700 13px var(--bc);letter-spacing:.14em;text-transform:uppercase;color:var(--fg2);padding:0 0 3px}
@@ -377,7 +396,7 @@ const TZ = 'America/Toronto';
 const NFL_TEAMS = 'ARI ATL BAL BUF CAR CHI CIN CLE DAL DEN DET GB HOU IND JAX KC LAC LAR LV MIA MIN NE NO NYG NYJ PHI PIT SEA SF TB TEN WSH'.split(' ');
 const NHL_TEAMS = 'ANA BOS BUF CAR CBJ CGY CHI COL DAL DET EDM FLA LA MIN MTL NJ NSH NYI NYR OTT PHI PIT SEA SJ STL TB TOR UTA VAN VGK WPG WSH'.split(' ');
 const PATH = { nfl: 'football/nfl', nhl: 'hockey/nhl' };
-const cardHex = () => document.body.dataset.sport === 'nhl' ? (CFG.ice === 'light' ? '#ffffff' : '#122131') : '#15281b';
+const cardHex = () => document.body.dataset.sport === 'nhl' ? ({ light: '#ffffff', dark: '#122131' }[CFG.look] || '#1d3a55') : '#15281b';
 
 /* ---------- helpers ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -388,7 +407,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem('fc_' + k, JSON.stringify(v)); } catch (e) {} },
   del(k) { try { localStorage.removeItem('fc_' + k); } catch (e) {} }
 };
-const DEFAULTS = { ice: 'dark', favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '' };
+const DEFAULTS = { look: 'glass', favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '' };
 let CFG = Object.assign({}, DEFAULTS, LS.get('cfg', {}));
 const saveCfg = () => LS.set('cfg', CFG);
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2400); }
@@ -445,7 +464,7 @@ function mkGame(sp, ev) {
 const isFav = (sp, abbr) => abbr && abbr === (sp === 'nfl' ? CFG.favNFL : CFG.favNHL);
 const hasFav = g => isFav(g.sp, g.home.abbr) || isFav(g.sp, g.away.abbr);
 const FB = "this.onerror=null;this.src=this.dataset.fb";
-const lightIce = () => document.body.dataset.sport === 'nhl' && CFG.ice === 'light';
+const lightIce = () => document.body.dataset.sport === 'nhl' && CFG.look === 'light';
 const logo = (t, onColour) => `<img src="${esc(!onColour && lightIce() ? t.logo : t.logoDark)}" data-fb="${esc(t.logo)}" onerror="${FB}" alt="" decoding="async">`;
 const FOOT = '<svg class="foot-ic" viewBox="0 0 16 10" aria-label="has the ball"><ellipse cx="8" cy="5" rx="7.2" ry="4.2" fill="#8b4a20" stroke="#fff" stroke-width="1"/><path d="M5 5h6M6.5 3.8v2.4M8 3.8v2.4M9.5 3.8v2.4" stroke="#fff" stroke-width=".9"/></svg>';
 
@@ -1119,7 +1138,7 @@ function openSettings(banner) {
   <section class="sec flush"><h2><span>Favourite teams</span></h2><div>
     <label class="row"><span class="k">NFL</span><select id="sfNfl"><option value="">None</option>${opt(NFL_TEAMS, CFG.favNFL)}</select></label>
     <label class="row"><span class="k">NHL</span><select id="sfNhl">${opt(NHL_TEAMS, CFG.favNHL)}</select></label>
-    <label class="row"><span class="k">Canadiens look</span><select id="sfIce"><option value="dark" ${CFG.ice !== 'light' ? 'selected' : ''}>Night rink</option><option value="light" ${CFG.ice === 'light' ? 'selected' : ''}>Fresh sheet</option></select></label></div></section>
+    <label class="row"><span class="k">Canadiens look</span><select id="sfIce">${[['glass', 'Glacier glass'], ['dark', 'Night rink'], ['light', 'Fresh sheet']].map(([v, l]) => `<option value="${v}" ${(CFG.look || 'glass') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div></section>
   <section class="sec flush"><h2><span>Sleeper</span></h2><div>
     <label class="row"><span class="k">League ID</span><input id="sfSl" inputmode="numeric" autocomplete="off" value="${esc(CFG.sleeperLeague)}" placeholder="Required"></label>
     <label class="row"><span class="k">Your team</span><select id="sfSlTeam"><option value="${esc(CFG.sleeperRoster)}">${CFG.sleeperRoster ? 'Loading…' : 'Load teams first'}</option></select></label>
@@ -1146,7 +1165,7 @@ function openSettings(banner) {
   $('#sfSlLoad').onclick = async () => { const L = $('#sfSl').value.trim(); if (!L) return; try { const [users, rosters] = await Promise.all([SL('league/' + L + '/users'), SL('league/' + L + '/rosters')]); fillSleeperTeams(users, rosters); toast('Teams loaded'); } catch (e) { $('#sfMsg').textContent = 'Sleeper: ' + e.message; } };
   $('#sfCbsLoad').onclick = async () => { const tok = $('#sfCbs').value.trim(); if (!tok) return; const old = CFG.cbsToken; CFG.cbsToken = tok; try { const b = await cbsCall('league/teams'); $('#sfCbsTeam').innerHTML = (b.teams || []).map(t => `<option value="${esc(t.id)}" ${String(t.id) === String(CFG.cbsTeam) ? 'selected' : ''}>${esc(t.name)}</option>`).join(''); toast('Teams loaded'); } catch (e) { $('#sfMsg').textContent = 'CBS: ' + e.message; } finally { CFG.cbsToken = old; } };
   $('#sfCbsDiag').onclick = async () => { if (!CFG.cbsToken) { toast('Add your CBS token first'); return; } const txt = await cbsDiagnostics(); try { await navigator.clipboard.writeText(txt); toast('Copied (field names only, no scores or token)'); } catch (e) { $('#sfMsg').textContent = txt; } };
-  $('#sfSave').onclick = () => { CFG.ice = $('#sfIce').value; document.body.dataset.ice = CFG.ice; CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
+  $('#sfSave').onclick = () => { CFG.look = $('#sfIce').value; document.body.dataset.ice = CFG.look; CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
   $('#sfReset').onclick = () => { const b = $('#sfReset'); if (b.dataset.armed) { LS.del('cfg'); LS.del('sp_players'); CFG = Object.assign({}, DEFAULTS); MY_NAMES.clear(); FX.data = {}; FX.byTeam = {}; toast('Cleared'); closeSheet(); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to clear everything'; } };
 }
 
@@ -1192,7 +1211,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheetMod
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(true); });
 window.addEventListener('online', () => refresh(true));
 
-document.body.dataset.ice = CFG.ice || 'dark';
+document.body.dataset.ice = CFG.look || 'glass';
 setTab(S.tab === 'nhl' ? 'nhl' : 'nfl');
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
