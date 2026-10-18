@@ -107,18 +107,24 @@ body[data-sport="nhl"][data-ice="light"]{--icebase:#d3e1ec}
 .cal-h button svg{width:8px;height:13px}
 .cal-dw,.cal-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
 .cal-dw span{font:600 10px var(--ui);color:var(--fg3);text-align:center;padding-bottom:2px}
-.cd{height:34px;border-radius:5px;position:relative;display:flex;align-items:center;justify-content:center;background:var(--well);min-width:0}
+.cd{height:38px;border-radius:5px;position:relative;display:flex;align-items:center;justify-content:center;background:var(--well);min-width:0}
 .cd.x{background:transparent}
 .cd .dn{position:absolute;top:1px;right:3px;font:600 9px/1 var(--ui);color:var(--fg3)}
-.cd img{width:24px;height:24px;object-fit:contain}
-.cd.away img{width:18px;height:18px}
+.cd img{width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+.cd.away img{width:26px;height:26px}
 .cd .at{position:absolute;top:1px;left:3px;font:700 9px/1 var(--ui);color:var(--fg3)}
-.cd .rs{position:absolute;left:22%;right:22%;bottom:2px;height:3px;border-radius:2px}
-.cd .rs.W{background:var(--green)}.cd .rs.L{background:var(--red)}.cd .rs.O{background:var(--amber)}
+.cd.W{background:color-mix(in srgb,var(--green) 34%,transparent)!important}
+.cd.L{background:color-mix(in srgb,var(--red) 34%,transparent)!important}
+.cd.O{background:color-mix(in srgb,var(--amber) 36%,transparent)!important}
+body[data-ice="light"] .cd.W{background:color-mix(in srgb,var(--green) 26%,#fff)!important}
+body[data-ice="light"] .cd.L{background:color-mix(in srgb,var(--red) 22%,#fff)!important}
+body[data-ice="light"] .cd.O{background:color-mix(in srgb,var(--amber) 26%,#fff)!important}
+.cd .dn,.cd .at{z-index:1;text-shadow:0 0 3px rgba(0,0,0,.35)}
+body[data-ice="light"] .cd .dn,body[data-ice="light"] .cd .at{text-shadow:none}
 .cd.today{box-shadow:inset 0 0 0 1.5px var(--tint)}
 button.cd:active{opacity:.7}
 .cal-k{display:flex;gap:10px;margin-top:5px;font:500 10.5px var(--ui);color:var(--fg3);flex-wrap:wrap}
-.cal-k i{display:inline-block;width:9px;height:3px;border-radius:2px;margin-right:4px;vertical-align:2px}
+.cal-k i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 
 /* ---------- section labels ---------- */
 .lbl{display:flex;align-items:baseline;gap:8px;margin:8px 4px -2px;font:700 12px var(--bc);letter-spacing:.14em;text-transform:uppercase;color:var(--fg2);text-shadow:0 1px 2px rgba(0,0,0,.25)}
@@ -706,13 +712,13 @@ function habsCalendar(games, ab) {
     if (!g) { cells += `<div class="cd${tod}"><span class="dn">${d}</span></div>`; continue; }
     const home = g.home.abbr === ab; const opp = home ? g.away : g.home; const me = home ? g.home : g.away;
     let rs = ''; if (g.state === 'post') rs = me.winner ? 'W' : /(OT|SO)/.test(g.detail || '') ? 'O' : 'L';
-    cells += `<button class="cd${home ? '' : ' away'}${tod}" data-open="nhl:${g.id}" aria-label="${esc((home ? 'vs ' : 'at ') + opp.name + ', ' + fmtDay(g.date))}"><span class="dn">${d}</span>${home ? '' : '<span class="at">@</span>'}${logo(opp)}${rs ? `<i class="rs ${rs}"></i>` : ''}</button>`;
+    cells += `<button class="cd${home ? '' : ' away'}${tod}${rs ? ' ' + rs : ''}" data-open="nhl:${g.id}" aria-label="${esc((home ? 'vs ' : 'at ') + opp.name + ', ' + fmtDay(g.date) + (rs ? ', ' + { W: 'win', L: 'loss', O: 'overtime loss' }[rs] : ''))}"><span class="dn">${d}</span>${home ? '' : '<span class="at">@</span>'}${logo(opp)}</button>`;
   }
   const label = first.toLocaleDateString('en-CA', { month: 'long', year: cur.y === now.getFullYear() ? undefined : 'numeric' });
   const chev = d => `<svg viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
   return `<div class="cal"><div class="cal-h"><button data-cal="-1" aria-label="Previous month">${chev('M6.5 1.5L1.5 6.5l5 5')}</button><span>${esc(label)}</span><button data-cal="1" aria-label="Next month">${chev('M1.5 1.5l5 5-5 5')}</button></div>
     <div class="cal-dw"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div class="cal-g">${cells}</div>
-    <div class="cal-k"><span><i style="background:var(--green)"></i>Win</span><span><i style="background:var(--red)"></i>Loss</span><span><i style="background:var(--amber)"></i>OT loss</span><span>@ away</span></div></div>`;
+    <div class="cal-k"><span><i class="cd W" style="height:10px"></i>Win</span><span><i class="cd L" style="height:10px"></i>Loss</span><span><i class="cd O" style="height:10px"></i>OT loss</span><span>@ away</span></div></div>`;
 }
 function shiftMonth(d) { const n = new Date(); const c = S.cal || { y: +ymd(n).slice(0, 4), m: +ymd(n).slice(4, 6) - 1 }; const t = new Date(c.y, c.m + d, 1); S.cal = { y: t.getFullYear(), m: t.getMonth() }; refresh(true); }
 
