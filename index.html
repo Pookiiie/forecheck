@@ -470,8 +470,23 @@ const secs = s => { const m = String(s || '').match(/(\d+):(\d+)/); return m ? +
 function lum(hex) { const n = parseInt(String(hex).replace('#', '').padEnd(6, '0').slice(0, 6), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }).reduce((a, v, i) => a + v * [.2126, .7152, .0722][i], 0); }
 const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
 const onInk = c => lum(c) > .36 ? '#10161c' : '#ffffff';
-function teamInk(t) { const a = t.color, b = t.alt; if (contrast(a, cardHex()) >= 2.2) return a; if (contrast(b, cardHex()) >= 2.2) return b; return '#c8ced8'; }
-function pairInk(g) { let h = teamInk(g.home), a = teamInk(g.away); if (contrast(h, a) < 1.35) { const alt = g.away.alt; if (contrast(alt, cardHex()) >= 2 && contrast(alt, h) > contrast(a, h)) a = alt; else a = '#c8ced8'; } return { h, a }; }
+function hexMix(c, w, t) { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const a = p(c), b = p(w); return '#' + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
+function satOf(c) { const n = [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16) / 255); const mx = Math.max(...n), mn = Math.min(...n); return mx ? (mx - mn) / mx : 0; }
+function lift(c, bg, need = 2.4) { let x = c; for (let t = 0; t <= 1 && contrast(x, bg) < need; t += .08) x = hexMix(c, '#ffffff', t); return x; } // lighten a team colour until it reads, keeping its hue
+function teamInk(t) {
+  const bg = cardHex(); const a = t.color, b = t.alt;
+  if (contrast(a, bg) >= 2.2) return a;
+  if (satOf(a) > .25 && contrast(a, bg) >= 1.25) return lift(a, bg);       // e.g. Habs red on dark blue -> lighter red
+  if (b && satOf(b) > .25 && contrast(b, bg) >= 2.2) return b;               // e.g. Sabres navy -> gold
+  return lift(satOf(a) > .1 ? a : (b || a), bg);
+}
+function hueOf(c) { const [r, g, b] = [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16) / 255); const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; if (!d) return -1; let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; }
+function tooClose(x, y) { const hx = hueOf(x), hy = hueOf(y); const dh = hx < 0 || hy < 0 ? 0 : Math.min(Math.abs(hx - hy), 360 - Math.abs(hx - hy)); return contrast(x, y) < 1.4 && dh < 40; }
+function pairInk(g) {
+  const bg = cardHex(); let h = teamInk(g.home), a = teamInk(g.away);
+  if (tooClose(h, a)) { const alt = g.away.alt && satOf(g.away.alt) > .2 ? lift(g.away.alt, bg) : null; a = alt && !tooClose(alt, h) ? alt : (contrast(h, '#ffffff') > 3 ? '#e8edf3' : lift(hexMix(a, '#000000', .0), bg, 4)); }
+  return { h, a };
+}
 function slabColor(t) { for (const c of [t.color, t.alt]) if (c && contrast(c, '#ffffff') >= 3.2) return c; return '#2b3440'; }
 
 /* ---------- ESPN normalising ---------- */
