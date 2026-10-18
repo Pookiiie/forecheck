@@ -499,13 +499,16 @@ function pairInk(g) {
 function slabColor(t) { for (const c of [t.color, t.alt]) if (c && contrast(c, '#ffffff') >= 3.2) return c; return '#2b3440'; }
 
 /* ---------- ESPN normalising ---------- */
+/* team colours, for feeds that leave them out (team schedules) */
+const TEAM_COL = { nhl: 'ANA:fc4c02/000000 BOS:231f20/fdb71a BUF:00468b/fdb71a CGY:dd1a32/000000 CAR:e30426/000000 CHI:e31937/000000 COL:860038/005ea3 CBJ:002d62/e31937 DAL:20864c/000000 DET:e30526/ffffff EDM:00205b/ff4c00 FLA:e51937/002d62 LA:121212/a2aaad MIN:124734/ae122a MTL:c41230/013a81 NSH:fdba31/002d62 NJ:e30b2b/000000 NYI:00529b/f47d31 NYR:0056ae/e51937 OTT:dd1a32/b79257 PHI:fe5823/000000 PIT:000000/fdb71a SJ:00788a/070707 SEA:000d33/a3dce4 STL:0070b9/fdb71a TB:003e7e/ffffff TOR:003e7e/ffffff UTAH:000000/7ab2e1 UTA:000000/7ab2e1 VAN:003e7e/008752 VGK:344043/b4975a WSH:d71830/0b1f41 WPG:002d62/c41230', nfl: 'ARI:a40227/ffffff ATL:a71930/000000 BAL:29126f/000000 BUF:00338d/d50a0a CAR:0085ca/000000 CHI:0b1c3a/e64100 CIN:fb4f14/000000 CLE:472a08/ff3c00 DAL:002a5c/b0b7bc DEN:0a2343/fc4c02 DET:0076b6/bbbbbb GB:204e32/ffb612 HOU:021018/eb0028 IND:003b75/ffffff JAX:007487/d7a22a KC:e31837/ffb612 LV:000000/a5acaf LAC:0080c6/ffc20e LAR:003594/ffd100 MIA:008e97/fc4c02 MIN:4f2683/ffc62f NE:002a5c/c60c30 NO:d3bc8d/000000 NYG:003c7f/c9243f NYJ:115740/ffffff PHI:06424d/000000 PIT:000000/ffb612 SF:aa0000/b3995d SEA:002a5c/69be28 TB:bd1c36/3e3a35 TEN:4495d2/001532 WSH:5a1414/ffb612' };
+const teamCol = (sp, ab) => { const m = new RegExp('(?:^| )' + ab + ':(\\w+)/(\\w*)').exec(TEAM_COL[sp] || ''); return m ? [m[1], m[2]] : null; };
 function mkTeam(sp, c) {
   const t = c.team || {}; const abbr = t.abbreviation || '';
   const logo = t.logo || (t.logos && t.logos[0] && t.logos[0].href) || `https://a.espncdn.com/i/teamlogos/${sp}/500/${abbr.toLowerCase()}.png`;
   const recs = c.records || c.record || [];
   const rec = Array.isArray(recs) ? ((recs.find(r => r.type === 'total') || recs[0] || {}).summary || '') : '';
   let score = c.score; if (score && typeof score === 'object') score = score.displayValue;
-  return { id: String(t.id || c.id || ''), abbr, name: t.shortDisplayName || t.name || abbr, color: '#' + (t.color || '55606a'), alt: '#' + (t.alternateColor || '9aa4ad'), logo, logoDark: logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo, score: score ?? '', rec, winner: !!c.winner, ls: c.linescores || [] };
+  return { id: String(t.id || c.id || ''), abbr, name: t.shortDisplayName || t.name || abbr, color: '#' + (t.color || (teamCol(sp, abbr) || [])[0] || '55606a'), alt: '#' + (t.alternateColor || (!t.color && (teamCol(sp, abbr) || [])[1]) || '9aa4ad'), logo, logoDark: logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo, score: score ?? '', rec, winner: !!c.winner, ls: c.linescores || [] };
 }
 function mkGame(sp, ev) {
   const c = ev.competitions[0]; const st = c.status || ev.status;
