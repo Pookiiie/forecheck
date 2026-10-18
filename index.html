@@ -791,8 +791,11 @@ async function habsRecap(g, ab) {
 /* ---------- favourite team ---------- */
 async function teamSchedule(sp, abbr) {
   return cached('sched:' + sp + abbr, 10 * 60e3, async () => {
-    const j = await espn(sp, 'teams/' + abbr.toLowerCase() + '/schedule');
-    return { team: j.team || {}, games: (j.events || []).map(e => { try { return mkGame(sp, e); } catch (x) { return null; } }).filter(Boolean) };
+    const [j, rm] = await Promise.all([espn(sp, 'teams/' + abbr.toLowerCase() + '/schedule'), recMap(sp).catch(() => ({}))]);
+    const games = (j.events || []).map(e => { try { return mkGame(sp, e); } catch (x) { return null; } }).filter(Boolean);
+    // team schedules carry no records, so upcoming games borrow today's records from the standings
+    games.forEach(g => { if (g.state === 'pre') [g.home, g.away].forEach(t => { if (!t.rec && rm[t.abbr]) t.rec = rm[t.abbr]; }); });
+    return { team: j.team || {}, games };
   });
 }
 const resultLine = (g, ab) => { const me = g.home.abbr === ab ? g.home : g.away, o = me === g.home ? g.away : g.home; const wl = me.winner ? 'W' : o.winner ? 'L' : 'T'; const ot = /(OT|SO)/.exec(g.detail || ''); return `${wl} ${esc(me.score)}–${esc(o.score)}${ot ? ' ' + ot[1] : ''} ${me === g.home ? 'vs' : '@'} ${esc(o.abbr)}`; };
@@ -1034,6 +1037,11 @@ async function applyIce() { const look = CFG.look || 'glass'; document.body.data
 
 /* ---------- standings + playoff picture ---------- */
 const espnV2 = (sp, p) => getJSON(`https://site.api.espn.com/apis/v2/sports/${PATH[sp]}/${p}`);
+async function recMap(sp) {
+  const { conf } = await standings(sp); const m = {};
+  const walk = n => { ((n.standings && n.standings.entries) || []).forEach(e => { const o = (e.stats || []).find(x => x.name === 'overall' || x.type === 'total'); const ab = e.team && e.team.abbreviation; if (ab && o) m[ab] = o.summary || String(o.displayValue || '').split(',')[0]; }); (n.children || []).forEach(walk); };
+  walk(conf); return m;
+}
 const standings = sp => cached('stand:' + sp, 10 * 60e3, async () => { const [conf, div] = await Promise.all([espnV2(sp, 'standings'), espnV2(sp, 'standings?level=3')]); return { conf, div }; });
 const stv = (e, k) => { const s = (e.stats || []).find(x => x.name === k || x.type === k); return s ? (s.value ?? parseFloat(s.displayValue)) : null; };
 const std = (e, k) => { const s = (e.stats || []).find(x => x.name === k || x.type === k); return s ? (s.displayValue ?? String(s.value)) : ''; };
