@@ -241,6 +241,13 @@ button.hero:active{opacity:.85}
 .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;background:var(--fill);font:700 13px/1.2 var(--bc);letter-spacing:.04em;white-space:nowrap}
 .chip .lng{font:600 10px var(--ui);color:var(--fg2)}
 .chip svg{width:9px;height:9px;color:var(--fg2)}
+.chip.dim{color:var(--fg2);font-weight:600}
+.wplay{width:9px;height:9px;color:var(--fg2);margin-right:2px}
+.svc{width:100%;text-align:left}
+.svc .n{width:22px;height:22px;flex:none;border-radius:50%;display:grid;place-items:center;font:700 12px var(--ui);border:1.5px solid var(--sep);color:transparent}
+.svc.on .n{background:var(--tint);border-color:var(--tint);color:#fff}
+.svc .k small{display:block;font-size:12px;color:var(--fg2)}
+.svc:active{background:var(--fill)}
 .mine{display:inline-block;padding:0 4px;border-radius:3px;background:color-mix(in srgb,var(--mine) 20%,transparent);color:var(--mine);font:700 9.5px/15px var(--ui);letter-spacing:.04em;vertical-align:1px}
 
 /* ---------- fantasy matchup cards ---------- */
@@ -436,7 +443,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem('fc_' + k, JSON.stringify(v)); } catch (e) {} },
   del(k) { try { localStorage.removeItem('fc_' + k); } catch (e) {} }
 };
-const DEFAULTS = { look: 'glass', favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '' };
+const DEFAULTS = { look: 'glass', watch: ['rds', 'sn'], favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '' };
 let CFG = Object.assign({}, DEFAULTS, LS.get('cfg', {}));
 const saveCfg = () => LS.set('cfg', CFG);
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2400); }
@@ -545,21 +552,41 @@ new MutationObserver(() => { clearTimeout(fitLogos.t); fitLogos.t = setTimeout((
 const FOOT = '<svg class="foot-ic" viewBox="0 0 16 10" aria-label="has the ball"><ellipse cx="8" cy="5" rx="7.2" ry="4.2" fill="#8b4a20" stroke="#fff" stroke-width="1"/><path d="M5 5h6M6.5 3.8v2.4M8 3.8v2.4M9.5 3.8v2.4" stroke="#fff" stroke-width=".9"/></svg>';
 
 /* ---------- where to watch the Habs in Montréal (2026-27 rights) ---------- */
-const TV = (name, lang, note) => ({ name, lang, note, kind: 'tv' });
-const ST = (name, lang, note) => ({ name, lang, note, kind: 'stream' });
+const PROV = {
+  rds: { name: 'RDS', app: 'RDS app', short: 'RDS', tv: 'RDS', lang: 'FR' },
+  sn: { name: 'Sportsnet', app: 'Sportsnet+', short: 'SN+', tv: 'Sportsnet', lang: 'EN' },
+  tva: { name: 'TVA Sports', app: 'TVA Sports Direct', short: 'TVA', tv: 'TVA Sports', lang: 'FR' },
+  tsn: { name: 'TSN', app: 'TSN app', short: 'TSN', tv: 'TSN2', lang: 'EN' },
+  prime: { name: 'Prime Video', app: 'Prime Video', short: 'Prime', tv: '', lang: 'EN/FR' }
+};
+const PV = (p, note) => ({ p, note });
 function watchHabs(g) {
-  const { wd } = et(g.date); const out = []; let note = '';
-  if (/classic|stadium series/i.test(g.note || '')) { out.push(TV('Sportsnet', 'EN'), TV('TVA Sports', 'FR'), ST('Sportsnet+', 'EN'), ST('TVA Sports Direct', 'FR')); note = (g.note || 'Outdoor game') + ': national broadcast.'; }
-  else if (wd === 'Sat') { out.push(TV('Sportsnet', 'EN'), TV('TVA Sports', 'FR'), ST('Sportsnet+', 'EN'), ST('TVA Sports Direct', 'FR')); note = 'Saturday Habs games are usually national. If not, TSN2 and RDS.'; }
-  else if (wd === 'Wed') { out.push(ST('Prime Video', 'EN/FR', 'if national'), TV('TSN2', 'EN'), TV('RDS', 'FR')); note = 'National Wednesday games are exclusive to Prime Video. Otherwise TSN2 and RDS.'; }
-  else if (wd === 'Mon') { out.push(ST('Sportsnet+', 'EN', 'if Monday Night Hockey'), TV('TSN2', 'EN'), TV('RDS', 'FR')); note = 'Six Habs Monday games stream only on Sportsnet+. The rest are on TSN2 and RDS.'; }
-  else { out.push(TV('TSN2', 'EN'), TV('RDS', 'FR'), ST('TSN app', 'EN'), ST('RDS app', 'FR')); note = 'Regional game. A few are national instead (Sportsnet / TVA Sports).'; }
+  const { wd } = et(g.date); let out, note;
+  if (/classic|stadium series/i.test(g.note || '')) { out = [PV('sn'), PV('tva')]; note = (g.note || 'Outdoor game') + ': national broadcast.'; }
+  else if (wd === 'Sat') { out = [PV('sn'), PV('tva')]; note = 'Saturday Habs games are usually national. If not, TSN2 and RDS.'; }
+  else if (wd === 'Wed') { out = [PV('prime', 'if national'), PV('rds'), PV('tsn')]; note = 'National Wednesday games are exclusive to Prime Video. Otherwise TSN2 and RDS.'; }
+  else if (wd === 'Mon') { out = [PV('sn', 'if Monday Night Hockey'), PV('rds'), PV('tsn')]; note = 'Six Habs Monday games stream only on Sportsnet+. The rest are on TSN2 and RDS.'; }
+  else { out = [PV('rds'), PV('tsn')]; note = 'Regional game. A few are national instead (Sportsnet / TVA Sports).'; }
   return { items: out, note, link: 'https://www.nhl.com/canadiens/schedule', linkText: 'Habs broadcast schedule' };
 }
-const SHORT_TV = { 'Sportsnet': 'SN', 'TVA Sports': 'TVA', 'Prime Video': 'Prime', 'Sportsnet+': 'SN+', 'TSN app': 'TSN app' };
+/* your services, in order of preference: the first one carrying the game is shown; the rest become small print */
+const myWatch = () => (Array.isArray(CFG.watch) ? CFG.watch : DEFAULTS.watch).filter(k => PROV[k]);
+function pickWatch(g) {
+  const w = watchHabs(g), mine = myWatch();
+  const ranked = mine.map(k => w.items.find(i => i.p === k)).filter(Boolean);
+  const main = ranked.length ? [ranked[0]] : mine.length ? [] : w.items;
+  const others = w.items.filter(i => !main.includes(i));
+  return { ...w, main, others };
+}
+const pvText = i => PROV[i.p].app + (i.note ? ' ' + i.note : '');
+const chip = i => `<span class="chip">${PLAY}${esc(PROV[i.p].app)}${PROV[i.p].lang ? ` <span class="lng">${esc(PROV[i.p].lang)}</span>` : ''}</span>`;
+function watchChips(g) {
+  const w = pickWatch(g);
+  if (!w.main.length) return `<div class="chips"><span class="chip dim">Not on your services</span></div>`;
+  return `<div class="chips">${w.main.map(chip).join('')}</div>`;
+}
 const showWatch = g => g.sp === 'nhl' && hasFav(g) && g.state !== 'post';
 const PLAY = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1l7 4-7 4z" fill="currentColor"/></svg>';
-const chip = x => `<span class="chip">${x.kind === 'stream' ? PLAY : ''}${esc(x.name)}${x.lang ? ` <span class="lng">${esc(x.lang)}</span>` : ''}</span>`;
 
 /* ---------- football situation ---------- */
 function ownFromText(txt, offAbbr) { const m = String(txt || '').trim().match(/^([A-Z]{2,4})?\s*(\d{1,2})$/); if (!m) return null; const n = +m[2]; if (n === 50) return 50; if (!m[1]) return null; return m[1] === offAbbr ? n : 100 - n; }
@@ -605,7 +632,7 @@ function tile(g, grouped) {
   const mineH = mine.length ? `<div class="tmine">${mine.map(p => `<span><b>${p.tag}</b>${esc(p.name)}${g.state !== 'pre' ? ` <i>${fmtP(p.pts)}</i>` : ''}</span>`).join('')}</div>` : '';
   let x = '';
   if (si && si.off) x = `<span class="x yl">${esc(si.dd)}${si.rz ? ' · RZ' : ''}</span>`;
-  else if (showWatch(g)) x = `<span class="x">${watchHabs(g).items.slice(0, 2).map(i => esc(SHORT_TV[i.name] || i.name)).join(' · ')}</span>`;
+  else if (showWatch(g)) { const w = pickWatch(g); x = `<span class="x">${w.main.length ? esc(PROV[w.main[0].p].short) : ''}</span>`; }
   else if (g.sp === 'nhl' && g.state === 'post') x = `<span class="x">${esc(fmtDay(g.date))}</span>`;
   else if (g.state === 'pre' && g.odds && g.sp === 'nfl') x = `<span class="x">${esc(g.odds)}</span>`;
   const st = g.state === 'pre' && g.sp === 'nfl' && grouped ? '' : statusText(g);
@@ -647,7 +674,7 @@ async function heroHTML(sp, games, extra = {}) {
   if (g) {
     const under = [flagUnder(g)];
     if (g.state === 'post' && next) under.push(`<div class="meta">Next: ${nextLine(next, ab)}</div>`);
-    if (showWatch(g)) under.push(`<div class="chips">${watchHabs(g).items.map(chip).join('')}</div>`);
+    if (showWatch(g)) under.push(watchChips(g));
     return { html: `<button class="hero" data-open="${sp}:${g.id}">${bug(g)}${under.join('') ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: g.id };
   }
   if (sp === 'nfl' && extra.byes && extra.byes.includes(ab)) {
@@ -658,7 +685,7 @@ async function heroHTML(sp, games, extra = {}) {
   }
   if (next) {
     const under = [`<div class="meta">${last ? 'Last: ' + resultLine(last, ab) : ''}</div>`];
-    if (showWatch(next)) under.push(`<div class="chips">${watchHabs(next).items.map(chip).join('')}</div>`);
+    if (showWatch(next)) under.push(watchChips(next));
     return { html: `<button class="hero" data-open="${sp}:${next.id}">${bug(next)}<div class="under">${under.join('')}</div></button>`, id: next.id };
   }
   return { html: '', id: null };
@@ -947,8 +974,11 @@ function lineScore(g) {
 const headBlock = (g, sog) => `<div class="hero">${bug(g, { lg: true, sog })}${g.state !== 'pre' ? lineScore(g) : ''}</div>`;
 function watchSec(g) {
   if (!showWatch(g)) return '';
-  const w = watchHabs(g);
-  return `<section class="sec flush"><h2><span>Where to watch</span></h2><div>${w.items.map(x => `<div class="row"><span class="k">${x.kind === 'stream' ? 'Stream' : 'TV'}</span><span class="v" style="color:var(--fg)">${esc(x.name)} <span style="color:var(--fg2)">${esc(x.lang || '')}${x.note ? ' · ' + esc(x.note) : ''}</span></span></div>`).join('')}</div></section><p class="foot">${esc(w.note)} <a href="${esc(w.link)}" target="_blank" rel="noopener">${esc(w.linkText)}</a></p>`;
+  const w = pickWatch(g);
+  const rows = w.main.map(i => { const P = PROV[i.p]; return `<div class="row"><span class="k">${PLAY.replace('<svg', '<svg class="wplay"')} ${esc(P.app)}</span><span class="v">${esc(P.lang)}${i.note ? ' · ' + esc(i.note) : ''}${P.tv ? ' · ' + esc(P.tv) + ' on TV' : ''}</span></div>`; }).join('')
+    || `<div class="row"><span class="k" style="color:var(--fg2)">Not on your services</span></div>`;
+  const also = w.others.length ? `Also on ${w.others.map(i => esc(pvText(i))).join(', ')}. ` : '';
+  return `<section class="sec flush"><h2><span>Where to watch</span></h2><div>${rows}</div></section><p class="foot">${also}${esc(w.note)} <a href="${esc(w.link)}" target="_blank" rel="noopener">${esc(w.linkText)}</a></p>`;
 }
 function compareRows(rows, g) {
   const ink = pairInk(g);
@@ -1337,6 +1367,8 @@ function openSettings(banner) {
     <label class="row"><span class="k">NFL</span><select id="sfNfl"><option value="">None</option>${opt(NFL_TEAMS, CFG.favNFL)}</select></label>
     <label class="row"><span class="k">NHL</span><select id="sfNhl">${opt(NHL_TEAMS, CFG.favNHL)}</select></label>
     <label class="row"><span class="k">Habs look</span><select id="sfIce">${[['glass', 'Glacier glass'], ['dark', 'Night rink'], ['light', 'Fresh sheet']].map(([v, l]) => `<option value="${v}" ${(CFG.look || 'glass') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div></section>
+  <section class="sec flush"><h2><span>Habs: your services</span></h2><div id="sfWatch"></div></section>
+  <p class="foot">Tap in order of preference. Each Habs game shows only the first one carrying it; the others are listed in small print in the game details.</p>
   <section class="sec flush"><h2><span>Sleeper</span></h2><div>
     <label class="row"><span class="k">League ID</span><input id="sfSl" inputmode="numeric" autocomplete="off" value="${esc(CFG.sleeperLeague)}" placeholder="Required"></label>
     <label class="row"><span class="k">Your team</span><select id="sfSlTeam"><option value="${esc(CFG.sleeperRoster)}">${CFG.sleeperRoster ? 'Loading…' : 'Load teams first'}</option></select></label>
@@ -1363,7 +1395,11 @@ function openSettings(banner) {
   $('#sfSlLoad').onclick = async () => { const L = $('#sfSl').value.trim(); if (!L) return; try { const [users, rosters] = await Promise.all([SL('league/' + L + '/users'), SL('league/' + L + '/rosters')]); fillSleeperTeams(users, rosters); toast('Teams loaded'); } catch (e) { $('#sfMsg').textContent = 'Sleeper: ' + e.message; } };
   $('#sfCbsLoad').onclick = async () => { const tok = $('#sfCbs').value.trim(); if (!tok) return; const old = CFG.cbsToken; CFG.cbsToken = tok; try { const b = await cbsCall('league/teams'); $('#sfCbsTeam').innerHTML = (b.teams || []).map(t => `<option value="${esc(t.id)}" ${String(t.id) === String(CFG.cbsTeam) ? 'selected' : ''}>${esc(t.name)}</option>`).join(''); toast('Teams loaded'); } catch (e) { $('#sfMsg').textContent = 'CBS: ' + e.message; } finally { CFG.cbsToken = old; } };
   $('#sfCbsDiag').onclick = async () => { if (!CFG.cbsToken) { toast('Add your CBS token first'); return; } const txt = await cbsDiagnostics(); try { await navigator.clipboard.writeText(txt); toast('Copied (field names only, no scores or token)'); } catch (e) { $('#sfMsg').textContent = txt; } };
-  $('#sfSave').onclick = () => { CFG.look = $('#sfIce').value; applyIce(); CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
+  let watchSel = myWatch().slice();
+  const drawWatch = () => { $('#sfWatch').innerHTML = Object.entries(PROV).map(([k, P]) => { const i = watchSel.indexOf(k); return `<button class="row svc${i >= 0 ? ' on' : ''}" data-svc="${k}" aria-pressed="${i >= 0}"><span class="n">${i >= 0 ? i + 1 : ''}</span><span class="k">${esc(P.app)}<small>${esc([P.tv && P.tv !== P.app ? P.tv + ' on TV' : '', P.lang].filter(Boolean).join(' · '))}</small></span></button>`; }).join(''); };
+  drawWatch();
+  $('#sfWatch').onclick = e => { const b = e.target.closest('[data-svc]'); if (!b) return; const k = b.dataset.svc; watchSel = watchSel.includes(k) ? watchSel.filter(x => x !== k) : watchSel.concat(k); drawWatch(); };
+  $('#sfSave').onclick = () => { CFG.watch = watchSel.slice(); CFG.look = $('#sfIce').value; applyIce(); CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
   $('#sfReset').onclick = () => { const b = $('#sfReset'); if (b.dataset.armed) { LS.del('cfg'); LS.del('sp_players'); CFG = Object.assign({}, DEFAULTS); MY_NAMES.clear(); FX.data = {}; FX.byTeam = {}; toast('Cleared'); closeSheet(); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to clear everything'; } };
 }
 
