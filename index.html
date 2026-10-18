@@ -212,12 +212,13 @@ body[data-ice="light"] .lbl{text-shadow:none}
 /* ---------- big score bug ---------- */
 .hero{display:grid;gap:7px;width:100%;background:var(--card);border-radius:12px;padding:8px}
 button.hero:active{opacity:.85}
-.bug{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;border-radius:7px;overflow:hidden;min-height:42px}
-.bt{display:flex;align-items:center;gap:6px;padding:0 9px;color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 86%,#fff) 0%,var(--c) 52%,color-mix(in srgb,var(--c) 78%,#000) 100%);min-width:0}
+.bug{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;border-radius:7px;overflow:hidden;min-height:48px}
+/* logos fill the slab height (44px in a 48px bug), no drop shadows */
+.bt{display:flex;align-items:center;gap:5px;padding:0 9px 0 5px;color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 86%,#fff) 0%,var(--c) 52%,color-mix(in srgb,var(--c) 78%,#000) 100%);min-width:0}
 .bt+.bt{border-left:1px solid rgba(0,0,0,.35)}
-.bt img{width:24px;height:24px;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4));flex:none}
-.bt .ab{font:800 20px/1 var(--bc);letter-spacing:.04em;text-shadow:0 1px 1px rgba(0,0,0,.35)}
-.bt .bs{margin-left:auto;font:800 28px/1 var(--bc);font-variant-numeric:tabular-nums;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.bt img{width:44px;height:44px;object-fit:contain;flex:none}
+.bt .ab{font:800 20px/1 var(--bc);letter-spacing:.04em}
+.bt .bs{margin-left:auto;font:800 28px/1 var(--bc);font-variant-numeric:tabular-nums}
 .bt .bs small{font:600 12.5px var(--ui);opacity:.9;text-shadow:none}
 .bt.lose .bs{opacity:.55}
 .bt .foot-ic{width:16px;height:10px}
@@ -245,7 +246,7 @@ button.hero:active{opacity:.85}
 .bug.nhl .bc .c1{color:#ffd27a}
 .bug.nhl .bc.on .c1{color:var(--red)}
 .bug.lg{min-height:56px;border-radius:9px}
-.bug.lg .bt img{width:30px;height:30px}
+.bug.lg .bt img{width:46px;height:46px}
 .bug.lg .bt .ab{font-size:23px}
 .bug.lg .bt .bs{font-size:36px}
 .bug.lg .bc{min-width:78px}
@@ -552,7 +553,7 @@ async function cached(key, ms, fn) { const m = memo[key]; if (m && Date.now() - 
 /* time */
 function et(d) { const p = {}; new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short', hour: 'numeric', minute: 'numeric', hourCycle: 'h23', month: 'numeric', day: 'numeric' }).formatToParts(d).forEach(x => p[x.type] = x.value); return { wd: p.weekday, h: +p.hour % 24 }; }
 const ymd = d => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replace(/-/g, '');
-const fmtTime = d => d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }).replace(/\./g, '').toUpperCase();
+const fmtTime = d => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 const fmtDay = d => d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }).replace(/\./g, '');
 const isToday = d => ymd(d) === ymd(new Date());
 const isTomorrow = d => ymd(d) === ymd(new Date(Date.now() + 864e5));
@@ -752,7 +753,7 @@ function bug(G, { lg = false, sog = null, watch = null } = {}) {
   else { const ot = /(OT|SO)/.exec(G.detail || ''); c = `<span class="c1">Final</span>${ot ? `<span class="c2">${ot[1]}</span>` : ''}`; }
   // where to watch rides along on a grey bar at the foot of the clock box, with day and time on one row above it
   const w = watch && watch.main && watch.main[0];
-  const inl = pre && !sog && (G.home.rec || G.away.rec) ? ' inl' : '';
+  const inl = '';
   if (w) { const P = PROV[w.p]; return `<div class="bug ${G.sp}${lg ? ' lg' : ''}${inl}">${slab(G.away)}${slab(G.home)}<div class="bc w${live ? ' on' : ''}"><span class="r1">${c}</span><span class="wbar">${PLAY}${esc(P.bug || P.name)}${P.lang ? ` <small>${esc(P.lang)}</small>` : ''}${w.note ? ` <small>${esc(w.note)}</small>` : ''}</span></div></div>`; }
   return `<div class="bug ${G.sp}${lg ? ' lg' : ''}${inl}">${slab(G.away)}${slab(G.home)}<div class="bc${live ? ' on' : ''}">${c}</div></div>`;
 }
