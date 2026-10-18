@@ -1171,7 +1171,7 @@ async function sleeperData(nfl) {
   const mus = await SL(`league/${L}/matchups/${wk}`);
   const ids = [...new Set(rosters.flatMap(r => (r.players || []).concat(r.starters || [])).filter(x => x && x !== '0'))];
   const P = await sleeperPlayers(ids);
-  const proj = await cached(`slp:${st.season}:${wk}`, 20 * 60e3, async () => { const rows = await projRows(st.season, wk); const m = {}; const rec = (lg.scoring_settings && lg.scoring_settings.rec) ?? 1; const key = rec >= 1 ? 'pts_ppr' : rec >= .5 ? 'pts_half_ppr' : 'pts_std'; rows.forEach(r => { const s = r.stats || {}; m[r.player_id] = s[key] ?? s.pts_ppr ?? 0; }); return m; }).catch(() => ({}));
+  const proj = await cached(`slp:${st.season}:${wk}`, 60e3, async () => { const rows = await projRows(st.season, wk); const m = {}; const rec = (lg.scoring_settings && lg.scoring_settings.rec) ?? 1; const key = rec >= 1 ? 'pts_ppr' : rec >= .5 ? 'pts_half_ppr' : 'pts_std'; rows.forEach(r => { const s = r.stats || {}; m[r.player_id] = s[key] ?? s.pts_ppr ?? 0; }); return m; }).catch(() => ({}));
   const uname = rid => { const r = rosters.find(x => x.roster_id === rid); const u = r && users.find(x => x.user_id === r.owner_id); return (u && ((u.metadata && u.metadata.team_name) || u.display_name)) || 'Team ' + rid; };
   const slots = (lg.roster_positions || []).filter(x => !['BN', 'IR', 'TAXI'].includes(x));
   const teamOf = m => {
@@ -1191,7 +1191,7 @@ async function sleeperData(nfl) {
 }
 /* Weekly projections from Sleeper; CBS live scoring has none, so CBS players are projected
    from the same stat lines using the BELL MIRABEL scoring (6-pt pass TD, -2 INT, no PPR). */
-const projRows = (season, wk) => cached(`proj:${season}:${wk}`, 20 * 60e3, () => getJSON(`https://api.sleeper.app/projections/nfl/${season}/${wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF`));
+const projRows = (season, wk) => cached(`proj:${season}:${wk}`, 60e3, () => getJSON(`https://api.sleeper.app/projections/nfl/${season}/${wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF`));
 const CBS_SC = { pass_yd: .04, pass_td: 6, pass_int: -2, rush_yd: .1, rush_td: 6, rec_yd: .1, rec_td: 6, fum_lost: -2, pass_2pt: 2, rush_2pt: 2, rec_2pt: 2 };
 function cbsProjMap(rows) {
   const k = {}, n = {};
