@@ -1,0 +1,1125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Forecheck</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1711">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Forecheck">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Big+Shoulders+Display:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+/* Layout: one column, phone-first. Sticky scoreboard header, fixed tab bar, full-screen game sheet.
+   Football = night game on turf (always dark). Hockey = fresh ice (light) / arena (dark). */
+:root{
+  --f-disp:"Big Shoulders Display","Barlow Condensed",Impact,"Arial Narrow",sans-serif;
+  --f-body:"Barlow",-apple-system,system-ui,"Segoe UI",sans-serif;
+  --f-num:"Barlow Condensed","Barlow",-apple-system,system-ui,sans-serif;
+  --bg:#0b1711;--bg2:#0f1f17;--card:#132a1e;--card2:#1a3527;--line:rgba(232,242,230,.12);
+  --fg:#eef3ec;--muted:#97ab9c;--accent:#e9c35a;--accent-ink:#1d1704;--live:#ff5d50;--good:#5fd394;--warn:#f1b44c;
+  --blue:#62b0ff;--chalk:#f3f6ee;--ice:#f4f8fb;--shadow:0 1px 0 rgba(255,255,255,.04) inset,0 10px 26px rgba(0,0,0,.32);
+  color-scheme:dark;
+}
+body[data-sport="nhl"]{
+  --bg:#e7eef4;--bg2:#dde7ef;--card:#ffffff;--card2:#f0f5f9;--line:rgba(14,40,64,.13);
+  --fg:#0c1d2b;--muted:#566a7b;--accent:#c8102e;--accent-ink:#ffffff;--live:#d0142f;--good:#16834b;--warn:#b26b00;
+  --blue:#1d4f91;--chalk:#ffffff;--ice:#f6fafd;--shadow:0 1px 2px rgba(14,40,64,.08),0 8px 20px rgba(14,40,64,.07);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  body[data-sport="nhl"]{
+    --bg:#0a1119;--bg2:#0e1822;--card:#131e2a;--card2:#192736;--line:rgba(214,232,250,.11);
+    --fg:#e7eff6;--muted:#8fa4b6;--accent:#ff4d5e;--accent-ink:#ffffff;--live:#ff4d5e;--good:#5fd394;--warn:#f1b44c;
+    --blue:#71a7ff;--chalk:#dfe9f2;--ice:#dfe9f2;--shadow:0 10px 26px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.42 var(--f-body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;transition:background-color .25s}
+img{max-width:100%}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+a{color:inherit}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+/* ---------- header ---------- */
+.top{position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top,0px);background:var(--bg2);border-bottom:1px solid var(--line)}
+body[data-sport="nfl"] .top{background:repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 30px,transparent 30px 60px),var(--bg2)}
+body[data-sport="nhl"] .top{background:linear-gradient(90deg,transparent calc(50% - 1.5px),rgba(200,16,46,.28) calc(50% - 1.5px) calc(50% + 1.5px),transparent calc(50% + 1.5px)),linear-gradient(90deg,transparent 22%,rgba(29,79,145,.16) 22% calc(22% + 3px),transparent calc(22% + 3px) calc(78% - 3px),rgba(29,79,145,.16) calc(78% - 3px) 78%,transparent 78%),var(--bg2)}
+.top-in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mark{font:900 24px/1 var(--f-disp);letter-spacing:.035em;text-transform:uppercase;margin:0}
+.mark b{color:var(--accent);font-weight:900}
+.updated{margin-left:auto;font:600 12px var(--f-num);color:var(--muted);letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--live);box-shadow:0 0 0 0 var(--live);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--live) 70%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.iconbtn{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--fg);background:var(--card2);border:1px solid var(--line)}
+.iconbtn svg{width:18px;height:18px}
+.iconbtn.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- main ---------- */
+main{max-width:760px;margin:0 auto;padding-top:14px;padding-bottom:calc(92px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:6px 2px -4px}
+.eyebrow{font:700 12px/1.2 var(--f-num);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+.eyebrow.live{color:var(--live)}
+.list{display:grid;gap:10px}
+@media (min-width:640px){.list{grid-template-columns:1fr 1fr}}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.empty{padding:22px 16px;text-align:center;color:var(--muted);background:var(--card);border-radius:14px;border:1px dashed var(--line)}
+.err{padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--live) 14%,var(--card));border:1px solid color-mix(in srgb,var(--live) 40%,transparent);font-size:14px}
+
+/* nav (week / day) */
+.nav{display:flex;align-items:center;gap:8px}
+.nav .lbl{flex:1;text-align:center;font:800 20px/1 var(--f-disp);letter-spacing:.04em;text-transform:uppercase}
+.nav .lbl small{display:block;font:600 12px var(--f-num);letter-spacing:.08em;color:var(--muted);margin-top:3px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:var(--card2);border:1px solid var(--line);font:700 13px var(--f-num);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.pill svg{width:14px;height:14px}
+.byes{font-size:13px;color:var(--muted);text-align:center;margin-top:-4px}
+
+/* ---------- game card ---------- */
+.game{background:var(--card);border-radius:14px;padding:11px 13px 12px;box-shadow:var(--shadow);display:grid;gap:7px;text-align:left;width:100%;border:1px solid var(--line);min-width:0}
+.game.fav{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.g-top{display:flex;align-items:center;gap:8px;min-height:20px}
+.st{font:700 13px var(--f-num);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.st.in{color:var(--live)}
+.livetag{display:inline-flex;align-items:center;gap:5px;font:800 11px var(--f-num);letter-spacing:.12em;color:#fff;background:var(--live);border-radius:4px;padding:2px 6px}
+.g-watch{margin-left:auto;display:flex;gap:4px;overflow:hidden;flex-wrap:nowrap;min-width:0;justify-content:flex-end}
+.tr{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:10px}
+.tr.lose{opacity:.55}
+.lg{width:30px;height:30px;object-fit:contain;display:block}
+.tn{display:flex;align-items:baseline;gap:7px;min-width:0}
+.ab{font:800 21px/1 var(--f-disp);letter-spacing:.03em}
+.nm{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec{font-family:var(--f-num);opacity:.85}
+.sc{font:800 30px/1 var(--f-disp);font-variant-numeric:tabular-nums;min-width:1.6ch;text-align:right}
+.star{color:var(--accent);font-size:13px;line-height:1}
+.poss{width:9px;height:6px;border-radius:50%;background:#a0582a;border:1px solid #f3e3d2;align-self:center}
+.sit{display:grid;gap:5px;padding-top:7px;border-top:1px solid var(--line)}
+.sit-line{display:flex;align-items:center;gap:8px;font:600 13px var(--f-num);letter-spacing:.03em;flex-wrap:wrap}
+.rz{color:#fff;background:var(--live);border-radius:4px;padding:0 5px;font-weight:800;letter-spacing:.08em;font-size:11px}
+.lastplay{font-size:13px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mini{position:relative;height:16px;border-radius:4px;background:repeating-linear-gradient(90deg,#1f6e3c 0 10%,#22763f 10% 20%);overflow:hidden}
+.mini .ez{position:absolute;top:0;bottom:0;width:6%}
+.mini .los{position:absolute;top:0;bottom:0;width:2px;background:var(--blue)}
+.mini .fd{position:absolute;top:0;bottom:0;width:2px;background:#f3d23b}
+.mini .ball{position:absolute;top:50%;width:11px;height:7px;margin:-3.5px 0 0 -5.5px;border-radius:50%;background:#8b4a20;border:1px solid #f6e9dc}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;background:var(--card2);border:1px solid var(--line);font:700 12px/1.3 var(--f-num);letter-spacing:.03em;white-space:nowrap}
+.chip .lng{font-size:10px;opacity:.7;letter-spacing:.08em}
+.chip.stream{border-style:dashed}
+.chip svg{width:10px;height:10px}
+.chip.mine{background:color-mix(in srgb,var(--accent) 20%,var(--card2));border-color:color-mix(in srgb,var(--accent) 50%,transparent);color:var(--fg);padding:1px 6px;font-size:10px;letter-spacing:.08em}
+
+/* ---------- hero ---------- */
+.hero{position:relative;overflow:hidden;border-radius:18px;padding:14px 16px 16px;color:#fff;background:linear-gradient(140deg,var(--tc) 0%,color-mix(in srgb,var(--tc) 62%,#000) 100%);box-shadow:var(--shadow);display:grid;gap:10px;text-align:left;width:100%}
+.hero::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.05) 0 2px,transparent 2px 14px);pointer-events:none}
+.hero .wm{position:absolute;right:-28px;top:-18px;width:150px;height:150px;opacity:.13;pointer-events:none}
+.hero-eb{font:800 12px var(--f-num);letter-spacing:.14em;text-transform:uppercase;opacity:.9;display:flex;gap:8px;align-items:center;position:relative;z-index:1}
+.hero-eb .livetag{background:#fff;color:var(--tc)}
+.hero-m{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;position:relative;z-index:1}
+.hero-t{display:flex;align-items:center;gap:8px;min-width:0}
+.hero-t.h{justify-content:flex-end}
+.hero-t img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+.hero-t .ab{font-size:28px}
+.hero-sc{font:900 46px/1 var(--f-disp);font-variant-numeric:tabular-nums;letter-spacing:.02em;display:flex;gap:10px;align-items:center}
+.hero-sc .vs{font-size:16px;opacity:.7;font-weight:800;letter-spacing:.1em}
+.hero-sc .l{opacity:.55}
+.hero-st{font:700 15px var(--f-num);letter-spacing:.04em;text-transform:uppercase;text-align:center;position:relative;z-index:1}
+.hero-sub{font-size:14px;opacity:.92;text-align:center;position:relative;z-index:1}
+.hero .chips{justify-content:center;position:relative;z-index:1}
+.hero .chip{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);color:#fff}
+.hero .mini{position:relative;z-index:1}
+.hero .lastplay{color:rgba(255,255,255,.85);text-align:center}
+
+/* ---------- tab bar ---------- */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:color-mix(in srgb,var(--bg2) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs-in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.tab{display:grid;justify-items:center;gap:2px;padding:8px 0 7px;color:var(--muted);font:700 11px var(--f-num);letter-spacing:.1em;text-transform:uppercase}
+.tab svg{width:24px;height:24px}
+.tab[aria-selected="true"]{color:var(--fg)}
+.tab[aria-selected="true"] svg{color:var(--accent)}
+
+/* ---------- sheet (game detail / settings) ---------- */
+.sheet{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;transform:translateY(102%);transition:transform .3s cubic-bezier(.2,.8,.2,1);visibility:hidden}
+.sheet.open{transform:none;visibility:visible}
+.sh-top{position:sticky;top:0;z-index:5;padding-top:env(safe-area-inset-top,0px);background:var(--bg2);border-bottom:1px solid var(--line)}
+.sh-top .top-in{padding-block:8px}
+.sh-title{font:800 18px/1 var(--f-disp);letter-spacing:.05em;text-transform:uppercase;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh-body{max-width:760px;margin:0 auto;padding-top:14px;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+.panel{background:var(--card);border-radius:14px;padding:13px 14px;box-shadow:var(--shadow);border:1px solid var(--line);display:grid;gap:10px;min-width:0}
+.panel h3{margin:0;font:700 12px/1.2 var(--f-num);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.panel h3 .r{margin-left:auto;letter-spacing:.04em;text-transform:none;font-weight:600}
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0}
+svg text{font-family:var(--f-num)}
+
+/* big detail scoreboard */
+.dh{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;text-align:center}
+.dh-t{display:grid;justify-items:center;gap:4px;min-width:0}
+.dh-t img{width:52px;height:52px;object-fit:contain}
+.dh-t .ab{font-size:24px}
+.dh-t .rec{font-size:13px;color:var(--muted)}
+.dh-sc{font:900 50px/1 var(--f-disp);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:12px}
+.dh-sc .l{opacity:.45}
+.dh-mid{display:grid;justify-items:center;gap:6px}
+.ls{width:100%;border-collapse:collapse;font:600 14px var(--f-num);font-variant-numeric:tabular-nums}
+.ls th,.ls td{padding:5px 6px;text-align:center;border-bottom:1px solid var(--line)}
+.ls th{font-size:11px;letter-spacing:.1em;color:var(--muted);font-weight:700}
+.ls td:first-child,.ls th:first-child{text-align:left}
+.ls td:last-child{font-weight:800}
+
+/* segmented control */
+.seg{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;padding:7px 6px;border-radius:7px;font:700 12px var(--f-num);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+
+/* compare bars */
+.cmp{display:grid;gap:9px}
+.cmp-r{display:grid;gap:4px}
+.cmp-v{display:grid;grid-template-columns:auto 1fr auto;align-items:baseline;gap:8px;font:700 15px var(--f-num);font-variant-numeric:tabular-nums}
+.cmp-v span:nth-child(2){font:600 12px var(--f-num);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center}
+.cmp-b{display:flex;gap:3px;height:6px}
+.cmp-b i{display:block;border-radius:3px;min-width:3px}
+
+/* tables */
+.tbl{width:100%;border-collapse:collapse;font:500 14px var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl th{font:700 11px var(--f-num);letter-spacing:.08em;color:var(--muted);text-align:right;padding:4px 6px;border-bottom:1px solid var(--line)}
+.tbl td{text-align:right;padding:6px;border-bottom:1px solid var(--line)}
+.tbl th:first-child,.tbl td:first-child{text-align:left;padding-left:0}
+.tbl td:first-child{font-family:var(--f-body);font-weight:600;font-size:14px;max-width:46vw;overflow:hidden;text-overflow:ellipsis}
+.tbl tr.me td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.cat{font:700 12px var(--f-num);letter-spacing:.1em;text-transform:uppercase;margin:6px 0 0;color:var(--muted)}
+
+/* drive chart */
+.drives{display:grid;gap:7px}
+.dr{display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:center}
+.dr-ab{font:800 14px var(--f-disp);letter-spacing:.04em}
+.dr-track{position:relative;height:18px;border-radius:4px;background:repeating-linear-gradient(90deg,var(--card2) 0 10%,color-mix(in srgb,var(--card2) 70%,var(--line)) 10% 20%)}
+.dr-bar{position:absolute;top:3px;bottom:3px;border-radius:3px;min-width:4px}
+.dr-meta{grid-column:2;display:flex;gap:8px;font:600 12px var(--f-num);color:var(--muted);letter-spacing:.03em;margin-top:-3px}
+.dr-res{font-weight:800;color:var(--fg)}
+.dr-res.score{color:var(--good)}
+.dr-res.bad{color:var(--live)}
+
+/* plays / goals */
+.plays{display:grid;gap:0}
+.play{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.play:last-child{border-bottom:0}
+.play .t{font:700 12px var(--f-num);color:var(--muted);letter-spacing:.04em;white-space:nowrap;padding-top:2px;min-width:54px}
+.play .tag{display:inline-block;font:800 11px var(--f-num);letter-spacing:.08em;padding:0 5px;border-radius:4px;color:#fff;margin-right:6px}
+
+/* watch */
+.watch{display:grid;gap:8px}
+.wrow{display:grid;grid-template-columns:70px 1fr;gap:8px;align-items:start}
+.wrow .k{font:700 11px var(--f-num);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-top:4px}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:12px;font:600 12px var(--f-num);color:var(--muted);letter-spacing:.03em}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* ---------- fantasy ---------- */
+.fx-head{display:flex;align-items:center;gap:8px}
+.fx-head .lg-name{font:800 20px/1 var(--f-disp);letter-spacing:.04em;text-transform:uppercase}
+.fx-head .src{margin-left:auto}
+.fx-vs{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+.fx-tm{min-width:0}
+.fx-tm.r{text-align:right}
+.fx-tm .n{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx-tm .p{font:900 38px/1 var(--f-disp);font-variant-numeric:tabular-nums}
+.fx-tm .pj{font:600 12px var(--f-num);color:var(--muted);letter-spacing:.04em}
+.fx-mid{font:800 12px var(--f-num);letter-spacing:.14em;color:var(--muted)}
+.fx-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px}
+.fx-bar i{display:block}
+.fx-odds{display:flex;justify-content:space-between;font:700 12px var(--f-num);letter-spacing:.06em;color:var(--muted);margin-top:-4px}
+.pl{display:grid;grid-template-columns:38px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.pl:last-child{border-bottom:0}
+.slot{font:800 11px var(--f-num);letter-spacing:.06em;color:var(--muted);text-align:center;background:var(--card2);border-radius:5px;padding:3px 0}
+.pn{min-width:0}
+.pn .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pn .m{font:600 12px var(--f-num);color:var(--muted);letter-spacing:.03em;display:flex;gap:6px;flex-wrap:wrap}
+.pn .m .in{color:var(--live)}
+.pn .m .inj{color:var(--warn);font-weight:800}
+.pp{text-align:right}
+.pp .v{font:800 20px/1 var(--f-disp);font-variant-numeric:tabular-nums}
+.pp .j{font:600 11px var(--f-num);color:var(--muted)}
+.bench{opacity:.72}
+.mu{display:grid;grid-template-columns:1fr auto auto auto 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.mu:last-child{border-bottom:0}
+.mu .a{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mu .b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mu .s{font:800 17px var(--f-disp);font-variant-numeric:tabular-nums}
+.mu .w{font-weight:700}
+.mu.me{background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:8px;padding-inline:6px}
+
+/* ---------- settings ---------- */
+.form{display:grid;gap:12px}
+.fld{display:grid;gap:5px}
+.fld label{font:700 12px var(--f-num);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fld input,.fld select,.fld textarea{width:100%;font:16px var(--f-body);color:var(--fg);background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.fld textarea{font:13px/1.4 ui-monospace,Menlo,monospace;min-height:84px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font:800 14px var(--f-num);letter-spacing:.08em;text-transform:uppercase}
+.btn.ghost{background:var(--card2);color:var(--fg);border:1px solid var(--line)}
+.hint{font-size:13px;color:var(--muted)}
+.hint code,.code{font:12px/1.45 ui-monospace,Menlo,monospace;word-break:break-all}
+.code{display:block;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px;user-select:all;-webkit-user-select:all}
+.ok{color:var(--good);font-weight:600}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:10px;font:600 14px var(--f-body);box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:calc(100% - 32px)}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-sport="nfl">
+<header class="top">
+  <div class="top-in">
+    <h1 class="mark">Fore<b>check</b></h1>
+    <div class="updated" id="updated"><span class="dot" id="livedot"></span><span id="updtxt">Loading</span></div>
+    <button class="iconbtn" id="refreshBtn" aria-label="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+    <button class="iconbtn" id="settingsBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </div>
+</header>
+
+<main id="view" aria-live="polite"></main>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="tabs-in" role="tablist">
+    <button class="tab" role="tab" data-tab="nfl" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4.5 19.5c-1.6-5.2 1.2-11.4 6.4-13.6 2.9-1.2 6.1-1.3 8.6-.8.5 2.5.4 5.7-.8 8.6-2.2 5.2-8.4 8-13.6 6.4z"/><path d="M9 15l6-6M10.5 10.5l1.5 1.5M12.5 8.5L14 10M8.5 12.5L10 14"/></svg>Football</button>
+    <button class="tab" role="tab" data-tab="nhl" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 3l6.5 13.5c.4.9 1.3 1.5 2.3 1.5H20"/><path d="M14 18h6v2.5h-6.5c-1.7 0-3.2-1-4-2.5"/><ellipse cx="6.5" cy="19" rx="3.5" ry="1.6"/><path d="M3 19v1.4c0 .9 1.6 1.6 3.5 1.6s3.5-.7 3.5-1.6V19"/></svg>Hockey</button>
+    <button class="tab" role="tab" data-tab="fx" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="16" cy="9" r="1.4"/></svg>Fantasy</button>
+  </div>
+</nav>
+
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle">
+  <div class="sh-top"><div class="top-in">
+    <button class="iconbtn" id="sheetBack" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="sh-title" id="shTitle"></div>
+    <div class="updated"><span class="dot" id="shdot"></span></div>
+  </div></div>
+  <div class="sh-body" id="shBody"></div>
+</section>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Forecheck: personal NFL + NHL live scores, game visuals, where to
+   watch in Montréal, and live fantasy (Sleeper + CBS).
+   Data: ESPN public site API, Sleeper public API, CBS Fantasy API
+   (with the user's own token). Personal settings stay on this device.
+   ===================================================================== */
+const TZ = 'America/Toronto';
+const NFL_TEAMS = 'ARI ATL BAL BUF CAR CHI CIN CLE DAL DEN DET GB HOU IND JAX KC LAC LAR LV MIA MIN NE NO NYG NYJ PHI PIT SEA SF TB TEN WSH'.split(' ');
+const NHL_TEAMS = 'ANA BOS BUF CAR CBJ CGY CHI COL DAL DET EDM FLA LA MIN MTL NJ NSH NYI NYR OTT PHI PIT SEA SJ STL TB TOR UTA VAN VGK WPG WSH'.split(' ');
+const PATH = { nfl: 'football/nfl', nhl: 'hockey/nhl' };
+const CBS_TOKEN_RE = /token["']?\s*[:=]\s*["']([A-Za-z0-9_\-.]{20,})["']/;
+
+/* ---------- tiny helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem('fc_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('fc_' + k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem('fc_' + k); } catch (e) {} }
+};
+const DEFAULTS = { favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '' };
+let CFG = Object.assign({}, DEFAULTS, LS.get('cfg', {}));
+const saveCfg = () => LS.set('cfg', CFG);
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); }
+
+async function getJSON(url, timeout = 15000) {
+  const c = new AbortController(); const t = setTimeout(() => c.abort(), timeout);
+  try {
+    const r = await fetch(url, { signal: c.signal, cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const txt = await r.text();
+    try { return JSON.parse(txt); } catch (e) { throw new Error(txt.slice(0, 120) || 'Bad response'); }
+  } catch (e) { if (e.name === 'AbortError') throw new Error('Timed out'); throw e; }
+  finally { clearTimeout(t); }
+}
+const espn = (sp, p) => getJSON(`https://site.api.espn.com/apis/site/v2/sports/${PATH[sp]}/${p}`);
+const memo = {};
+async function cached(key, ms, fn) {
+  const m = memo[key]; if (m && Date.now() - m.t < ms) return m.v;
+  const v = await fn(); memo[key] = { t: Date.now(), v }; return v;
+}
+
+/* time */
+function et(d) {
+  const p = {}; new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short', hour: 'numeric', minute: 'numeric', hourCycle: 'h23', month: 'numeric', day: 'numeric' }).formatToParts(d).forEach(x => p[x.type] = x.value);
+  return { wd: p.weekday, h: +p.hour % 24, m: +p.minute, mon: +p.month, day: +p.day };
+}
+const ymd = d => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replace(/-/g, '');
+const fmtTime = d => d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }).replace(/\./g, '').toUpperCase();
+const fmtDay = d => d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }).replace(/\./g, '');
+const isToday = d => ymd(d) === ymd(new Date());
+function whenLabel(d) { const tom = new Date(Date.now() + 864e5); return (isToday(d) ? 'Today' : ymd(d) === ymd(tom) ? 'Tomorrow' : fmtDay(d)) + ' · ' + fmtTime(d); }
+const secs = s => { const m = String(s || '').match(/(\d+):(\d+)/); return m ? +m[1] * 60 + +m[2] : 0; };
+
+/* colour */
+function lum(hex) { const n = parseInt(String(hex).replace('#', '').padEnd(6, '0').slice(0, 6), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }).reduce((a, v, i) => a + v * [.2126, .7152, .0722][i], 0); }
+const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+const cssVar = n => getComputedStyle(document.body).getPropertyValue(n).trim();
+function teamInk(t) { // a team colour that reads on the current card colour
+  const bg = cssVar('--card') || '#132a1e'; const a = t.color, b = t.alt;
+  if (contrast(a, bg) >= 2) return a; return contrast(b, bg) > contrast(a, bg) ? b : a;
+}
+function pairInk(g) { // keep the two teams distinguishable
+  let h = teamInk(g.home), a = teamInk(g.away);
+  if (contrast(h, a) < 1.35) { const alt = g.away.alt; if (contrast(alt, h) > contrast(a, h)) a = alt; }
+  return { h, a };
+}
+function heroColor(t) { // team colour that keeps white text readable
+  for (const c of [t.color, t.alt]) if (c && contrast(c, '#ffffff') >= 3.6) return c;
+  return '#1d2733';
+}
+
+/* ---------- ESPN normalising ---------- */
+function mkTeam(sp, c) {
+  const t = c.team || {}; const abbr = t.abbreviation || '';
+  let logo = t.logo || (t.logos && t.logos[0] && t.logos[0].href) || `https://a.espncdn.com/i/teamlogos/${sp}/500/${abbr.toLowerCase()}.png`;
+  const logoDark = logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo;
+  const recs = c.records || c.record || [];
+  const rec = Array.isArray(recs) ? ((recs.find(r => r.type === 'total') || recs[0] || {}).summary || '') : '';
+  let score = c.score; if (score && typeof score === 'object') score = score.displayValue;
+  return { id: String(t.id || c.id || ''), abbr, name: t.shortDisplayName || t.name || abbr, full: t.displayName || '', color: '#' + (t.color || '55606a'), alt: '#' + (t.alternateColor || '9aa4ad'), logo, logoDark, score: score ?? '', rec, winner: !!c.winner, ls: c.linescores || [], stats: c.statistics || [] };
+}
+function mkGame(sp, ev) {
+  const c = ev.competitions[0]; const st = c.status || ev.status;
+  const H = c.competitors.find(x => x.homeAway === 'home'), A = c.competitors.find(x => x.homeAway === 'away');
+  const us = []; (c.broadcasts || []).forEach(b => { (b.names || []).forEach(n => us.push(n)); if (b.media && b.media.shortName) us.push(b.media.shortName); });
+  const season = ev.season || {};
+  return {
+    sp, id: String(ev.id || c.id), date: new Date(ev.date || c.date), state: st.type.state, detail: st.type.shortDetail || st.type.detail || '', period: st.period, clock: st.displayClock,
+    home: mkTeam(sp, H), away: mkTeam(sp, A), sit: c.situation || null, us: [...new Set(us)], venue: c.venue && c.venue.fullName, note: (c.notes && c.notes[0] && c.notes[0].headline) || '',
+    stype: season.type || (ev.seasonType && ev.seasonType.type) || 2, week: ev.week && ev.week.number
+  };
+}
+const isFav = (sp, abbr) => abbr && abbr === (sp === 'nfl' ? CFG.favNFL : CFG.favNHL);
+const hasFav = g => isFav(g.sp, g.home.abbr) || isFav(g.sp, g.away.abbr);
+
+/* ---------- where to watch in Montréal ---------- */
+const TV = (name, lang, note) => ({ name, lang, note, kind: 'tv' });
+const ST = (name, lang, note) => ({ name, lang, note, kind: 'stream' });
+function watchNFL(g) {
+  const { wd, h, mon } = et(g.date); const out = []; let note = '', link = 'https://www.tsn.ca/nfl/article/nfl-on-tsnctv-broadcast-schedule-3';
+  const post = +g.stype === 3;
+  const christmas = mon === 12 && et(g.date).day === 25;
+  if (post) { out.push(TV('TSN', 'EN'), TV('CTV', 'EN'), TV('RDS', 'FR')); note = 'Playoff games are on TSN and CTV, with RDS in French.'; }
+  else if (christmas) { out.push(TV('TSN', 'EN'), TV('CTV', 'EN'), TV('RDS', 'FR')); note = 'All Christmas games air on TSN and CTV in Canada.'; }
+  else if (wd === 'Thu' && h >= 19) { out.push(TV('TSN', 'EN'), TV('CTV2', 'EN'), TV('RDS2', 'FR')); note = 'Thursday Night Football. Prime Video doesn’t carry it in Canada.'; }
+  else if (wd === 'Sun' && h >= 19) { out.push(TV('TSN', 'EN'), TV('CTV', 'EN'), TV('RDS', 'FR')); note = 'Sunday Night Football.'; }
+  else if (wd === 'Mon') { out.push(TV('TSN', 'EN'), TV('CTV2', 'EN'), TV('RDS2', 'FR')); note = 'Monday Night Football.'; }
+  else if (wd === 'Sun' && h < 12) { out.push(ST('TSN app', 'EN', 'TSN Premium')); note = 'International morning games are mostly on TSN Premium in the TSN app.'; }
+  else if (wd === 'Sun') { out.push(TV('CTV', 'EN', 'maybe'), TV('TSN', 'EN', 'maybe'), TV('RDS', 'FR', 'maybe')); note = 'Sunday afternoon picks change weekly. Bell carries most games across CTV, TSN1–5 and RDS; check the weekly list.'; }
+  else { out.push(TV('TSN', 'EN'), TV('CTV', 'EN'), TV('RDS', 'FR', 'likely')); note = 'Stand-alone games usually air on TSN and CTV.'; }
+  out.push(ST('DAZN', 'EN', 'every game'));
+  if (out.some(x => x.name.startsWith('TSN'))) out.push(ST('TSN app / Crave', 'EN'));
+  if (out.some(x => x.name.startsWith('RDS'))) out.push(ST('RDS app', 'FR'));
+  return { items: out, note, link, linkText: 'TSN/CTV weekly schedule' };
+}
+const CAN_NHL = ['MTL', 'TOR', 'OTT', 'WPG', 'EDM', 'CGY', 'VAN'];
+function watchNHL(g) {
+  const { wd } = et(g.date); const T = [g.home.abbr, g.away.abbr]; const out = []; let note = '', link = '', linkText = '';
+  if (T.includes('MTL')) {
+    link = 'https://www.nhl.com/canadiens/schedule'; linkText = 'Canadiens broadcast schedule';
+    if (wd === 'Sat') { out.push(TV('Sportsnet', 'EN', 'Saturday Night Hockey'), TV('TVA Sports', 'FR'), ST('Sportsnet+', 'EN'), ST('TVA Sports Direct', 'FR')); note = 'Saturday Habs games are usually national. If not, it’s TSN2 and RDS.'; }
+    else if (wd === 'Wed') { out.push(ST('Prime Video', 'EN/FR', 'if national'), TV('TSN2', 'EN'), TV('RDS', 'FR')); note = 'National Wednesday games are exclusive to Prime Video. Otherwise TSN2 and RDS.'; }
+    else if (wd === 'Mon') { out.push(ST('Sportsnet+', 'EN', 'if Monday Night Hockey'), TV('TSN2', 'EN'), TV('RDS', 'FR')); note = 'Six Habs Monday games stream only on Sportsnet+. The rest are on TSN2 and RDS.'; }
+    else { out.push(TV('TSN2', 'EN'), TV('RDS', 'FR'), ST('TSN app', 'EN'), ST('RDS app', 'FR')); note = 'Regional Habs game. A few are national instead (Sportsnet / TVA Sports).'; }
+  } else if (T.includes('OTT')) {
+    out.push(TV('TSN5', 'EN'), TV('RDS', 'FR'), ST('TSN app', 'EN')); note = 'Senators regional games are available in Québec.';
+    if (wd === 'Sat') { out.unshift(TV('Sportsnet', 'EN', 'if national')); }
+  } else if (T.some(t => CAN_NHL.includes(t))) {
+    if (wd === 'Sat') { out.push(TV('Sportsnet', 'EN', 'Saturday Night Hockey'), TV('TVA Sports', 'FR', 'maybe')); note = 'Saturday doubleheaders feature Canadian teams.'; }
+    else if (wd === 'Wed') { out.push(ST('Prime Video', 'EN/FR', 'if national'), ST('Sportsnet+ Premium', 'EN')); note = 'National Wednesday games are on Prime Video. Regional ones are out of market here.'; }
+    else { out.push(TV('Sportsnet', 'EN', 'if national'), ST('Sportsnet+ Premium', 'EN', 'out of market')); note = 'Regional games for other Canadian teams are blacked out in Montréal.'; }
+  } else {
+    out.push(ST('Sportsnet+ Premium', 'EN', 'out of market'), TV('NHL Centre Ice', 'EN')); note = 'ESPN, TNT and ESPN+ aren’t available in Canada. Some US games are picked up by Sportsnet.';
+  }
+  return { items: out, note, link, linkText };
+}
+const watchFor = g => g.sp === 'nfl' ? watchNFL(g) : watchNHL(g);
+const PLAY_SVG = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1l7 4-7 4z" fill="currentColor"/></svg>';
+function chip(x) { return `<span class="chip${x.kind === 'stream' ? ' stream' : ''}">${x.kind === 'stream' ? PLAY_SVG : ''}${esc(x.name)}${x.lang ? ` <span class="lng">${esc(x.lang)}</span>` : ''}</span>`; }
+function watchChips(g, max = 99) { return watchFor(g).items.slice(0, max).map(chip).join(''); }
+
+/* ---------- shared bits ---------- */
+const darkUI = () => g_sport() === 'nfl' || matchMedia('(prefers-color-scheme: dark)').matches;
+function g_sport() { return document.body.dataset.sport; }
+function logoImg(t, cls = 'lg') { return `<img class="${cls}" src="${esc(darkUI() ? t.logoDark : t.logo)}" alt="" loading="lazy" decoding="async">`; }
+function statusHTML(g) {
+  if (g.state === 'in') return `<span class="livetag">LIVE</span><span class="st in">${esc(g.detail)}</span>`;
+  if (g.state === 'pre') return `<span class="st">${esc(whenLabel(g.date))}</span>`;
+  return `<span class="st">${esc(g.detail || 'Final')}</span>`;
+}
+function ownFromText(txt, offAbbr) {
+  const m = String(txt || '').trim().match(/^([A-Z]{2,4})?\s*(\d{1,2})$/); if (!m) return null; const n = +m[2];
+  if (n === 50) return 50; if (!m[1]) return null; return m[1] === offAbbr ? n : 100 - n;
+}
+function nflSit(g) { // normalise the live situation: offence always drives toward the right
+  const s = g.sit; if (!s || g.state !== 'in') return null;
+  const offId = String(s.possession || ''); const off = offId === g.home.id ? g.home : offId === g.away.id ? g.away : null; if (!off) return { text: s.lastPlay && s.lastPlay.text };
+  const def = off === g.home ? g.away : g.home;
+  const own = ownFromText(s.possessionText, off.abbr);
+  return { off, def, own, down: s.down, dist: s.distance, dd: s.downDistanceText || s.shortDownDistanceText || '', rz: !!s.isRedZone, text: s.lastPlay && s.lastPlay.text, goal: /goal/i.test(s.downDistanceText || '') };
+}
+function miniField(si, g) {
+  if (!si || si.own == null) return '';
+  const ink = pairInk(g); const oc = si.off === g.home ? ink.h : ink.a, dc = si.off === g.home ? ink.a : ink.h;
+  const x = v => (6 + v * .88).toFixed(2) + '%';
+  const fd = si.dist && !si.goal && si.own + si.dist < 100 ? `<i class="fd" style="left:${x(si.own + si.dist)}"></i>` : '';
+  return `<div class="mini" aria-hidden="true"><i class="ez" style="left:0;background:${oc}"></i><i class="ez" style="right:0;background:${dc}"></i><i class="los" style="left:${x(si.own)}"></i>${fd}<i class="ball" style="left:${x(si.own)}"></i></div>`;
+}
+
+/* ---------- game card ---------- */
+function teamRow(g, t) {
+  const done = g.state === 'post'; const lose = done && !t.winner && (g.home.winner || g.away.winner);
+  const si = g.sp === 'nfl' ? nflSit(g) : null; const poss = si && si.off === t;
+  return `<div class="tr${lose ? ' lose' : ''}">${logoImg(t)}<div class="tn"><span class="ab">${esc(t.abbr)}</span>${isFav(g.sp, t.abbr) ? '<span class="star" aria-label="Favourite">★</span>' : ''}${poss ? '<span class="poss" title="Has the ball"></span>' : ''}<span class="nm">${esc(t.name)} <span class="rec">${esc(t.rec)}</span></span></div><div class="sc">${g.state === 'pre' ? '' : esc(t.score)}</div></div>`;
+}
+function gameCard(g) {
+  let sit = '';
+  if (g.sp === 'nfl' && g.state === 'in') {
+    const si = nflSit(g);
+    if (si) sit = `<div class="sit">${si.off ? `<div class="sit-line">${esc(si.off.abbr)} ball · ${esc(si.dd)}${si.rz ? ' <span class="rz">RED ZONE</span>' : ''}</div>${miniField(si, g)}` : ''}${si.text ? `<div class="lastplay">${esc(si.text)}</div>` : ''}</div>`;
+  }
+  const w = g.state === 'post' ? '' : `<div class="g-watch">${watchFor(g).items.slice(0, 2).map(chip).join('')}</div>`;
+  return `<button class="game${hasFav(g) ? ' fav' : ''}" data-open="${g.sp}:${g.id}"><div class="g-top">${statusHTML(g)}${w}</div>${teamRow(g, g.away)}${teamRow(g, g.home)}${sit}</button>`;
+}
+function groupGames(games) {
+  const rank = g => (hasFav(g) ? 0 : 1);
+  const live = games.filter(g => g.state === 'in').sort((a, b) => rank(a) - rank(b));
+  const pre = games.filter(g => g.state === 'pre').sort((a, b) => a.date - b.date || rank(a) - rank(b));
+  const post = games.filter(g => g.state === 'post').sort((a, b) => rank(a) - rank(b) || b.date - a.date);
+  return { live, pre, post };
+}
+function sectionsHTML(games, sp) {
+  const { live, pre, post } = groupGames(games); let h = '';
+  if (live.length) h += `<div class="sec-h"><p class="eyebrow live">Live now · ${live.length}</p></div><div class="list">${live.map(gameCard).join('')}</div>`;
+  if (pre.length) {
+    const byDay = {}; pre.forEach(g => { const k = sp === 'nfl' ? (isToday(g.date) ? 'Today' : fmtDay(g.date)) : 'Upcoming'; (byDay[k] = byDay[k] || []).push(g); });
+    for (const [k, arr] of Object.entries(byDay)) h += `<div class="sec-h"><p class="eyebrow">${esc(k)}</p></div><div class="list">${arr.map(gameCard).join('')}</div>`;
+  }
+  if (post.length) h += `<div class="sec-h"><p class="eyebrow">Final</p></div><div class="list">${post.map(gameCard).join('')}</div>`;
+  return h || `<div class="empty">No games on this ${sp === 'nfl' ? 'week' : 'day'}.</div>`;
+}
+
+/* ---------- favourite hero ---------- */
+async function teamSchedule(sp, abbr) {
+  return cached('sched:' + sp + abbr, 10 * 60e3, async () => {
+    const j = await espn(sp, 'teams/' + abbr.toLowerCase() + '/schedule');
+    const team = j.team || {};
+    return { team, games: (j.events || []).map(e => { try { return mkGame(sp, e); } catch (x) { return null; } }).filter(Boolean) };
+  });
+}
+async function heroHTML(sp, games, extra = {}) {
+  const ab = sp === 'nfl' ? CFG.favNFL : CFG.favNHL; if (!ab) return '';
+  let g = games.find(x => x.home.abbr === ab || x.away.abbr === ab);
+  let next = null, last = null, teamInfo = null;
+  if (!g || g.state === 'post') {
+    try {
+      const sc = await teamSchedule(sp, ab); teamInfo = sc.team;
+      next = sc.games.find(x => x.state !== 'post' && x.date > Date.now() - 6 * 36e5 && (!g || x.id !== g.id));
+      const done = sc.games.filter(x => x.state === 'post'); last = done[done.length - 1];
+    } catch (e) {}
+  }
+  const show = g || last; if (!show && !next) return '';
+  const base = show || next; const me = base.home.abbr === ab ? base.home : base.away;
+  const tc = heroColor(me);
+  const wm = `<img class="wm" src="${esc(me.logoDark)}" alt="">`;
+  const nm = me.name || ab;
+  if (!show || (!g && next)) { // no game in view: bye / off day
+    const ng = next; const opp = ng ? (ng.home.abbr === ab ? ng.away : ng.home) : null; const at = ng && ng.home.abbr === ab ? 'vs' : '@';
+    const bye = sp === 'nfl' && extra.byes && extra.byes.includes(ab);
+    const lastLine = last ? (() => { const mine = last.home.abbr === ab ? last.home : last.away, o = mine === last.home ? last.away : last.home; const wl = mine.winner ? 'W' : (o.winner ? 'L' : 'T'); return `Last: ${wl} ${esc(mine.score)}–${esc(o.score)} ${mine === last.home ? 'vs' : '@'} ${esc(o.abbr)}`; })() : '';
+    return `<button class="hero" style="--tc:${tc}" ${ng ? `data-open="${sp}:${ng.id}"` : ''}>${wm}<div class="hero-eb">★ ${esc(nm)}${bye ? ' · bye week' : ''}</div>
+      ${opp ? `<div class="hero-m"><div class="hero-t">${`<img src="${esc(me.logoDark)}" alt="">`}<span class="ab">${esc(ab)}</span></div><div class="hero-sc"><span class="vs">${at.toUpperCase()}</span></div><div class="hero-t h"><span class="ab">${esc(opp.abbr)}</span><img src="${esc(opp.logoDark)}" alt=""></div></div>
+      <div class="hero-st">Next: ${esc(whenLabel(ng.date))}</div>` : `<div class="hero-st">No upcoming games</div>`}
+      ${lastLine ? `<div class="hero-sub">${lastLine}</div>` : ''}
+      ${ng ? `<div class="chips">${watchChips(ng, 4)}</div>` : ''}</button>`;
+  }
+  const G = show; const live = G.state === 'in', pre = G.state === 'pre';
+  const si = G.sp === 'nfl' ? nflSit(G) : null;
+  const sc = t => `<span class="${G.state === 'post' && !t.winner && (G.home.winner || G.away.winner) ? 'l' : ''}">${esc(t.score)}</span>`;
+  let sub = '';
+  if (live && si && si.off) sub = `<div class="hero-sub">${esc(si.off.abbr)} ball · ${esc(si.dd)}${si.rz ? ' · red zone' : ''}</div>${miniField(si, G)}${si.text ? `<div class="lastplay">${esc(si.text)}</div>` : ''}`;
+  if (G.state === 'post' && next) { const o = next.home.abbr === ab ? next.away : next.home; sub = `<div class="hero-sub">Next: ${next.home.abbr === ab ? 'vs' : '@'} ${esc(o.abbr)} · ${esc(whenLabel(next.date))}</div>`; }
+  return `<button class="hero" style="--tc:${tc}" data-open="${G.sp}:${G.id}">${wm}
+    <div class="hero-eb">${live ? '<span class="livetag">LIVE</span>' : ''}★ ${esc(nm)}${G.note ? ' · ' + esc(G.note) : ''}</div>
+    <div class="hero-m"><div class="hero-t"><img src="${esc(G.away.logoDark)}" alt=""><span class="ab">${esc(G.away.abbr)}</span></div>
+      <div class="hero-sc">${pre ? '<span class="vs">AT</span>' : `${sc(G.away)}<span class="vs">–</span>${sc(G.home)}`}</div>
+      <div class="hero-t h"><span class="ab">${esc(G.home.abbr)}</span><img src="${esc(G.home.logoDark)}" alt=""></div></div>
+    <div class="hero-st">${pre ? esc(whenLabel(G.date)) : esc(G.detail)}</div>${sub}
+    ${G.state !== 'post' ? `<div class="chips">${watchChips(G, 4)}</div>` : ''}</button>`;
+}
+
+/* ---------- app state ---------- */
+const S = { tab: LS.get('tab', 'nfl'), nfl: { q: null, cur: null }, nhl: { date: null }, detail: null, sheetMode: null, live: false, timer: null, busy: false, fx: { sv: 'me', cv: 'me' } };
+
+function setSport(tab) {
+  document.body.dataset.sport = tab === 'nhl' ? 'nhl' : 'nfl';
+  const m = document.querySelector('meta[name="theme-color"]'); requestAnimationFrame(() => m.setAttribute('content', cssVar('--bg2') || '#0f1f17'));
+}
+function setTab(tab) {
+  S.tab = tab; LS.set('tab', tab); setSport(tab);
+  document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+  $('#view').innerHTML = `<div class="empty">Loading…</div>`; window.scrollTo(0, 0); refresh(true);
+}
+function setUpdated(live) {
+  S.live = live; $('#livedot').classList.toggle('on', !!live);
+  $('#updtxt').textContent = (live ? 'Live · ' : '') + fmtTime(new Date());
+}
+
+/* ---------- NFL view ---------- */
+async function loadNFL() {
+  const q = S.nfl.q; const j = await espn('nfl', 'scoreboard' + (q ? `?week=${q.week}&seasontype=${q.st}&dates=${q.yr}` : ''));
+  const cur = { week: j.week && j.week.number, st: j.season && j.season.type, yr: j.season && j.season.year };
+  if (!q) S.nfl.cur = cur;
+  const games = (j.events || []).map(e => mkGame('nfl', e));
+  const byes = ((j.week && j.week.teamsOnBye) || []).map(t => t.abbreviation);
+  const view = q || cur; const isCur = !q || (S.nfl.cur && q.week === S.nfl.cur.week && q.st === S.nfl.cur.st);
+  const label = +view.st === 3 ? (['', 'Wild Card', 'Divisional', 'Conference', 'Pro Bowl', 'Super Bowl'][view.week] || 'Playoffs') : +view.st === 1 ? 'Preseason ' + view.week : 'Week ' + view.week;
+  const hero = isCur ? await heroHTML('nfl', games, { byes }) : '';
+  if (S.tab !== 'nfl' || S.sheetMode) { return games.some(g => g.state === 'in'); }
+  $('#view').innerHTML = `${hero}
+    <div class="nav"><button class="iconbtn" data-wk="-1" aria-label="Previous week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="lbl">${esc(label)}<small>${esc(view.yr)} ${+view.st === 3 ? 'postseason' : 'season'}${isCur ? '' : ' · <u>back to this week</u>'}</small></div>
+      <button class="iconbtn" data-wk="1" aria-label="Next week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></button></div>
+    ${byes.length ? `<div class="byes">On bye: ${byes.map(esc).join(', ')}</div>` : ''}
+    ${sectionsHTML(games, 'nfl')}`;
+  return games.some(g => g.state === 'in');
+}
+function shiftWeek(d) {
+  const c = S.nfl.q || S.nfl.cur; if (!c) return; let { week, st, yr } = c; week = +week + d; st = +st;
+  if (st === 2 && week > 18) { st = 3; week = 1; } else if (st === 3 && week < 1) { st = 2; week = 18; } else if (st === 3 && week > 5) week = 5; else if (st === 2 && week < 1) { st = 1; week = 3; } else if (st === 1 && week > 3) { st = 2; week = 1; } else if (st === 1 && week < 1) week = 1;
+  S.nfl.q = (S.nfl.cur && S.nfl.cur.week === week && +S.nfl.cur.st === st) ? null : { week, st, yr };
+  refresh(true);
+}
+
+/* ---------- NHL view ---------- */
+async function loadNHL() {
+  const d = S.nhl.date; const j = await espn('nhl', 'scoreboard' + (d ? '?dates=' + d : ''));
+  const day = (j.day && j.day.date) ? j.day.date.replace(/-/g, '') : ymd(new Date());
+  S.nhl.shown = day;
+  const games = (j.events || []).map(e => mkGame('nhl', e));
+  const isCur = !d;
+  const hero = isCur ? await heroHTML('nhl', games) : '';
+  if (S.tab !== 'nhl' || S.sheetMode) return games.some(g => g.state === 'in');
+  const dt = new Date(+day.slice(0, 4), +day.slice(4, 6) - 1, +day.slice(6, 8), 12);
+  $('#view').innerHTML = `${hero}
+    <div class="nav"><button class="iconbtn" data-day="-1" aria-label="Previous day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="lbl">${esc(isToday(dt) ? 'Tonight' : dt.toLocaleDateString('en-CA', { weekday: 'long' }))}<small>${esc(fmtDay(dt))}${isCur ? '' : ' · <u>back to today</u>'}</small></div>
+      <button class="iconbtn" data-day="1" aria-label="Next day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></button></div>
+    ${sectionsHTML(games, 'nhl')}`;
+  return games.some(g => g.state === 'in');
+}
+function shiftDay(n) {
+  const base = S.nhl.shown || ymd(new Date());
+  const dt = new Date(+base.slice(0, 4), +base.slice(4, 6) - 1, +base.slice(6, 8) + n, 12);
+  const v = ymd(dt); S.nhl.date = v === ymd(new Date()) ? null : v; refresh(true);
+}
+
+/* =====================================================================
+   GAME DETAIL
+   ===================================================================== */
+function openSheet(mode, title) {
+  S.sheetMode = mode; $('#shTitle').textContent = title || ''; $('#sheet').classList.add('open'); $('#shBody').innerHTML = '<div class="empty">Loading…</div>'; $('#sheet').scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet() { S.sheetMode = null; S.detail = null; setSport(S.tab); $('#sheet').classList.remove('open'); document.body.style.overflow = ''; $('#shdot').classList.remove('on'); refresh(true); }
+async function openGame(sp, id) {
+  S.detail = { sp, id, tab: 'away' }; setSport(sp); openSheet('game', 'Game'); await loadDetail();
+}
+async function loadDetail() {
+  const D = S.detail; if (!D) return false;
+  const s = await espn(D.sp, 'summary?event=' + D.id);
+  if (!S.detail || S.detail.id !== D.id) return false;
+  const comp = s.header.competitions[0];
+  const g = mkGame(D.sp, { id: D.id, date: comp.date, competitions: [comp], season: s.header.season });
+  g.week = s.header.week;
+  D.g = g; D.s = s;
+  $('#shTitle').textContent = `${g.away.abbr} @ ${g.home.abbr}`;
+  const keep = $('#sheet').scrollTop;
+  $('#shBody').innerHTML = D.sp === 'nfl' ? nflDetail(g, s) : nhlDetail(g, s);
+  $('#sheet').scrollTop = keep;
+  $('#shdot').classList.toggle('on', g.state === 'in');
+  return g.state === 'in';
+}
+function detailHead(g) {
+  const lose = t => g.state === 'post' && !t.winner && (g.home.winner || g.away.winner);
+  const per = Math.max(g.home.ls.length, g.away.ls.length);
+  const plab = i => g.sp === 'nfl' ? (i < 4 ? String(i + 1) : 'OT') : (i < 3 ? String(i + 1) : i === 3 ? 'OT' : 'SO');
+  const ls = per ? `<div class="scroll-x"><table class="ls"><thead><tr><th></th>${Array.from({ length: per }, (_, i) => `<th>${plab(i)}</th>`).join('')}<th>T</th></tr></thead><tbody>${[g.away, g.home].map(t => `<tr><td><b>${esc(t.abbr)}</b></td>${Array.from({ length: per }, (_, i) => `<td>${esc((t.ls[i] && (t.ls[i].displayValue ?? t.ls[i].value)) ?? '')}</td>`).join('')}<td>${esc(t.score)}</td></tr>`).join('')}</tbody></table></div>` : '';
+  return `<section class="panel"><div class="dh">
+    <div class="dh-t">${logoImg(g.away)}<span class="ab">${esc(g.away.abbr)}${isFav(g.sp, g.away.abbr) ? ' <span class="star">★</span>' : ''}</span><span class="rec">${esc(g.away.rec)}</span></div>
+    <div class="dh-mid"><div class="dh-sc">${g.state === 'pre' ? '<span style="font-size:22px;opacity:.6">AT</span>' : `<span class="${lose(g.away) ? 'l' : ''}">${esc(g.away.score)}</span><span style="font-size:22px;opacity:.4">–</span><span class="${lose(g.home) ? 'l' : ''}">${esc(g.home.score)}</span>`}</div>
+      <div>${statusHTML(g)}</div></div>
+    <div class="dh-t">${logoImg(g.home)}<span class="ab">${esc(g.home.abbr)}${isFav(g.sp, g.home.abbr) ? ' <span class="star">★</span>' : ''}</span><span class="rec">${esc(g.home.rec)}</span></div>
+  </div>${ls}</section>`;
+}
+function watchPanel(g, s) {
+  const w = watchFor(g);
+  const us = []; ((s && s.broadcasts) || []).forEach(b => { const n = (b.media && b.media.shortName) || (b.names && b.names.join(', ')); if (n) us.push(n); });
+  const usAll = [...new Set(us.concat(g.us))];
+  const tv = w.items.filter(x => x.kind === 'tv'), st = w.items.filter(x => x.kind === 'stream');
+  return `<section class="panel"><h3>Where to watch in Montréal</h3><div class="watch">
+    ${tv.length ? `<div class="wrow"><span class="k">TV</span><div class="chips">${tv.map(x => chip(x) + (x.note ? ` <span class="small muted">${esc(x.note)}</span>` : '')).join('')}</div></div>` : ''}
+    ${st.length ? `<div class="wrow"><span class="k">Stream</span><div class="chips">${st.map(x => chip(x) + (x.note ? ` <span class="small muted">${esc(x.note)}</span>` : '')).join('')}</div></div>` : ''}
+    ${usAll.length ? `<div class="wrow"><span class="k">US feed</span><div class="small muted" style="padding-top:3px">${usAll.map(esc).join(' · ')}${g.sp === 'nfl' ? ' (on Montréal cable, often replaced by the Canadian feed)' : ''}</div></div>` : ''}
+    <p class="hint" style="margin:0">${esc(w.note)}${w.link ? ` <a href="${esc(w.link)}" target="_blank" rel="noopener">${esc(w.linkText)} ↗</a>` : ''}</p></div></section>`;
+}
+function compareRows(rows, g) {
+  const ink = pairInk(g);
+  return `<div class="cmp">${rows.map(r => {
+    const tot = (r.a || 0) + (r.h || 0); const pa = tot ? r.a / tot * 100 : 50;
+    return `<div class="cmp-r"><div class="cmp-v"><span>${esc(r.ad)}</span><span>${esc(r.label)}</span><span>${esc(r.hd)}</span></div><div class="cmp-b"><i style="width:${pa}%;background:${ink.a};opacity:${r.a >= r.h ? 1 : .45}"></i><i style="flex:1;background:${ink.h};opacity:${r.h >= r.a ? 1 : .45}"></i></div></div>`;
+  }).join('')}</div>`;
+}
+const MY_NAMES = new Map(); // normalised name -> ['PFL','CBS']
+const normName = n => String(n || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\b(jr|sr|ii|iii|iv|v)\b\.?/g, '').replace(/[^a-z]/g, '');
+function mineTags(name) { const t = MY_NAMES.get(normName(name)); return t ? t.map(x => `<span class="chip mine">${x}</span>`).join(' ') : ''; }
+
+/* ---------- NFL detail ---------- */
+function fieldSVG(o) { // own: 0-100 from offence's goal line; offence attacks right
+  const W = 1200, Hh = 380; let s = `<svg viewBox="0 0 ${W} ${Hh}" width="100%" role="img" aria-label="Field position" style="display:block;border-radius:10px">`;
+  for (let i = 0; i < 20; i++) s += `<rect x="${100 + i * 50}" y="0" width="50" height="${Hh}" fill="${i % 2 ? '#1f6c3b' : '#237541'}"/>`;
+  s += `<rect x="0" y="0" width="100" height="${Hh}" fill="${o.oc}"/><rect x="1100" y="0" width="100" height="${Hh}" fill="${o.dc}"/>`;
+  s += `<text x="50" y="${Hh / 2}" fill="#fff" font-size="58" font-weight="800" text-anchor="middle" dominant-baseline="central" transform="rotate(-90 50 ${Hh / 2})" style="font-family:var(--f-disp);letter-spacing:6px">${esc(o.oab)}</text>`;
+  s += `<text x="1150" y="${Hh / 2}" fill="#fff" font-size="58" font-weight="800" text-anchor="middle" dominant-baseline="central" transform="rotate(90 1150 ${Hh / 2})" style="font-family:var(--f-disp);letter-spacing:6px">${esc(o.dab)}</text>`;
+  for (let y = 0; y <= 100; y += 5) s += `<line x1="${100 + y * 10}" y1="0" x2="${100 + y * 10}" y2="${Hh}" stroke="#fff" stroke-opacity="${y % 10 ? .35 : .6}" stroke-width="${y % 10 ? 2 : 3}"/>`;
+  for (let y = 1; y < 100; y++) if (y % 5) { const x = 100 + y * 10; s += `<line x1="${x}" y1="4" x2="${x}" y2="16" stroke="#fff" stroke-opacity=".45" stroke-width="2"/><line x1="${x}" y1="${Hh - 16}" x2="${x}" y2="${Hh - 4}" stroke="#fff" stroke-opacity=".45" stroke-width="2"/><line x1="${x}" y1="${Hh * .38}" x2="${x}" y2="${Hh * .38 + 10}" stroke="#fff" stroke-opacity=".35" stroke-width="2"/><line x1="${x}" y1="${Hh * .62 - 10}" x2="${x}" y2="${Hh * .62}" stroke="#fff" stroke-opacity=".35" stroke-width="2"/>`; }
+  for (let y = 10; y <= 90; y += 10) { const n = y <= 50 ? y : 100 - y; s += `<text x="${100 + y * 10}" y="64" fill="#fff" fill-opacity=".72" font-size="44" font-weight="700" text-anchor="middle">${n}</text><text x="${100 + y * 10}" y="${Hh - 34}" fill="#fff" fill-opacity=".72" font-size="44" font-weight="700" text-anchor="middle">${n}</text>`; }
+  if (o.own != null) {
+    const bx = 100 + o.own * 10;
+    if (o.start != null && o.start <= o.own) { const sx = 100 + o.start * 10; s += `<rect x="${sx}" y="${Hh / 2 - 26}" width="${Math.max(4, bx - sx)}" height="52" fill="${o.oc}" fill-opacity=".55" rx="6"/><line x1="${sx}" y1="${Hh / 2 - 40}" x2="${sx}" y2="${Hh / 2 + 40}" stroke="#fff" stroke-width="3" stroke-dasharray="8 6"/>`; }
+    s += `<line x1="${bx}" y1="0" x2="${bx}" y2="${Hh}" stroke="#5db1ff" stroke-width="7"/>`;
+    if (o.dist && !o.goal && o.own + o.dist < 100) { const fx = 100 + (o.own + o.dist) * 10; s += `<line x1="${fx}" y1="0" x2="${fx}" y2="${Hh}" stroke="#f3d23b" stroke-width="7"/>`; }
+    s += `<g transform="translate(${bx} ${Hh / 2})"><ellipse rx="26" ry="15" fill="#8b4a20" stroke="#fff" stroke-width="2.5"/><line x1="-9" y1="0" x2="9" y2="0" stroke="#fff" stroke-width="2.5"/><line x1="-5" y1="-4" x2="-5" y2="4" stroke="#fff" stroke-width="2"/><line x1="0" y1="-4" x2="0" y2="4" stroke="#fff" stroke-width="2"/><line x1="5" y1="-4" x2="5" y2="4" stroke="#fff" stroke-width="2"/></g>`;
+    s += `<path d="M${bx + 34} ${Hh / 2 - 14} l22 14 -22 14z" fill="#fff" fill-opacity=".9"/>`;
+  }
+  return s + '</svg>';
+}
+function nflLive(g, s) {
+  if (g.state !== 'in') return '';
+  const cur = s.drives && s.drives.current; const ink = pairInk(g);
+  let off = null, own = null, dist = null, dd = '', goal = false, start = null, last = null;
+  if (cur && cur.plays && cur.plays.length) {
+    const lp = cur.plays[cur.plays.length - 1]; last = lp;
+    const offId = String((cur.team && cur.team.id) || (lp.end && lp.end.team && lp.end.team.id) || '');
+    off = offId === g.home.id ? g.home : offId === g.away.id ? g.away : null;
+    const e = lp.end || {};
+    if (e.yardsToEndzone != null) own = 100 - e.yardsToEndzone; else if (off) own = ownFromText(e.possessionText, off.abbr);
+    dist = e.distance; dd = e.downDistanceText || ''; goal = /goal/i.test(dd);
+    if (off && cur.start) start = ownFromText(cur.start.text, off.abbr);
+    if (start == null && cur.start && cur.start.yardsToEndzone != null) start = 100 - cur.start.yardsToEndzone;
+  }
+  const si = nflSit(g); if ((own == null || !off) && si && si.off) { off = si.off; own = si.own; dist = si.dist; dd = si.dd; goal = si.goal; }
+  if (!off) return '';
+  const def = off === g.home ? g.away : g.home;
+  const oc = off === g.home ? ink.h : ink.a, dc = off === g.home ? ink.a : ink.h;
+  const lastTxt = (last && last.text) || (si && si.text) || '';
+  const drv = cur ? `${cur.plays.length} play${cur.plays.length === 1 ? '' : 's'}${cur.yards != null ? ', ' + cur.yards + ' yds' : ''}${cur.timeElapsed && cur.timeElapsed.displayValue ? ', ' + cur.timeElapsed.displayValue : ''}` : '';
+  return `<section class="panel"><h3><span class="livetag">LIVE</span> On the field <span class="r">${esc(off.abbr)} driving →</span></h3>
+    ${fieldSVG({ own, dist, goal, start, oc, dc, oab: off.abbr, dab: def.abbr })}
+    <div class="sit-line" style="justify-content:space-between"><span>${esc(dd)}${si && si.rz ? ' <span class="rz">RED ZONE</span>' : ''}</span><span class="muted">${esc(drv)}</span></div>
+    ${lastTxt ? `<div class="small">${esc(lastTxt)}</div>` : ''}
+    <div class="legend"><span><i class="sw" style="background:#5db1ff;border-radius:2px"></i>Line of scrimmage</span><span><i class="sw" style="background:#f3d23b;border-radius:2px"></i>First down</span><span><i class="sw" style="background:${oc};opacity:.7;border-radius:2px"></i>This drive</span></div></section>`;
+}
+function wpChart(g, s) {
+  const wp = s.winprobability; if (!wp || wp.length < 3) return '';
+  const ink = pairInk(g); const W = 600, H = 200, pad = 8; const n = wp.length;
+  const perOf = {}; ((s.drives && s.drives.previous) || []).concat(s.drives && s.drives.current ? [s.drives.current] : []).forEach(d => (d.plays || []).forEach(p => perOf[p.id] = p.period && p.period.number));
+  const X = i => (i / (n - 1)) * W, Y = p => pad + (1 - p) * (H - 2 * pad);
+  const pts = wp.map((w, i) => [X(i), Y(w.homeWinPercentage)]);
+  const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
+  const area = line + `L${W} ${Y(.5)}L0 ${Y(.5)}Z`;
+  let ticks = '', lastP = 1; wp.forEach((w, i) => { const p = perOf[w.playId]; if (p && p > lastP) { ticks += `<line x1="${X(i)}" x2="${X(i)}" y1="0" y2="${H}" stroke="var(--line)" stroke-width="1.5"/><text x="${X(i) + 4}" y="${H - 6}" font-size="13" fill="var(--muted)">${p > 4 ? 'OT' : 'Q' + p}</text>`; lastP = p; } });
+  const end = wp[n - 1].homeWinPercentage; const lead = end >= .5 ? g.home : g.away; const pct = Math.round(Math.max(end, 1 - end) * 100);
+  const id = 'wp' + g.id;
+  return `<section class="panel"><h3>Win probability <span class="r">${esc(lead.abbr)} ${pct}%</span></h3>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Win probability over the game">
+      <defs><clipPath id="${id}t"><rect x="0" y="0" width="${W}" height="${Y(.5)}"/></clipPath><clipPath id="${id}b"><rect x="0" y="${Y(.5)}" width="${W}" height="${H}"/></clipPath></defs>
+      ${ticks}<line x1="0" x2="${W}" y1="${Y(.5)}" y2="${Y(.5)}" stroke="var(--muted)" stroke-dasharray="4 5" stroke-opacity=".7"/>
+      <path d="${area}" fill="${ink.h}" fill-opacity=".35" clip-path="url(#${id}t)"/><path d="${area}" fill="${ink.a}" fill-opacity=".35" clip-path="url(#${id}b)"/>
+      <path d="${line}" fill="none" stroke="var(--fg)" stroke-width="2.4" stroke-linejoin="round"/>
+      <circle cx="${pts[n - 1][0] - 3}" cy="${pts[n - 1][1]}" r="5" fill="var(--fg)"/>
+      <text x="6" y="22" font-size="15" font-weight="700" fill="var(--fg)">${esc(g.home.abbr)} 100%</text><text x="6" y="${H - 12}" font-size="15" font-weight="700" fill="var(--fg)">${esc(g.away.abbr)} 100%</text>
+    </svg></section>`;
+}
+function nflDrives(g, s) {
+  const list = ((s.drives && s.drives.previous) || []).slice(); if (s.drives && s.drives.current && !list.find(d => d.id === s.drives.current.id)) list.push(s.drives.current);
+  if (!list.length) return '';
+  const ink = pairInk(g);
+  const rows = list.slice().reverse().map(d => {
+    const tid = String(d.team && d.team.id); const t = tid === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a;
+    let a = ownFromText(d.start && d.start.text, t.abbr); if (a == null && d.start && d.start.yardsToEndzone != null) a = 100 - d.start.yardsToEndzone;
+    let b = ownFromText(d.end && d.end.text, t.abbr); if (b == null && d.end && d.end.yardsToEndzone != null) b = 100 - d.end.yardsToEndzone;
+    const res = d.displayResult || d.result || (d === s.drives.current ? 'In progress' : '');
+    if (/touchdown/i.test(res)) b = 100; if (a == null) a = 25; if (b == null) b = a;
+    const lo = clamp(Math.min(a, b), 0, 100), hi = clamp(Math.max(a, b), 0, 100);
+    const cls = d.isScore ? 'score' : /intercept|fumble|downs|safety|turnover/i.test(res) ? 'bad' : '';
+    return `<div class="dr"><span class="dr-ab">${esc(t.abbr)}</span><div class="dr-track"><i class="dr-bar" style="left:${lo}%;width:${Math.max(hi - lo, 1.2)}%;background:${col};${b < a ? 'opacity:.6' : ''}"></i></div>
+      <div class="dr-meta"><span class="dr-res ${cls}">${esc(res)}</span><span>${esc(d.description || '')}</span><span>${esc(d.start && d.start.period ? 'Q' + d.start.period.number : '')}</span></div></div>`;
+  }).join('');
+  return `<section class="panel"><h3>Drive chart <span class="r">own goal line → end zone</span></h3><div class="drives">${rows}</div></section>`;
+}
+function scoringPanel(g, s) {
+  const sp = s.scoringPlays || []; if (!sp.length) return '';
+  const ink = pairInk(g);
+  return `<section class="panel"><h3>Scoring</h3><div class="plays">${sp.map(p => { const t = p.team && String(p.team.id) === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a; return `<div class="play"><span class="t">Q${esc(p.period && p.period.number)} ${esc(p.clock && p.clock.displayValue)}</span><div><span class="tag" style="background:${col}">${esc(t.abbr)}</span><b>${esc((p.type && p.type.abbreviation) || '')}</b> ${esc(p.text)} <span class="muted num">${esc(p.awayScore)}–${esc(p.homeScore)}</span></div></div>`; }).join('')}</div></section>`;
+}
+function teamStatsNFL(g, s) {
+  const T = (s.boxscore && s.boxscore.teams) || []; if (T.length < 2) return '';
+  const by = id => T.find(t => String(t.team.id) === id); const A = by(g.away.id), Hm = by(g.home.id); if (!A || !Hm) return '';
+  const val = (t, k) => { const x = (t.statistics || []).find(z => z.name === k); return x ? x.displayValue : null; };
+  const spec = [['totalYards', 'Total yards'], ['netPassingYards', 'Passing'], ['rushingYards', 'Rushing'], ['firstDowns', 'First downs'], ['thirdDownEff', '3rd down', 'eff'], ['redZoneAttempts', 'Red zone', 'eff'], ['turnovers', 'Turnovers', 'low'], ['sacksYardsLost', 'Sacks taken', 'first'], ['totalPenaltiesYards', 'Penalties', 'first'], ['possessionTime', 'Possession', 'time']];
+  const num = (v, how) => { if (v == null) return 0; if (how === 'time') return secs(v); const m = String(v).match(/^(\d+)[-/](\d+)$/); if (m) return how === 'eff' ? (+m[2] ? +m[1] / +m[2] : 0) : +m[1]; return parseFloat(v) || 0; };
+  const rows = spec.map(([k, label, how]) => { const ad = val(A, k), hd = val(Hm, k); if (ad == null && hd == null) return null; return { label, ad: ad ?? '–', hd: hd ?? '–', a: num(ad, how), h: num(hd, how) }; }).filter(Boolean);
+  return `<section class="panel"><h3>Team stats <span class="r">${esc(g.away.abbr)} · ${esc(g.home.abbr)}</span></h3>${compareRows(rows, g)}</section>`;
+}
+function playersPanel(g, s, cats, fmtRow) {
+  const P = (s.boxscore && s.boxscore.players) || []; if (!P.length) return '';
+  const D = S.detail; const side = D.tab === 'home' ? g.home : g.away;
+  const blk = P.find(p => String(p.team.id) === side.id); if (!blk) return '';
+  let h = '';
+  cats.forEach(([name, label, cols, limit]) => {
+    const c = (blk.statistics || []).find(x => x.name === name); if (!c || !(c.athletes || []).length) return;
+    const lab = c.labels || c.keys || []; const idx = cols.map(cn => lab.indexOf(cn));
+    const ath = c.athletes.slice(0, limit || 99);
+    h += `<p class="cat">${esc(label)}</p><div class="scroll-x"><table class="tbl"><thead><tr><th></th>${cols.map(x => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${ath.map(a => { const nm = a.athlete.displayName; const tag = mineTags(nm); return `<tr class="${tag ? 'me' : ''}"><td>${esc(a.athlete.shortName || nm)} ${tag}</td>${idx.map(i => `<td>${esc(i >= 0 ? a.stats[i] : '')}</td>`).join('')}</tr>`; }).join('')}</tbody></table></div>`;
+  });
+  if (!h) return '';
+  return `<section class="panel"><h3>Players</h3><div class="seg" role="group" aria-label="Team"><button data-ptab="away" aria-pressed="${D.tab !== 'home'}">${esc(g.away.name)}</button><button data-ptab="home" aria-pressed="${D.tab === 'home'}">${esc(g.home.name)}</button></div>${h}</section>`;
+}
+function recentPlays(g, s) {
+  if (g.state !== 'in') return '';
+  const cur = s.drives && s.drives.current; const prev = (s.drives && s.drives.previous) || [];
+  let plays = []; if (cur) plays = plays.concat(cur.plays || []); if (plays.length < 10 && prev.length) plays = (prev[prev.length - 1].plays || []).concat(plays);
+  plays = plays.slice(-12).reverse(); if (!plays.length) return '';
+  return `<section class="panel"><h3>Recent plays</h3><div class="plays">${plays.map(p => `<div class="play"><span class="t">${esc(p.start && p.start.shortDownDistanceText || '')}<br>Q${esc(p.period && p.period.number)} ${esc(p.clock && p.clock.displayValue)}</span><div>${p.scoringPlay ? '<b>' : ''}${esc(p.text)}${p.scoringPlay ? '</b>' : ''}</div></div>`).join('')}</div></section>`;
+}
+function preInfo(g, s) {
+  if (g.state !== 'pre') return '';
+  const pc = (s.pickcenter || [])[0]; const gi = s.gameInfo || {};
+  const bits = [];
+  if (pc && pc.details) bits.push(`Line: <b>${esc(pc.details)}</b>`); if (pc && pc.overUnder) bits.push(`O/U <b>${esc(pc.overUnder)}</b>`);
+  if (gi.venue) bits.push(esc(gi.venue.fullName + (gi.venue.address && gi.venue.address.city ? ', ' + gi.venue.address.city : '')));
+  if (gi.weather && gi.weather.temperature != null) bits.push(esc(gi.weather.temperature + '°F' + (gi.weather.displayValue ? ' ' + gi.weather.displayValue : '')));
+  return `<section class="panel"><h3>Kickoff</h3><div><b>${esc(whenLabel(g.date))}</b></div>${bits.length ? `<div class="small muted">${bits.join(' · ')}</div>` : ''}</section>`;
+}
+function nflDetail(g, s) {
+  return detailHead(g) + nflLive(g, s) + preInfo(g, s) + watchPanelIf(g, s, true) + wpChart(g, s) + scoringPanel(g, s) + nflDrives(g, s) + teamStatsNFL(g, s) +
+    playersPanel(g, s, [['passing', 'Passing', ['C/ATT', 'YDS', 'TD', 'INT', 'RTG']], ['rushing', 'Rushing', ['CAR', 'YDS', 'AVG', 'TD', 'LONG']], ['receiving', 'Receiving', ['REC', 'TGTS', 'YDS', 'TD', 'LONG']], ['kicking', 'Kicking', ['FG', 'XP', 'PTS']], ['defensive', 'Defence', ['TOT', 'SACKS', 'TFL', 'PD'], 6]]) +
+    recentPlays(g, s) + watchPanelIf(g, s, false);
+}
+function watchPanelIf(g, s, top) { const show = g.state === 'post' ? !top : top; return show ? watchPanel(g, s) : ''; }
+
+/* ---------- NHL detail ---------- */
+function rinkSVG(g, plays) {
+  const ink = pairInk(g); const W = 200, H = 85;
+  let s = `<svg viewBox="-100 -42.5 200 85" width="100%" role="img" aria-label="Shot map" style="display:block">`;
+  s += `<rect x="-99.5" y="-42" width="199" height="84" rx="27" fill="var(--ice)" stroke="var(--muted)" stroke-opacity=".5" stroke-width=".8"/>`;
+  s += `<line x1="0" y1="-42" x2="0" y2="42" stroke="#c8102e" stroke-opacity=".75" stroke-width="1"/><line x1="-25" y1="-42" x2="-25" y2="42" stroke="#1d4f91" stroke-opacity=".7" stroke-width="1"/><line x1="25" y1="-42" x2="25" y2="42" stroke="#1d4f91" stroke-opacity=".7" stroke-width="1"/>`;
+  s += `<line x1="-89" y1="-38" x2="-89" y2="38" stroke="#c8102e" stroke-opacity=".6" stroke-width=".4"/><line x1="89" y1="-38" x2="89" y2="38" stroke="#c8102e" stroke-opacity=".6" stroke-width=".4"/>`;
+  s += `<circle r="15" fill="none" stroke="#1d4f91" stroke-opacity=".45" stroke-width=".4"/>`;
+  [[-69, -22], [-69, 22], [69, -22], [69, 22]].forEach(([x, y]) => s += `<circle cx="${x}" cy="${y}" r="15" fill="none" stroke="#c8102e" stroke-opacity=".4" stroke-width=".4"/><circle cx="${x}" cy="${y}" r=".9" fill="#c8102e" fill-opacity=".6"/>`);
+  [[-20, -22], [-20, 22], [20, -22], [20, 22]].forEach(([x, y]) => s += `<circle cx="${x}" cy="${y}" r=".9" fill="#c8102e" fill-opacity=".5"/>`);
+  s += `<path d="M-89 -4 A4 4 0 0 1 -89 4 Z" fill="#7fb2e5" fill-opacity=".35"/><path d="M89 -4 A4 4 0 0 0 89 4 Z" fill="#7fb2e5" fill-opacity=".35"/>`;
+  s += `<rect x="-92.5" y="-3" width="3.5" height="6" fill="none" stroke="#c8102e" stroke-width=".6"/><rect x="89" y="-3" width="3.5" height="6" fill="none" stroke="#c8102e" stroke-width=".6"/>`;
+  s += `<text x="-62" y="39" font-size="5" text-anchor="middle" fill="var(--muted)" font-weight="700">${esc(g.home.abbr)} ZONE</text><text x="62" y="39" font-size="5" text-anchor="middle" fill="var(--muted)" font-weight="700">${esc(g.away.abbr)} ZONE</text>`;
+  const ev = plays.filter(p => p.coordinate && p.team && /^(Shot|Missed|Goal)$/.test(p.type && p.type.text) && p.period && p.period.number <= 4);
+  const pts = ev.map(p => { const home = String(p.team.id) === g.home.id; let { x, y } = p.coordinate; const flip = home ? x < 0 : x > 0; if (flip) { x = -x; y = -y; } return { x, y, home, t: p.type.text }; });
+  pts.sort((a, b) => (a.t === 'Goal') - (b.t === 'Goal'));
+  pts.forEach(p => { const c = p.home ? ink.h : ink.a; if (p.t === 'Goal') s += `<circle cx="${p.x}" cy="${-p.y}" r="3.3" fill="${c}" stroke="var(--fg)" stroke-width=".9"/><circle cx="${p.x}" cy="${-p.y}" r="1" fill="var(--ice)"/>`; else if (p.t === 'Shot') s += `<circle cx="${p.x}" cy="${-p.y}" r="1.7" fill="${c}" fill-opacity=".85"/>`; else s += `<circle cx="${p.x}" cy="${-p.y}" r="1.5" fill="none" stroke="${c}" stroke-width=".55" stroke-opacity=".8"/>`; });
+  return s + '</svg>';
+}
+function nhlShotFlow(g, plays) {
+  const ink = pairInk(g); const ev = plays.filter(p => p.team && /^(Shot|Goal)$/.test(p.type && p.type.text) && p.period && p.period.number <= 4);
+  if (ev.length < 2) return '';
+  const tmin = p => (p.period.number - 1) * 20 + secs(p.clock && p.clock.displayValue) / 60;
+  const maxT = Math.max(60, ...ev.map(tmin)); const W = 600, H = 180, pad = 14;
+  const series = [g.away, g.home].map(t => { let c = 0; const arr = [[0, 0]]; const goals = []; ev.filter(p => String(p.team.id) === t.id).forEach(p => { const x = tmin(p); arr.push([x, c]); c++; arr.push([x, c]); if (p.type.text === 'Goal') goals.push([x, c]); }); return { t, arr, goals, c }; });
+  const maxY = Math.max(10, ...series.map(s => s.c)) * 1.08; const X = m => m / maxT * W, Y = v => H - pad - v / maxY * (H - 2 * pad);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Shots on goal over time">`;
+  for (let p = 20; p < maxT; p += 20) s += `<line x1="${X(p)}" x2="${X(p)}" y1="0" y2="${H}" stroke="var(--line)" stroke-width="1.5"/>`;
+  for (let p = 0; p < Math.ceil(maxT / 20); p++) s += `<text x="${X(p * 20) + 6}" y="${H - 2}" font-size="13" fill="var(--muted)">${p < 3 ? 'P' + (p + 1) : 'OT'}</text>`;
+  series.forEach(({ t, arr, goals, c }) => { const col = t === g.home ? ink.h : ink.a; const end = Math.min(maxT, g.state === 'in' ? Math.max(arr[arr.length - 1][0], 0) : maxT); arr.push([end, c]); s += `<path d="${arr.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round"/>`; goals.forEach(([x, y]) => s += `<circle cx="${X(x)}" cy="${Y(y)}" r="5.5" fill="${col}" stroke="var(--card)" stroke-width="2"/>`); s += `<text x="${X(end) - 4}" y="${Y(c) - 8}" font-size="14" font-weight="700" text-anchor="end" fill="${col}">${esc(t.abbr)} ${c}</text>`; });
+  return s + '</svg>';
+}
+function nhlDetail(g, s) {
+  const plays = s.plays || []; const ink = pairInk(g);
+  let h = detailHead(g);
+  if (g.state === 'pre') h += preInfo(g, s);
+  if (g.state !== 'post') h += watchPanel(g, s);
+  const shotN = plays.filter(p => p.coordinate && /^(Shot|Missed|Goal)$/.test(p.type && p.type.text)).length;
+  if (shotN) h += `<section class="panel"><h3>Shot map <span class="r">attacking → the other team’s zone</span></h3>${rinkSVG(g, plays)}
+    <div class="legend"><span><i class="sw" style="background:${ink.a}"></i>${esc(g.away.abbr)}</span><span><i class="sw" style="background:${ink.h}"></i>${esc(g.home.abbr)}</span><span>● on goal</span><span>○ missed</span><span>◉ goal</span></div></section>`;
+  const flow = nhlShotFlow(g, plays); if (flow) h += `<section class="panel"><h3>Shots on goal, game flow <span class="r">dots are goals</span></h3>${flow}</section>`;
+  const goals = plays.filter(p => p.type && p.type.text === 'Goal');
+  if (goals.length) h += `<section class="panel"><h3>Goals</h3><div class="plays">${goals.map(p => { const t = String(p.team && p.team.id) === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a; const str = p.strength && p.strength.abbreviation !== 'even-strength' ? `<span class="chip" style="margin-left:4px">${esc(p.strength.text === 'Power Play' ? 'PP' : p.strength.text === 'Shorthanded' ? 'SH' : p.strength.text)}</span>` : ''; return `<div class="play"><span class="t">${esc(p.period.number > 3 ? (p.period.number > 4 ? 'SO' : 'OT') : 'P' + p.period.number)} ${esc(p.clock && p.clock.displayValue)}</span><div><span class="tag" style="background:${col}">${esc(t.abbr)}</span>${esc(p.text)}${str} <span class="muted num">${esc(p.awayScore)}–${esc(p.homeScore)}</span></div></div>`; }).join('')}</div></section>`;
+  const T = (s.boxscore && s.boxscore.teams) || [];
+  const A = T.find(t => String(t.team.id) === g.away.id), Hm = T.find(t => String(t.team.id) === g.home.id);
+  if (A && Hm) {
+    const v = (t, k) => { const x = (t.statistics || []).find(z => z.name === k); return x ? x.displayValue : null; };
+    const rows = [['shotsTotal', 'Shots'], ['hits', 'Hits'], ['blockedShots', 'Blocked'], ['faceoffPercent', 'Faceoff %'], ['takeaways', 'Takeaways'], ['giveaways', 'Giveaways'], ['penaltyMinutes', 'PIM']].map(([k, l]) => { const a = v(A, k), b = v(Hm, k); if (a == null && b == null) return null; return { label: l, ad: a ?? '–', hd: b ?? '–', a: parseFloat(a) || 0, h: parseFloat(b) || 0 }; }).filter(Boolean);
+    const ppA = v(A, 'powerPlayGoals'), ppoA = v(A, 'powerPlayOpportunities'), ppH = v(Hm, 'powerPlayGoals'), ppoH = v(Hm, 'powerPlayOpportunities');
+    if (ppoA != null) rows.splice(1, 0, { label: 'Power play', ad: `${ppA}/${ppoA}`, hd: `${ppH}/${ppoH}`, a: +ppA || 0, h: +ppH || 0 });
+    h += `<section class="panel"><h3>Team stats <span class="r">${esc(g.away.abbr)} · ${esc(g.home.abbr)}</span></h3>${compareRows(rows, g)}</section>`;
+  }
+  h += nhlPlayers(g, s);
+  if (g.state === 'in') {
+    const keep = plays.filter(p => p.type && !/^(Stoppage|Face Off|Period Start|Period End)$/.test(p.type.text)).slice(-12).reverse();
+    if (keep.length) h += `<section class="panel"><h3>Recent plays</h3><div class="plays">${keep.map(p => `<div class="play"><span class="t">P${esc(p.period.number)} ${esc(p.clock && p.clock.displayValue)}</span><div>${p.type.text === 'Goal' ? '<b>' : ''}${esc(p.text)}${p.type.text === 'Goal' ? '</b>' : ''}</div></div>`).join('')}</div></section>`;
+  }
+  if (g.state === 'post') h += watchPanel(g, s);
+  return h;
+}
+function nhlPlayers(g, s) {
+  const P = (s.boxscore && s.boxscore.players) || []; if (!P.length) return '';
+  const D = S.detail; const side = D.tab === 'home' ? g.home : g.away;
+  const blk = P.find(p => String(p.team.id) === side.id); if (!blk) return '';
+  const cats = blk.statistics || []; const sk = []; let gl = null;
+  cats.forEach(c => { const lab = c.labels || c.keys || []; if (c.name === 'goalies') gl = { lab, ath: c.athletes || [] }; else if (c.name !== 'skaters') (c.athletes || []).forEach(a => sk.push({ lab, a })); });
+  if (!sk.length) cats.filter(c => c.name === 'skaters').forEach(c => (c.athletes || []).forEach(a => sk.push({ lab: c.labels || c.keys || [], a })));
+  const get = (r, k) => { const i = r.lab.indexOf(k); return i >= 0 ? r.a.stats[i] : ''; };
+  sk.forEach(r => { r.g = +get(r, 'G') || 0; r.as = +get(r, 'A') || 0; r.sog = +get(r, 'SOG') || 0; r.toi = secs(get(r, 'TOI')); });
+  sk.sort((x, y) => (y.g + y.as) - (x.g + x.as) || y.g - x.g || y.sog - x.sog || y.toi - x.toi);
+  let h = `<p class="cat">Skaters</p><div class="scroll-x"><table class="tbl"><thead><tr><th></th><th>G</th><th>A</th><th>P</th><th>SOG</th><th>+/-</th><th>HT</th><th>TOI</th></tr></thead><tbody>${sk.map(r => `<tr><td>${esc(r.a.athlete.shortName || r.a.athlete.displayName)}</td><td>${r.g}</td><td>${r.as}</td><td><b>${r.g + r.as}</b></td><td>${r.sog}</td><td>${esc(get(r, '+/-'))}</td><td>${esc(get(r, 'HT'))}</td><td>${esc(get(r, 'TOI'))}</td></tr>`).join('')}</tbody></table></div>`;
+  if (gl && gl.ath.length) { const gi = k => gl.lab.indexOf(k); h += `<p class="cat">Goalies</p><div class="scroll-x"><table class="tbl"><thead><tr><th></th><th>SA</th><th>SV</th><th>GA</th><th>SV%</th><th>TOI</th></tr></thead><tbody>${gl.ath.map(a => `<tr><td>${esc(a.athlete.shortName || a.athlete.displayName)}</td>${['SA', 'SV', 'GA', 'SV%', 'TOI'].map(k => `<td>${esc(gi(k) >= 0 ? a.stats[gi(k)] : '')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
+  return `<section class="panel"><h3>Players</h3><div class="seg" role="group" aria-label="Team"><button data-ptab="away" aria-pressed="${D.tab !== 'home'}">${esc(g.away.name)}</button><button data-ptab="home" aria-pressed="${D.tab === 'home'}">${esc(g.home.name)}</button></div>${h}</section>`;
+}
+
+/* =====================================================================
+   FANTASY
+   ===================================================================== */
+const SL = p => getJSON('https://api.sleeper.app/v1/' + p);
+const TEAM_FIX = { WAS: 'WSH', JAC: 'JAX', LA: 'LAR', OAK: 'LV', SD: 'LAC' };
+const nflAbbr = a => TEAM_FIX[a] || a;
+async function nflNow() { return cached('nflnow', 20e3, async () => { const j = await espn('nfl', 'scoreboard'); const map = {}; (j.events || []).forEach(e => { const g = mkGame('nfl', e); map[g.home.abbr] = g; map[g.away.abbr] = g; }); return { map, week: j.week && j.week.number, year: j.season && j.season.year, byes: ((j.week && j.week.teamsOnBye) || []).map(t => t.abbreviation) }; }); }
+function remainFrac(g) { if (!g || g.state === 'pre') return 1; if (g.state === 'post') return 0; const per = +g.period || 1; if (per > 4) return 0.02; const left = (4 - per) * 15 + secs(g.clock) / 60; return clamp(left / 60, 0, 1); }
+function gameTag(abbr, nfl) {
+  if (!abbr) return '';
+  const a = nflAbbr(abbr); if (nfl.byes.includes(a)) return '<span>bye</span>'; const g = nfl.map[a]; if (!g) return '';
+  const opp = g.home.abbr === a ? g.away : g.home; const at = g.home.abbr === a ? 'vs' : '@';
+  if (g.state === 'pre') return `<span>${at} ${esc(opp.abbr)} · ${esc(fmtDay(g.date).split(',')[0])} ${esc(fmtTime(g.date))}</span>`;
+  const me = g.home.abbr === a ? g.home : g.away;
+  return `<span class="${g.state === 'in' ? 'in' : ''}">${at} ${esc(opp.abbr)} ${esc(me.score)}–${esc(opp.score)} · ${esc(g.state === 'in' ? g.detail : 'Final')}</span>`;
+}
+async function sleeperPlayers(ids) {
+  let c = LS.get('sp_players', null); const day = ymd(new Date());
+  const missing = !c || c.d !== day || ids.some(id => !(id in c.m));
+  if (missing) {
+    const all = await getJSON('https://api.sleeper.app/v1/players/nfl', 45000); const m = {};
+    ids.forEach(id => { const p = all[id]; if (p) m[id] = [p.full_name || ((p.first_name || '') + ' ' + (p.last_name || '')).trim() || id, p.position || '', p.team || '', p.injury_status || '']; else if (/^[A-Z]{2,3}$/.test(id)) m[id] = [id + ' D/ST', 'DEF', id, '']; });
+    c = { d: day, m }; LS.set('sp_players', c);
+  }
+  return c.m;
+}
+async function sleeperBlock(nfl) {
+  const L = CFG.sleeperLeague;
+  const base = await cached('sl:' + L, 30 * 60e3, async () => { const [st, lg, users, rosters] = await Promise.all([SL('state/nfl'), SL('league/' + L), SL('league/' + L + '/users'), SL('league/' + L + '/rosters')]); return { st, lg, users, rosters }; });
+  const { st, lg, users, rosters } = base; const wk = st.display_week || st.week;
+  const mus = await SL(`league/${L}/matchups/${wk}`);
+  const ids = [...new Set(rosters.flatMap(r => (r.players || []).concat(r.starters || [])).filter(x => x && x !== '0'))];
+  const P = await sleeperPlayers(ids);
+  const proj = await cached(`slp:${st.season}:${wk}`, 20 * 60e3, async () => { const rows = await getJSON(`https://api.sleeper.app/projections/nfl/${st.season}/${wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF`); const m = {}; const rec = (lg.scoring_settings && lg.scoring_settings.rec) ?? 1; const key = rec >= 1 ? 'pts_ppr' : rec >= .5 ? 'pts_half_ppr' : 'pts_std'; rows.forEach(r => { const s = r.stats || {}; m[r.player_id] = s[key] ?? s.pts_ppr ?? 0; }); return m; }).catch(() => ({}));
+  const uname = rid => { const r = rosters.find(x => x.roster_id === rid); const u = r && users.find(x => x.user_id === r.owner_id); return (u && ((u.metadata && u.metadata.team_name) || u.display_name)) || 'Team ' + rid; };
+  const slots = (lg.roster_positions || []).filter(x => x !== 'BN' && x !== 'IR' && x !== 'TAXI');
+  const teamOf = m => {
+    const starters = (m.starters || []); const pts = m.players_points || {};
+    const rows = starters.map((id, i) => ({ id, slot: (slots[i] || '').replace('SUPER_FLEX', 'SF').replace('REC_FLEX', 'RF').replace('WRRB_FLEX', 'W/R'), st: true }));
+    (m.players || []).filter(id => !starters.includes(id)).forEach(id => rows.push({ id, slot: 'BN', st: false }));
+    let live = 0, act = 0;
+    rows.forEach(r => { const p = P[r.id] || [r.id, '', '', '']; r.name = p[0]; r.pos = p[1]; r.team = p[2]; r.inj = p[3]; r.pts = +(pts[r.id] || 0); r.proj = proj[r.id] != null ? +proj[r.id] : null; const g = nfl.map[nflAbbr(r.team)]; const rem = nfl.byes.includes(nflAbbr(r.team)) ? 0 : remainFrac(g); r.est = r.pts + (r.proj || 0) * rem; r.left = rem > 0 && g && g.state !== 'post'; if (r.st && r.id !== '0') { live += r.pts; act += r.est; } });
+    return { rid: m.roster_id, name: uname(m.roster_id), pts: m.points != null ? +m.points : live, est: act, rows, left: rows.filter(r => r.st && r.left).length };
+  };
+  const meM = mus.find(m => String(m.roster_id) === String(CFG.sleeperRoster));
+  const oppM = meM && mus.find(m => m.matchup_id === meM.matchup_id && m.roster_id !== meM.roster_id);
+  const me = meM && teamOf(meM), opp = oppM && teamOf(oppM);
+  if (me) me.rows.forEach(r => addMine(r.name, 'PFL'));
+  const pairs = {}; mus.forEach(m => { if (m.matchup_id != null) (pairs[m.matchup_id] = pairs[m.matchup_id] || []).push(m); });
+  const league = Object.values(pairs).map(arr => arr.map(teamOf));
+  return renderFx({ key: 'sv', title: lg.name || 'Sleeper', src: 'Sleeper', week: wk, me, opp, league });
+}
+function addMine(name, tag) { const k = normName(name); if (!k) return; const t = MY_NAMES.get(k) || []; if (!t.includes(tag)) t.push(tag); MY_NAMES.set(k, t); }
+
+/* CBS: the token comes from the user's own CBS league page (Settings explains how) */
+async function cbsCall(path, extra = '') {
+  const j = await getJSON(`https://api.cbssports.com/fantasy/${path}?version=3.0&response_format=JSON&access_token=${encodeURIComponent(CFG.cbsToken)}${extra}`);
+  if (j && (j.error || (j.statusCode && j.statusCode >= 400))) throw new Error(typeof j.error === 'string' ? j.error : (j.statusMessage || 'CBS refused the request'));
+  return (j && j.body) || {};
+}
+async function cbsBlock(nfl) {
+  const wk = nfl.week;
+  const b = await cbsCall('league/scoring/live', '&period=' + wk);
+  const ls = b.live_scoring || b; const teams = ls.teams || [];
+  if (!teams.length) throw new Error('CBS returned no teams for week ' + wk);
+  const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+  const mkT = t => {
+    const rows = (t.players || []).map(p => {
+      const status = String(p.status || p.roster_status || p.roster_pos || '').toUpperCase();
+      const st = !/^(RS|BN|B|IR|RES)/.test(status);
+      const team = p.pro_team || p.team || '';
+      const pts = num(p.fpts ?? p.pts ?? p.points) || 0; const pj = num(p.proj_fpts ?? p.proj_pts ?? p.projected_points ?? p.fpts_proj);
+      const g = nfl.map[nflAbbr(team)]; const rem = nfl.byes.includes(nflAbbr(team)) ? 0 : remainFrac(g);
+      return { name: p.fullname || p.full_name || p.name || '?', pos: p.position || '', team, slot: st ? (p.position || '') : 'BN', st, pts, proj: pj, est: pj != null ? pts + pj * rem : pts, left: rem > 0 && g && g.state !== 'post', inj: p.injury || p.injury_status || '' };
+    });
+    rows.sort((a, b) => (b.st - a.st));
+    const startPts = rows.filter(r => r.st).reduce((a, r) => a + r.pts, 0);
+    const est = rows.filter(r => r.st).reduce((a, r) => a + r.est, 0);
+    return { rid: String(t.id), name: t.name || t.long_name || 'Team ' + t.id, pts: num(t.pts ?? t.points ?? t.fpts) ?? startPts, est, rows, left: rows.filter(r => r.st && r.left).length, opp: t.opponent || t.opponent_id || (t.matchup && t.matchup.opponent_id) };
+  };
+  const T = teams.map(mkT);
+  const me = T.find(t => t.rid === String(CFG.cbsTeam));
+  let opp = null; if (me && me.opp != null) opp = T.find(t => t.rid === String(typeof me.opp === 'object' ? me.opp.id : me.opp));
+  if (me) me.rows.forEach(r => addMine(r.name, 'CBS'));
+  let league = [];
+  if (T.some(t => t.opp != null)) { const seen = new Set(); T.forEach(t => { if (seen.has(t.rid)) return; const o = T.find(x => x.rid === String(typeof t.opp === 'object' ? t.opp.id : t.opp)); seen.add(t.rid); if (o) { seen.add(o.rid); league.push([t, o]); } else league.push([t]); }); }
+  else league = T.slice().sort((a, b) => b.pts - a.pts).map(t => [t]);
+  return renderFx({ key: 'cv', title: 'CBS league', src: 'CBS', week: wk, me, opp, league });
+}
+function fmtP(v) { return v == null ? '–' : (Math.round(v * 10) / 10).toFixed(1); }
+function renderFx({ key, title, src, week, me, opp, league }) {
+  const view = S.fx[key];
+  let h = `<section class="panel"><div class="fx-head"><span class="lg-name">${esc(title)}</span><span class="pill src">${esc(src)} · Wk ${esc(week)}</span></div>`;
+  if (me) {
+    if (opp) {
+      const tot = Math.max(1, me.est + opp.est); const share = me.est / tot;
+      const odds = Math.round(clamp(.5 + (me.est - opp.est) / (2 * Math.max(12, Math.sqrt(me.left + opp.left + 1) * 9)), .01, .99) * 100);
+      h += `<div class="fx-vs"><div class="fx-tm"><div class="n">${esc(me.name)}</div><div class="p">${fmtP(me.pts)}</div><div class="pj">proj ${fmtP(me.est)} · ${me.left} to play</div></div><div class="fx-mid">VS</div><div class="fx-tm r"><div class="n">${esc(opp.name)}</div><div class="p">${fmtP(opp.pts)}</div><div class="pj">proj ${fmtP(opp.est)} · ${opp.left} to play</div></div></div>
+        <div class="fx-bar" aria-hidden="true"><i style="width:${(share * 100).toFixed(1)}%;background:var(--accent)"></i><i style="flex:1;background:var(--muted);opacity:.5"></i></div><div class="fx-odds"><span>Rough win chance ${odds}%</span><span>${100 - odds}%</span></div>`;
+    } else {
+      h += `<div class="fx-vs"><div class="fx-tm"><div class="n">${esc(me.name)}</div><div class="p">${fmtP(me.pts)}</div><div class="pj">proj ${fmtP(me.est)} · ${me.left} to play</div></div><div></div><div></div></div>`;
+    }
+    h += `<div class="seg" role="group"><button data-fx="${key}:me" aria-pressed="${view === 'me'}">My lineup</button>${opp ? `<button data-fx="${key}:opp" aria-pressed="${view === 'opp'}">Opponent</button>` : ''}<button data-fx="${key}:lg" aria-pressed="${view === 'lg'}">League</button></div>`;
+  } else {
+    h += `<p class="hint" style="margin:0">Pick your team in Settings to see your lineup. League scores below.</p>`;
+  }
+  const v = me ? view : 'lg';
+  if (v === 'lg') {
+    const myId = me && me.rid;
+    h += `<div>${league.map(arr => { const [a, b] = arr; if (!b) return `<div class="mu${a.rid === myId ? ' me' : ''}"><span class="a">${esc(a.name)}</span><span class="s">${fmtP(a.pts)}</span><span></span><span></span><span class="b muted small">proj ${fmtP(a.est)}</span></div>`; const aw = a.pts >= b.pts; return `<div class="mu${a.rid === myId || b.rid === myId ? ' me' : ''}"><span class="a ${aw ? 'w' : ''}">${esc(a.name)}</span><span class="s">${fmtP(a.pts)}</span><span class="muted">–</span><span class="s">${fmtP(b.pts)}</span><span class="b ${aw ? '' : 'w'}">${esc(b.name)}</span></div>`; }).join('')}</div>`;
+  } else {
+    const t = v === 'opp' && opp ? opp : me;
+    h += `<div>${t.rows.map(r => `<div class="pl${r.st ? '' : ' bench'}"><span class="slot">${esc(r.slot || r.pos)}</span><div class="pn"><div class="n">${esc(r.name)}</div><div class="m"><span>${esc(r.pos)}${r.team ? ' · ' + esc(r.team) : ''}</span>${r.inj ? `<span class="inj">${esc(String(r.inj).slice(0, 3).toUpperCase())}</span>` : ''}${gameTag(r.team, S.fxNfl)}</div></div><div class="pp"><div class="v">${fmtP(r.pts)}</div><div class="j">${r.proj != null ? 'proj ' + fmtP(r.proj) : ''}</div></div></div>`).join('')}</div>`;
+  }
+  return h + '</section>';
+}
+async function loadFx() {
+  const nfl = await nflNow(); S.fxNfl = nfl;
+  const parts = [];
+  if (!CFG.sleeperLeague && !CFG.cbsToken) parts.push(`<section class="panel"><h3>Connect your leagues</h3><p style="margin:0">Open <b>Settings</b> (gear, top right) and paste your setup code, or add your Sleeper league and CBS token there. Everything stays on this phone.</p><button class="btn" data-settings>Open settings</button></section>`);
+  const jobs = [];
+  if (CFG.sleeperLeague) jobs.push(sleeperBlock(nfl).catch(e => `<div class="err"><b>Sleeper:</b> ${esc(e.message)}</div>`));
+  if (CFG.cbsToken) jobs.push(cbsBlock(nfl).catch(e => `<div class="err"><b>CBS:</b> ${esc(e.message)}. The token may have expired; grab a fresh one (Settings → CBS).</div>`));
+  parts.push(...await Promise.all(jobs));
+  if (S.tab !== 'fx' || S.sheetMode) return Object.values(nfl.map).some(g => g.state === 'in');
+  $('#view').innerHTML = parts.join('');
+  return Object.values(nfl.map).some(g => g.state === 'in');
+}
+async function warmMine() { // so box scores can flag your players without visiting Fantasy first
+  try { const nfl = await nflNow(); S.fxNfl = nfl; if (CFG.sleeperLeague) await sleeperBlock(nfl); if (CFG.cbsToken) await cbsBlock(nfl); } catch (e) {}
+}
+
+/* =====================================================================
+   SETTINGS
+   ===================================================================== */
+const BOOKMARKLET = "javascript:(()=>{const m=document.documentElement.outerHTML.match(/token[\"']?\\s*[:=]\\s*[\"']([A-Za-z0-9_\\-.]{20,})[\"']/);if(!m){alert('No CBS token on this page. Open your CBS league while signed in.');return}navigator.clipboard.writeText(m[1]).then(()=>alert('CBS token copied. Paste it into Forecheck Settings.'),()=>prompt('Copy this CBS token:',m[1]))})();";
+function openSettings() {
+  openSheet('settings', 'Settings');
+  const opt = (list, v) => list.map(a => `<option ${a === v ? 'selected' : ''}>${a}</option>`).join('');
+  $('#shBody').innerHTML = `
+  <section class="panel"><h3>Favourite teams</h3><div class="row2">
+    <div class="fld"><label for="sfNfl">NFL</label><select id="sfNfl"><option value="">None</option>${opt(NFL_TEAMS, CFG.favNFL)}</select></div>
+    <div class="fld"><label for="sfNhl">NHL</label><select id="sfNhl"><option value="">None</option>${opt(NHL_TEAMS, CFG.favNHL)}</select></div></div></section>
+
+  <section class="panel"><h3>Setup code</h3><p class="hint" style="margin:0">Paste the code Claude gave you to fill in your leagues in one go.</p>
+    <div class="fld"><label for="sfCode">Code</label><textarea id="sfCode" placeholder="FC1…" autocapitalize="off" autocomplete="off" spellcheck="false"></textarea></div>
+    <button class="btn ghost" id="sfApply">Apply code</button></section>
+
+  <section class="panel"><h3>Sleeper</h3><div class="form">
+    <div class="fld"><label for="sfSl">League ID</label><input id="sfSl" inputmode="numeric" autocomplete="off" value="${esc(CFG.sleeperLeague)}"></div>
+    <div class="fld"><label for="sfSlTeam">Your team</label><select id="sfSlTeam"><option value="${esc(CFG.sleeperRoster)}">${CFG.sleeperRoster ? 'Roster ' + esc(CFG.sleeperRoster) : 'Load teams first'}</option></select></div>
+    <button class="btn ghost" id="sfSlLoad">Load teams</button></div></section>
+
+  <section class="panel"><h3>CBS</h3><div class="form">
+    <div class="fld"><label for="sfCbs">Access token</label><input id="sfCbs" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(CFG.cbsToken)}"></div>
+    <div class="fld"><label for="sfCbsTeam">Your team</label><select id="sfCbsTeam"><option value="${esc(CFG.cbsTeam)}">${CFG.cbsTeam ? 'Team ' + esc(CFG.cbsTeam) : 'Load teams first'}</option></select></div>
+    <button class="btn ghost" id="sfCbsLoad">Load teams</button>
+    <p class="hint" style="margin:0">CBS has no public login for apps like this, so Forecheck uses the token CBS gives your own league page. To get it on a Mac: make a bookmark whose address is the line below, open your CBS league while signed in, and click the bookmark. It copies the token, and Universal Clipboard lets you paste it here on your iPhone. Tokens can expire; if CBS stops loading, repeat this.</p>
+    <code class="code" id="bmk">${esc(BOOKMARKLET)}</code>
+    <button class="btn ghost" id="sfCopyBm">Copy bookmark code</button></div></section>
+
+  <section class="panel"><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="sfSave">Save</button><button class="btn ghost" id="sfReset">Clear saved data</button></div>
+    <p class="hint" style="margin:0" id="sfMsg">Settings are stored only on this device.</p></section>`;
+  $('#sfApply').onclick = () => { const raw = $('#sfCode').value.trim(); try { const j = JSON.parse(decodeURIComponent(escape(atob(raw.replace(/^FC1/, ''))))); ['favNFL', 'favNHL', 'sleeperLeague', 'sleeperRoster', 'cbsToken', 'cbsTeam'].forEach(k => { if (j[k] != null && j[k] !== '') CFG[k] = String(j[k]); }); saveCfg(); for (const k in memo) delete memo[k]; toast('Setup code applied'); openSettings(); } catch (e) { $('#sfMsg').textContent = 'That code didn’t work. Check it was copied in full.'; } };
+  $('#sfSlLoad').onclick = async () => { const L = $('#sfSl').value.trim(); if (!L) return; try { const [users, rosters] = await Promise.all([SL('league/' + L + '/users'), SL('league/' + L + '/rosters')]); $('#sfSlTeam').innerHTML = rosters.map(r => { const u = users.find(x => x.user_id === r.owner_id) || {}; const n = (u.metadata && u.metadata.team_name) || u.display_name || 'Roster ' + r.roster_id; return `<option value="${r.roster_id}" ${String(r.roster_id) === String(CFG.sleeperRoster) ? 'selected' : ''}>${esc(n)}${u.display_name && n !== u.display_name ? ' (' + esc(u.display_name) + ')' : ''}</option>`; }).join(''); } catch (e) { $('#sfMsg').textContent = 'Sleeper: ' + e.message; } };
+  $('#sfCbsLoad').onclick = async () => { const tok = $('#sfCbs').value.trim(); if (!tok) return; const old = CFG.cbsToken; CFG.cbsToken = tok; try { const b = await cbsCall('league/teams'); const teams = b.teams || []; $('#sfCbsTeam').innerHTML = teams.map(t => `<option value="${esc(t.id)}" ${String(t.id) === String(CFG.cbsTeam) ? 'selected' : ''}>${esc(t.name)}${t.owners && t.owners[0] && t.owners[0].name ? ' (' + esc(t.owners[0].name) + ')' : ''}</option>`).join(''); } catch (e) { $('#sfMsg').textContent = 'CBS: ' + e.message; } finally { CFG.cbsToken = old; } };
+  $('#sfCopyBm').onclick = async () => { try { await navigator.clipboard.writeText(BOOKMARKLET); toast('Bookmark code copied'); } catch (e) { const r = document.createRange(); r.selectNodeContents($('#bmk')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } };
+  $('#sfSave').onclick = () => { CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); warmMine(); };
+  $('#sfReset').onclick = () => { if ($('#sfReset').dataset.armed) { LS.del('cfg'); LS.del('sp_players'); CFG = Object.assign({}, DEFAULTS); MY_NAMES.clear(); toast('Cleared'); closeSheet(); } else { $('#sfReset').dataset.armed = '1'; $('#sfReset').textContent = 'Tap again to clear'; } };
+}
+
+/* =====================================================================
+   REFRESH LOOP + EVENTS
+   ===================================================================== */
+async function refresh(force) {
+  clearTimeout(S.timer);
+  if (document.hidden && !force) { S.timer = setTimeout(refresh, 30e3); return; }
+  if (S.busy && !force) return; S.busy = true; $('#refreshBtn').classList.add('spin');
+  let live = false;
+  try {
+    if (S.sheetMode === 'game') live = await loadDetail();
+    else if (S.sheetMode === 'settings') live = S.live;
+    else if (S.tab === 'nfl') live = await loadNFL();
+    else if (S.tab === 'nhl') live = await loadNHL();
+    else live = await loadFx();
+    setUpdated(live);
+  } catch (e) {
+    const msg = navigator.onLine === false ? 'You’re offline. Scores will refresh when you reconnect.' : 'Couldn’t load scores (' + e.message + '). Retrying shortly.';
+    if (S.sheetMode === 'game') toast(msg); else if (!S.sheetMode) { const v = $('#view'); if (!v.querySelector('.game,.panel,.hero')) v.innerHTML = `<div class="err">${esc(msg)}</div>`; else toast(msg); }
+  } finally {
+    S.busy = false; $('#refreshBtn').classList.remove('spin');
+    S.timer = setTimeout(refresh, live ? 15e3 : 60e3);
+  }
+}
+document.addEventListener('click', e => {
+  const o = e.target.closest('[data-open]'); if (o) { const [sp, id] = o.dataset.open.split(':'); openGame(sp, id); return; }
+  const t = e.target.closest('[data-tab]'); if (t) { if (S.sheetMode) closeSheet(); setTab(t.dataset.tab); return; }
+  const w = e.target.closest('[data-wk]'); if (w) { shiftWeek(+w.dataset.wk); return; }
+  const d = e.target.closest('[data-day]'); if (d) { shiftDay(+d.dataset.day); return; }
+  if (e.target.closest('.nav .lbl u')) { if (S.tab === 'nfl') S.nfl.q = null; else S.nhl.date = null; refresh(true); return; }
+  const p = e.target.closest('[data-ptab]'); if (p && S.detail) { S.detail.tab = p.dataset.ptab; const g = S.detail.g, s = S.detail.s; const keep = $('#sheet').scrollTop; $('#shBody').innerHTML = S.detail.sp === 'nfl' ? nflDetail(g, s) : nhlDetail(g, s); $('#sheet').scrollTop = keep; return; }
+  const f = e.target.closest('[data-fx]'); if (f) { const [k, v] = f.dataset.fx.split(':'); S.fx[k] = v; refresh(true); return; }
+  if (e.target.closest('[data-settings]')) { openSettings(); return; }
+});
+$('#sheetBack').onclick = closeSheet;
+$('#settingsBtn').onclick = openSettings;
+$('#refreshBtn').onclick = () => { for (const k in memo) if (k === 'nflnow') delete memo[k]; refresh(true); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheetMode) closeSheet(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(true); });
+window.addEventListener('online', () => refresh(true));
+matchMedia('(prefers-color-scheme: dark)').addEventListener && matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { setSport(S.tab); refresh(true); });
+
+setTab(['nfl', 'nhl', 'fx'].includes(S.tab) ? S.tab : 'nfl');
+warmMine();
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
