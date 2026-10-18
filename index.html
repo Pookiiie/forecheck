@@ -446,17 +446,18 @@ function tLine(g, t, si) {
   const lose = g.state === 'post' && !t.winner && (g.home.winner || g.away.winner);
   return `<div class="tl${lose ? ' lose' : ''}" style="--c:${teamInk(t)}">${logo(t)}<span class="ab">${esc(t.abbr)}</span>${si && si.off === t ? FOOT : ''}${g.state === 'pre' ? `<span class="rec">${esc(t.rec)}</span>` : ''}<span class="sc">${g.state === 'pre' ? '' : esc(t.score)}</span></div>`;
 }
-function tile(g) {
+function tile(g, grouped) {
   const si = g.sp === 'nfl' ? nflSit(g) : null;
   const mine = g.sp === 'nfl' ? minesIn(g) : [];
   const mineH = mine.length ? `<div class="tmine">${mine.slice(0, 3).map(p => `<span><b>${p.tag}</b>${esc(p.name)}${g.state !== 'pre' ? ` <i>${fmtP(p.pts)}</i>` : ''}</span>`).join('')}${mine.length > 3 ? `<span>+${mine.length - 3}</span>` : ''}</div>` : '';
   let x = '';
   if (si && si.off) x = `<span class="x yl">${esc(si.dd)}${si.rz ? ' · RZ' : ''}</span>`;
   else if (showWatch(g)) x = `<span class="x">${watchHabs(g).items.slice(0, 2).map(i => esc(i.name)).join(' · ')}</span>`;
-  else if (g.state === 'pre' && g.odds) x = `<span class="x">${esc(g.odds)}</span>`;
-  return `<button class="tile${hasFav(g) ? ' fav' : ''}" data-open="${g.sp}:${g.id}">${tLine(g, g.away, si)}${tLine(g, g.home, si)}${si && si.off ? `<div class="tgauge">${gauge(si, g)}</div>` : ''}${mineH}<div class="tf">${statusText(g)}${x}</div></button>`;
+  else if (g.state === 'pre' && g.odds && g.sp === 'nfl') x = `<span class="x">${esc(g.odds)}</span>`;
+  const st = g.state === 'pre' && g.sp === 'nfl' && grouped ? '' : statusText(g);
+  return `<button class="tile${hasFav(g) ? ' fav' : ''}" data-open="${g.sp}:${g.id}">${tLine(g, g.away, si)}${tLine(g, g.home, si)}${si && si.off ? `<div class="tgauge">${gauge(si, g)}</div>` : ''}${mineH}${st || x ? `<div class="tf">${st}${x}</div>` : ''}</button>`;
 }
-const tiles = (label, games, cls = '') => games.length ? `<div class="lbl ${cls}">${label}</div><div class="g2 tiles">${games.map(tile).join('')}</div>` : '';
+const tiles = (label, games, cls = '', grouped = false) => games.length ? `<div class="lbl ${cls}">${label}</div><div class="g2 tiles">${games.map(g => tile(g, grouped)).join('')}</div>` : '';
 function sec(title, right, body, cls = '') { return `<section class="sec ${cls}"><h2><span>${title}</span>${right ? `<span class="r">${right}</span>` : ''}</h2>${body}</section>`; }
 
 /* ---------- big score bug ---------- */
@@ -569,7 +570,7 @@ async function loadNFL() {
   const notHero = g => g.id !== hero.id;
   h += tiles(`Live · ${L.filter(notHero).length}`, L.filter(notHero), 'live');
   const slots = {}; P.forEach(g => { const k = dayWord(g.date) + ' · ' + fmtTime(g.date); (slots[k] = slots[k] || []).push(g); });
-  for (const [k, arr] of Object.entries(slots)) h += tiles(esc(k), arr.filter(notHero).sort((a, b) => score(b) - score(a)));
+  for (const [k, arr] of Object.entries(slots)) h += tiles(esc(k), arr.filter(notHero).sort((a, b) => score(b) - score(a)), '', true);
   h += tiles('Final', F.filter(notHero));
   if (byes.length) h += `<p class="foot">On bye: ${byes.map(esc).join(', ')}</p>`;
   if (!games.length) h += '<div class="empty">No games this week.</div>';
