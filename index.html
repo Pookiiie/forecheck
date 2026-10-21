@@ -627,7 +627,7 @@ const logo = (t, onColour, ctx = 'std') => { const u = !onColour && lightIce() ?
    Measure each logo's opaque area once and scale it toward the same visual weight. */
 const LOGO_FIT = {}, LOGO_PENDING = {};
 const LOGO_NUDGE = { 'nhl/tb': .84 }; // hand adjustments for logos that still read too big or small
-const LOGO_TRIM = { 'nhl/tor': .98, 'nhl/wsh': .96, 'nhl/ott': 1.02 }; // applied after the size caps, for marks that still read big (Eric's eye)
+const LOGO_TRIM = { 'nhl/tor': .96, 'nhl/wsh': .96, 'nhl/ott': 1.02 }; // applied after the size caps, for marks that still read big (Eric's eye)
 const LOGO_NUDGE_DARK = { 'nhl/wpg': 1.1 }; // on dark backgrounds only: the Jets' navy disc fades into the dark, so it reads smaller
 function measureLogo(url) {
   if (LOGO_PENDING[url]) return LOGO_PENDING[url];
