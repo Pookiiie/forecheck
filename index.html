@@ -664,11 +664,11 @@ function calFit(img, f) {
   const N = f.N, M = f.mask, tx = f.tx / 100 * W, ty = f.ty / 100 * H;
   const pts = []; for (let y = 0; y < N; y += 2) for (let x = 0; x < N; x += 2) if (M[y * N + x]) pts.push([(x + .5) / N * W - W / 2 + tx, (y + .5) / N * H - H / 2 + ty]);
   const ok = (s, dx, dy) => { for (const [a, b] of pts) { const px = ox + dx + s * a, py = oy + dy + s * b; if (px < .5 || py < .5 || px > cw - .5 || py > ch - .5) return false; if (R && px > R.l && px < R.r && py > R.t && py < R.b) return false; } return true; };
-  // only take back about a quarter of the shrink a perfect clearance would need: a hair of overlap with the
-  // number's box reads better than a visibly smaller logo (Vegas ~98%, Devils ~96%)
+  // take back only part of the shrink a perfect clearance would need: a hair of overlap with the number's
+  // box reads better than a visibly smaller logo (tuned by eye: Vegas 97%, Devils 95%)
   const top = f.calMax * .99; let fit = f.calMax * .7;
   for (let s = top; s > f.calMax * .7; s -= .005) if (ok(s, 0, 0)) { fit = s; break; }
-  const s = top - (top - fit) * .27;
+  const extra = (top - fit) / f.calMax; const s = extra > .001 ? f.calMax * (.99 - .011 - .261 * extra) : top;
   return `scale(${s.toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
   return `scale(${(f.calMax * .7).toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
 }
