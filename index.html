@@ -332,7 +332,7 @@ button.hero:active{opacity:.85}
 .mine{display:inline-block;padding:0 4px;border-radius:4px;background:color-mix(in srgb,var(--mine) 20%,transparent);color:var(--mine);font:700 9.5px/15px var(--ui);letter-spacing:.04em;vertical-align:1px}
 
 /* ---------- fantasy matchup cards ---------- */
-.fxc{display:grid;gap:3px;background:var(--card);border-radius:10px;padding:7px 9px 8px;min-width:0;width:100%;border-top:3px solid var(--mine)}
+.fxc{display:grid;align-content:start;gap:3px;background:var(--card);border-radius:10px;padding:7px 9px 8px;min-width:0;width:100%;border-top:3px solid var(--mine)}
 .fxc:active{opacity:.8}
 .fxh{display:flex;align-items:baseline;gap:6px;font:700 12px var(--bc);letter-spacing:.12em;text-transform:uppercase;color:var(--fg2)}
 .fxh .pc{margin-left:auto;color:var(--mine);letter-spacing:.04em}
@@ -938,7 +938,7 @@ function lineupCard(issues) {
   const order = [], by = {};
   issues.forEach(i => { const k = i.why === 'Questionable' ? 'Q' : i.why === 'Empty' ? 'Empty' : i.why; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(i.why === 'Empty' ? i.name.replace(/ slot$/, '') : lastName(i.name)); });
   const bad = issues.some(i => i.lvl === 2);
-  return `<div class="fxw${bad ? '' : ' q'}">⚠ ${order.map(k => `<b>${esc(k === 'Empty' ? 'Empty slot' : k)}:</b> ${esc(by[k].join(', '))}`).join(' · ')}</div>`;
+  return `<div class="fxw${bad ? '' : ' q'}">⚠ ${order.map(k => `<b>${esc(k === 'Empty' ? 'Empty slot' : k)}:</b>&nbsp;${esc(by[k].join(', '))}`).join(' · ')}</div>`;
 }
 function lineupSheet(issues) {
   if (!issues.length) return '';
