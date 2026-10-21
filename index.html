@@ -671,7 +671,7 @@ function calFit(img, f) {
   // box reads better than a visibly smaller logo (tuned by eye: Vegas 97%, Devils 95%)
   const top = f.calMax * .99; let fit = f.calMax * .7;
   for (let s = top; s > f.calMax * .7; s -= .005) if (ok(s, 0, 0)) { fit = s; break; }
-  const extra = (top - fit) / f.calMax; const s = extra > .001 ? f.calMax * (.99 - .0066 - .4357 * extra) : top;
+  const extra = (top - fit) / f.calMax; const s = f.calMax * Math.min(.99, .99 + .0434 - .8264 * extra);
   return `scale(${s.toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
   return `scale(${(f.calMax * .7).toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
 }
