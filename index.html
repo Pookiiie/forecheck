@@ -415,6 +415,16 @@ button.hero:active{opacity:.85}
 .ypc td.neg{color:var(--red)}
 .ypc tr.oth td{color:var(--fg2)}
 .ypc .ln{font:400 11.5px/1.3 var(--ui);color:var(--fg2)}
+.gls{display:grid}
+.gl{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;align-items:baseline;gap:9px;padding:5px 0}
+.gl+.gl{border-top:1px solid var(--sep)}
+.gl .tag{margin:0}
+.gl b{font:600 14px var(--ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gl b small{font:400 11px var(--ui);color:var(--fg2)}
+.gl .sv{font:700 17px var(--bc);font-variant-numeric:tabular-nums}
+.gl .sv i{font-style:normal;color:var(--fg2);font-size:13px}
+.gl .pc{font:700 15px var(--bc);color:var(--amber);font-variant-numeric:tabular-nums;min-width:3.2ch;text-align:right}
+.gl .ga{font:600 11.5px var(--ui);color:var(--fg2);min-width:3.6ch;text-align:right}
 .cat{font:700 12px var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);margin:4px 0 -4px}
 svg text{font-family:var(--bc)}
 
@@ -1578,13 +1588,26 @@ function nhlFlow(g, plays) {
   });
   return s + '</svg>';
 }
+/* goalie lines right under the score: saves/shots, SV%, goals against (and time on ice if a team used two) */
+function nhlGoalies(g, s, ink) {
+  if (g.state === 'pre') return '';
+  const P = (s.boxscore && s.boxscore.players) || []; const rows = [];
+  [g.away, g.home].forEach(t => {
+    const b = P.find(p => String(p.team.id) === t.id); const c = b && (b.statistics || []).find(x => x.name === 'goalies'); if (!c) return;
+    const lab = c.labels || c.keys || []; const v = (a, k) => { const i = lab.indexOf(k); return i >= 0 ? a.stats[i] : ''; };
+    const used = (c.athletes || []).filter(a => secs(v(a, 'TOI')) > 0 || +v(a, 'SA') > 0);
+    used.forEach(a => rows.push({ t, col: t === g.home ? ink.h : ink.a, name: a.athlete.shortName || a.athlete.displayName, sv: v(a, 'SV'), sa: v(a, 'SA'), ga: v(a, 'GA'), pct: v(a, 'SV%'), toi: used.length > 1 ? v(a, 'TOI') : '' }));
+  });
+  if (!rows.length) return '';
+  return sec('Goalies', '', `<div class="gls">${rows.map(r => `<div class="gl"><span class="tag" style="background:${r.col};color:${onInk(r.col)}">${esc(r.t.abbr)}</span><b>${esc(r.name)}${r.toi ? ` <small>${esc(r.toi)}</small>` : ''}</b><span class="sv">${esc(r.sv)}<i>/${esc(r.sa)}</i></span><span class="pc">${esc(r.pct)}</span><span class="ga">${esc(r.ga)} GA</span></div>`).join('')}</div>`);
+}
 function nhlDetail(g, s) {
   const plays = s.plays || []; const ink = pairInk(g);
   const T = (s.boxscore && s.boxscore.teams) || [];
   const A = T.find(t => String(t.team.id) === g.away.id), Hm = T.find(t => String(t.team.id) === g.home.id);
   const v = (t, k) => { const x = t && (t.statistics || []).find(z => z.name === k); return x ? x.displayValue : null; };
   const sog = g.state !== 'pre' && A && Hm && v(A, 'shotsTotal') != null ? { a: v(A, 'shotsTotal'), h: v(Hm, 'shotsTotal') } : null;
-  let h = headBlock(g, sog);
+  let h = headBlock(g, sog) + nhlGoalies(g, s, ink);
   if (g.state === 'pre') h += preInfo(g, s);
   h += watchSec(g);
   if (plays.some(p => p.coordinate && /^(Shot|Missed|Goal)$/.test(p.type && p.type.text))) h += sec('Shot map', 'attacking →', `${rinkSVG(g, plays)}<div class="legend"><span><i class="sw" style="background:${ink.a}"></i>${esc(g.away.abbr)}</span><span><i class="sw" style="background:${ink.h}"></i>${esc(g.home.abbr)}</span><span>● on goal</span><span>○ missed</span><span>◉ goal</span></div>`);
