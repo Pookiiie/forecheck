@@ -887,8 +887,22 @@ function setTab(tab) {
 function setUpdated(live) { S.live = live; $('#livedot').classList.toggle('on', !!live); $('#updtxt').textContent = fmtTime(new Date()); }
 
 /* ---------- Football (with fantasy) ---------- */
-function nflModel(j) { const map = {}; (j.events || []).forEach(e => { const g = mkGame('nfl', e); map[g.home.abbr] = g; map[g.away.abbr] = g; }); return { map, week: j.week && j.week.number, year: (j.season && j.season.year) || new Date().getFullYear(), byes: ((j.week && j.week.teamsOnBye) || []).map(t => t.abbreviation) }; }
-async function nflNow() { return cached('nflnow', 15e3, async () => nflModel(await espn('nfl', 'scoreboard'))); }
+function nflModel(j) { const map = {}; (j.events || []).forEach(e => { const g = mkGame('nfl', e); map[g.home.abbr] = g; map[g.away.abbr] = g; }); return { map, st: j.season && j.season.type, week: j.week && j.week.number, year: (j.season && j.season.year) || new Date().getFullYear(), byes: ((j.week && j.week.teamsOnBye) || []).map(t => t.abbreviation) }; }
+/* ESPN keeps last week as "current" until early Wednesday. Once every game of that week is final and
+   the last kickoff was 8+ hours ago (Monday night is done), move on to the next week on its calendar. */
+async function nflScoreboardNow() {
+  const j = await espn('nfl', 'scoreboard'); const ev = j.events || [];
+  const done = ev.length && ev.every(e => ((e.competitions[0].status || e.status || {}).type || {}).state === 'post');
+  const lastKick = Math.max(0, ...ev.map(e => +new Date(e.date)));
+  if (!done || Date.now() - lastKick < 8 * 36e5) return j;
+  const st = String((j.season && j.season.type) || 2), wk = String((j.week && j.week.number) || ''), yr = (j.season && j.season.year) || new Date().getFullYear();
+  const flat = []; (((j.leagues || [])[0] || {}).calendar || []).forEach(c => (c.entries || []).forEach(e => flat.push({ st: String(c.value), wk: String(e.value) })));
+  const i = flat.findIndex(x => x.st === st && x.wk === wk);
+  const nx = i >= 0 && flat[i + 1] ? flat[i + 1] : { st, wk: String(+wk + 1) };
+  try { const j2 = await espn('nfl', `scoreboard?week=${nx.wk}&seasontype=${nx.st}&dates=${yr}`); if ((j2.events || []).length) return j2; } catch (e) {}
+  return j;
+}
+async function nflNow() { return cached('nflnow', 15e3, async () => nflModel(await nflScoreboardNow())); }
 async function loadFantasy(nfl) {
   const out = {}; const jobs = [];
   if (CFG.sleeperLeague) jobs.push(sleeperData(nfl).then(m => out.sv = m).catch(e => out.svErr = e.message));
@@ -1003,7 +1017,7 @@ function fxCards() {
   return cards.length ? `<div class="lbl">Your matchups<span class="r">Week ${esc(FX.week || '')}</span></div><div class="g2">${cards.join('')}</div>` : '';
 }
 async function loadNFL() {
-  const q = S.nfl.q; const j = await espn('nfl', 'scoreboard' + (q ? `?week=${q.week}&seasontype=${q.st}&dates=${q.yr}` : ''));
+  const q = S.nfl.q; const j = q ? await espn('nfl', `scoreboard?week=${q.week}&seasontype=${q.st}&dates=${q.yr}`) : await nflScoreboardNow();
   const cur = { week: j.week && j.week.number, st: j.season && j.season.type, yr: j.season && j.season.year };
   const isCur = !q; if (isCur) { S.nfl.cur = cur; memo.nflnow = { t: Date.now(), v: nflModel(j) }; }
   const games = (j.events || []).map(e => mkGame('nfl', e));
@@ -1559,7 +1573,7 @@ function addMine(name, tag) { const k = normName(name); if (!k) return; const t 
 async function sleeperData(nfl) {
   const L = CFG.sleeperLeague;
   const { st, lg, users, rosters } = await cached('sl:' + L, 30 * 60e3, async () => { const [st, lg, users, rosters] = await Promise.all([SL('state/nfl'), SL('league/' + L), SL('league/' + L + '/users'), SL('league/' + L + '/rosters')]); return { st, lg, users, rosters }; });
-  const wk = st.display_week || st.week;
+  const wk = (+nfl.st === 2 && nfl.week) || st.display_week || st.week;
   const mus = await SL(`league/${L}/matchups/${wk}`);
   const ids = [...new Set(rosters.flatMap(r => (r.players || []).concat(r.starters || [])).filter(x => x && x !== '0'))];
   const P = await sleeperPlayers(ids);
@@ -1630,7 +1644,10 @@ async function cbsDiagnostics() {
 }
 async function cbsData(nfl) {
   const wk = nfl.week;
-  const [b, pm] = await Promise.all([cbsCall('league/scoring/live', '&period=' + wk), projRows(nfl.year, wk).then(cbsProjMap).catch(() => ({ k: {}, n: {} }))]);
+  const tokenMsg = 'CBS refused the request. Your CBS token has probably expired: get a fresh one (Settings → CBS).';
+  const live = async extra => { try { return await cbsCall('league/scoring/live', extra); } catch (e) { if (/HTTP 40[13]|load failed|failed to fetch|networkerror|invalid|expired|token/i.test(e.message)) throw new Error(tokenMsg); throw e; } };
+  const [b0, pm] = await Promise.all([live('&period=' + wk), projRows(nfl.year, wk).then(cbsProjMap).catch(() => ({ k: {}, n: {} }))]);
+  let b = b0; if (!((b.live_scoring || b).teams || []).length) b = await live('');   // fall back to whatever week CBS considers live
   const ls = b.live_scoring || b; const teams = ls.teams || []; if (!teams.length) throw new Error('CBS returned no teams for week ' + wk);
   const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
   const T = teams.map(t => {
