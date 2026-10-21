@@ -508,6 +508,8 @@ svg text{font-family:var(--bc)}
 /* compare bars */
 .cmp{display:grid;gap:8px}
 .cmp-v{display:grid;grid-template-columns:auto 1fr auto;align-items:baseline;gap:8px;font:700 17px var(--bc);font-variant-numeric:tabular-nums}
+.cmp-v span:first-child,.cmp-v span:last-child{color:var(--fg2)}
+.cmp-v span.best{color:var(--fg)}
 .cmp-v span:nth-child(2){font:600 12px var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);text-align:center}
 .cmp-b{display:flex;gap:2px;height:4px;margin-top:3px}
 .cmp-b i{display:block;border-radius:2px;min-width:2px}
@@ -1475,9 +1477,15 @@ function watchSec(g) {
   const also = w.others.length ? `Also on ${w.others.map(i => esc(pvText(i))).join(', ')}. ` : '';
   return `<section class="sec flush"><h2><span>Where to watch</span></h2><div>${rows}</div></section><p class="foot">${also}${esc(w.note)} <a href="${esc(w.link)}" target="_blank" rel="noopener">${esc(w.linkText)}</a></p>`;
 }
+/* side-by-side stat bars: the better side gets the longer, solid bar and the bright number; the other side is
+   dimmed. For lower-is-better stats (goals against, PIM...) the bar lengths are flipped so longer still means better. */
 function compareRows(rows, g) {
   const ink = pairInk(g);
-  return `<div class="cmp">${rows.map(r => { const tot = (r.a || 0) + (r.h || 0); const pa = tot ? r.a / tot * 100 : 50; return `<div><div class="cmp-v"><span>${esc(r.ad)}</span><span>${esc(r.label)}</span><span>${esc(r.hd)}</span></div><div class="cmp-b"><i style="width:${pa}%;background:${ink.a};opacity:${(r.low ? r.a <= r.h : r.a >= r.h) ? 1 : .4}"></i><i style="flex:1;background:${ink.h};opacity:${(r.low ? r.h <= r.a : r.h >= r.a) ? 1 : .4}"></i></div></div>`; }).join('')}</div>`;
+  return `<div class="cmp">${rows.map(r => {
+    const a = +r.a || 0, h = +r.h || 0, tot = a + h; let pa = tot ? a / tot * 100 : 50; if (r.low && tot) pa = 100 - pa;
+    const aBest = r.low ? a <= h : a >= h, hBest = r.low ? h <= a : h >= a;
+    return `<div><div class="cmp-v"><span class="${aBest ? 'best' : ''}">${esc(r.ad)}</span><span>${esc(r.label)}</span><span class="${hBest ? 'best' : ''}">${esc(r.hd)}</span></div><div class="cmp-b"><i style="width:${pa}%;background:${ink.a};opacity:${aBest ? 1 : .35}"></i><i style="flex:1;background:${ink.h};opacity:${hBest ? 1 : .35}"></i></div></div>`;
+  }).join('')}</div>`;
 }
 const MY_NAMES = new Map();
 const normName = n => String(n || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\b(jr|sr|ii|iii|iv|v)\b\.?/g, '').replace(/[^a-z]/g, '');
@@ -1569,7 +1577,7 @@ function teamStatsNFL(g, s) {
   const val = (t, k) => { const x = (t.statistics || []).find(z => z.name === k); return x ? x.displayValue : null; };
   const spec = [['totalYards', 'Total yards'], ['netPassingYards', 'Passing'], ['rushingYards', 'Rushing'], ['firstDowns', 'First downs'], ['thirdDownEff', '3rd down', 'eff'], ['redZoneAttempts', 'Red zone', 'eff'], ['turnovers', 'Turnovers'], ['sacksYardsLost', 'Sacks taken'], ['totalPenaltiesYards', 'Penalties'], ['possessionTime', 'Possession', 'time']];
   const num = (v, how) => { if (v == null) return 0; if (how === 'time') return secs(v); const m = String(v).match(/^(\d+)[-/](\d+)$/); if (m) return how === 'eff' ? (+m[2] ? +m[1] / +m[2] : 0) : +m[1]; return parseFloat(v) || 0; };
-  const rows = spec.map(([k, label, how]) => { const ad = val(A, k), hd = val(Hm, k); if (ad == null && hd == null) return null; return { label, ad: ad ?? '–', hd: hd ?? '–', a: num(ad, how), h: num(hd, how) }; }).filter(Boolean);
+  const rows = spec.map(([k, label, how]) => { const ad = val(A, k), hd = val(Hm, k); if (ad == null && hd == null) return null; return { label, ad: ad ?? '–', hd: hd ?? '–', a: num(ad, how), h: num(hd, how), low: ['turnovers', 'sacksYardsLost', 'totalPenaltiesYards'].includes(k) }; }).filter(Boolean);
   return sec('Team stats', `${esc(g.away.abbr)} · ${esc(g.home.abbr)}`, compareRows(rows, g));
 }
 function playersNFL(g, s) {
@@ -1804,7 +1812,7 @@ function nhlDetail(g, s) {
     if (ga && gh && pa != null && ph != null) rows.push({ label: 'PIM / game', ad: (pa / ga).toFixed(1), hd: (ph / gh).toFixed(1), a: pa / ga, h: ph / gh, low: true });
     if (rows.length) h += sec('Season averages', `${esc(g.away.abbr)} · ${esc(g.home.abbr)}`, compareRows(rows, g));
   } else if (A && Hm) {
-    const rows = [['shotsTotal', 'Shots'], ['hits', 'Hits'], ['blockedShots', 'Blocked'], ['faceoffPercent', 'Faceoff %'], ['takeaways', 'Takeaways'], ['giveaways', 'Giveaways'], ['penaltyMinutes', 'PIM']].map(([k, l]) => { const a = v(A, k), b = v(Hm, k); if (a == null && b == null) return null; return { label: l, ad: a ?? '–', hd: b ?? '–', a: parseFloat(a) || 0, h: parseFloat(b) || 0 }; }).filter(Boolean);
+    const rows = [['shotsTotal', 'Shots'], ['hits', 'Hits'], ['blockedShots', 'Blocked'], ['faceoffPercent', 'Faceoff %'], ['takeaways', 'Takeaways'], ['giveaways', 'Giveaways'], ['penaltyMinutes', 'PIM']].map(([k, l]) => { const a = v(A, k), b = v(Hm, k); if (a == null && b == null) return null; return { label: l, ad: a ?? '–', hd: b ?? '–', a: parseFloat(a) || 0, h: parseFloat(b) || 0, low: k === 'giveaways' || k === 'penaltyMinutes' }; }).filter(Boolean);
     const ppo = v(A, 'powerPlayOpportunities'); if (ppo != null) rows.splice(1, 0, { label: 'Power play', ad: `${v(A, 'powerPlayGoals')}/${ppo}`, hd: `${v(Hm, 'powerPlayGoals')}/${v(Hm, 'powerPlayOpportunities')}`, a: +v(A, 'powerPlayGoals') || 0, h: +v(Hm, 'powerPlayGoals') || 0 });
     if (rows.length) h += sec('Team stats', `${esc(g.away.abbr)} · ${esc(g.home.abbr)}`, compareRows(rows, g));
   }
