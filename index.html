@@ -664,7 +664,12 @@ function calFit(img, f) {
   const N = f.N, M = f.mask, tx = f.tx / 100 * W, ty = f.ty / 100 * H;
   const pts = []; for (let y = 0; y < N; y += 2) for (let x = 0; x < N; x += 2) if (M[y * N + x]) pts.push([(x + .5) / N * W - W / 2 + tx, (y + .5) / N * H - H / 2 + ty]);
   const ok = (s, dx, dy) => { for (const [a, b] of pts) { const px = ox + dx + s * a, py = oy + dy + s * b; if (px < .5 || py < .5 || px > cw - .5 || py > ch - .5) return false; if (R && px > R.l && px < R.r && py > R.t && py < R.b) return false; } return true; };
-  for (let s = f.calMax * .99; s > f.calMax * .7; s -= .01) if (ok(s, 0, 0)) return `scale(${s.toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
+  // only take back about a third of the shrink a perfect clearance would need: a hair of overlap with the
+  // number's box reads better than a visibly smaller logo (Vegas ~98%, Devils ~96%)
+  const top = f.calMax * .99; let fit = f.calMax * .7;
+  for (let s = top; s > f.calMax * .7; s -= .005) if (ok(s, 0, 0)) { fit = s; break; }
+  const s = top - (top - fit) * .35;
+  return `scale(${s.toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
   return `scale(${(f.calMax * .7).toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
 }
 function fitLogos(root) { (root || document).querySelectorAll('img.lgo:not([style])').forEach(img => { const u = img.getAttribute('src'); measureLogo(u).then(f => { if (!f || !img.isConnected || img.getAttribute('src') !== u) return; const ctx = img.dataset.ctx || 'std'; if (ctx.startsWith('cal') && !f[ctx]) f[ctx] = calFit(img, f); if (f[ctx]) img.style.transform = f[ctx]; }); }); }
