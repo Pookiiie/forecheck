@@ -1264,8 +1264,9 @@ function calSlide(d, to) {
     S.cal = isCur ? null : to;
     const tmp = document.createElement('div'); tmp.innerHTML = habsCalendar(S.calGames, S.calAb); const fresh = tmp.firstElementChild; const ng = fresh.querySelector('.cal-g');
     ng.style.transform = `translateX(${d * w}px)`; cal.replaceWith(fresh);
-    requestAnimationFrame(() => requestAnimationFrame(() => { ng.style.transition = 'transform .2s cubic-bezier(0,0,.2,1)'; ng.style.transform = ''; }));
-    setTimeout(() => { ng.style.transition = ''; calSlide.busy = false; }, 240);
+    void ng.offsetWidth; // commit the off-screen start position, then animate in
+    ng.style.transition = 'transform .2s cubic-bezier(0,0,.2,1)'; ng.style.transform = '';
+    setTimeout(() => { ng.style.transition = ''; ng.style.transform = ''; calSlide.busy = false; }, 240);
   }, 140);
 }
 
