@@ -1868,7 +1868,9 @@ function gestures(scroller, ptr, mode) {
   scroller.addEventListener('touchstart', e => {
     if (e.touches.length !== 1) { G = null; return; }
     const t = e.touches[0]; place();
-    G = { x: t.clientX, y: t.clientY, t: Date.now(), top: scroller.scrollTop, lock: null, dx: 0, dy: 0, tgt: e.target };
+    // decide what the swipe is for when it starts: the calendar can re-render mid-swipe (after a month change),
+    // which would detach the touched element and make a calendar swipe look like a tab swipe
+    G = { x: t.clientX, y: t.clientY, t: Date.now(), top: scroller.scrollTop, lock: null, dx: 0, dy: 0, inCal: !!e.target.closest('.cal'), noSwipe: !!e.target.closest('.scroll-x,.wpg') };
   }, { passive: true });
   scroller.addEventListener('touchmove', e => {
     if (!G || e.touches.length !== 1) return; const t = e.touches[0];
@@ -1880,9 +1882,9 @@ function gestures(scroller, ptr, mode) {
       ptr.style.opacity = k; ptr.style.transform = `translateY(${Math.min(G.dy * .45, 52) - 40}px) rotate(${G.dy * 3}deg)`;
     }
     if (G.lock === 'h') {
-      if (G.tgt.closest('.scroll-x,.wpg') && !(mode === 'sheet' && G.x < 30)) { G.lock = 'x'; return; }
+      if (G.noSwipe && !(mode === 'sheet' && G.x < 30)) { G.lock = 'x'; return; }
       if (mode === 'sheet') { if (G.dx > 0) { e.preventDefault(); const sh = $('#sheet'); sh.style.transition = 'none'; sh.style.transform = `translateX(${G.dx}px)`; } }
-      else { const el = G.tgt.closest('.cal') ? G.tgt.closest('.cal').querySelector('.cal-g') : $('#view'); G.el = el; el.style.transition = 'none'; el.style.transform = `translateX(${G.dx * .25}px)`; el.style.opacity = 1 - Math.min(.5, Math.abs(G.dx) / 600); }
+      else { const el = G.inCal ? ($('#view .cal-g') || $('#view')) : $('#view'); G.el = el; el.style.transition = 'none'; el.style.transform = `translateX(${G.dx * .25}px)`; el.style.opacity = 1 - Math.min(.5, Math.abs(G.dx) / 600); }
     }
   }, { passive: false });
   const end = () => {
@@ -1903,7 +1905,7 @@ function gestures(scroller, ptr, mode) {
     }
     const el = g.el; if (el) { el.style.transition = 'transform .2s ease-out,opacity .2s'; el.style.transform = ''; el.style.opacity = ''; setTimeout(() => { el.style.transition = ''; }, 220); }
     if (!go) return;
-    if (g.tgt.closest('.cal')) { shiftMonth(g.dx < 0 ? 1 : -1); return; }
+    if (g.inCal) { shiftMonth(g.dx < 0 ? 1 : -1); return; }
     const to = g.dx < 0 ? 'nhl' : 'nfl'; if (to === S.tab) return;
     const v = $('#view'); v.classList.remove('slide-l', 'slide-r'); void v.offsetWidth; v.classList.add(g.dx < 0 ? 'slide-l' : 'slide-r');
     setTab(to);
