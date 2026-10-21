@@ -667,7 +667,7 @@ function calFit(img, f) {
   for (let s = f.calMax; s > f.calMax * .7; s -= .02) for (const dy of [0, 1, 2, 3]) for (const dx of [0, -1, -2, -3]) if (ok(s, dx, dy)) return `translate(${dx}px,${dy}px) scale(${s.toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
   return `scale(${(f.calMax * .7).toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
 }
-function fitLogos(root) { (root || document).querySelectorAll('img.lgo:not([style])').forEach(img => { const u = img.getAttribute('src'); measureLogo(u).then(f => { if (!f || !img.isConnected || img.getAttribute('src') !== u) return; const ctx = img.dataset.ctx || 'std'; if (ctx === 'cal' && !f.cal) f.cal = calFit(img, f); if (f[ctx]) img.style.transform = f[ctx]; }); }); }
+function fitLogos(root) { (root || document).querySelectorAll('img.lgo:not([style])').forEach(img => { const u = img.getAttribute('src'); measureLogo(u).then(f => { if (!f || !img.isConnected || img.getAttribute('src') !== u) return; const ctx = img.dataset.ctx || 'std'; if (ctx.startsWith('cal') && !f[ctx]) f[ctx] = calFit(img, f); if (f[ctx]) img.style.transform = f[ctx]; }); }); }
 function fitBugs() {
   document.querySelectorAll('.bug.inl').forEach(b => {
     b.classList.remove('stk');
@@ -1214,7 +1214,7 @@ function habsCalendar(games, ab) {
     if (!g) { cells += `<div class="cd${tod}"><span class="dn">${d}</span></div>`; continue; }
     const home = g.home.abbr === ab; const opp = home ? g.away : g.home; const me = home ? g.home : g.away;
     let rs = ''; if (g.state === 'post') rs = me.winner ? 'W' : /(OT|SO)/.test(g.detail || '') ? 'O' : 'L';
-    cells += `<button class="cd${home ? '' : ' away'}${tod}${rs ? ' ' + rs : ''}" data-open="nhl:${g.id}" aria-label="${esc((home ? 'vs ' : 'at ') + opp.name + ', ' + fmtDay(g.date) + (rs ? ', ' + { W: 'win', L: 'loss', O: 'overtime loss' }[rs] : ''))}"><span class="dn">${d}</span>${home ? '' : '<span class="at">@</span>'}${logo(opp, false, 'cal')}</button>`;
+    cells += `<button class="cd${home ? '' : ' away'}${tod}${rs ? ' ' + rs : ''}" data-open="nhl:${g.id}" aria-label="${esc((home ? 'vs ' : 'at ') + opp.name + ', ' + fmtDay(g.date) + (rs ? ', ' + { W: 'win', L: 'loss', O: 'overtime loss' }[rs] : ''))}"><span class="dn">${d}</span>${home ? '' : '<span class="at">@</span>'}${logo(opp, false, d > 9 ? 'cal2' : 'cal1')}</button>`;
   }
   const label = first.toLocaleDateString('en-CA', { month: 'long', year: cur.y === now.getFullYear() ? undefined : 'numeric' });
   const chev = d => `<svg viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
