@@ -35,6 +35,8 @@ body[data-sport="nhl"]{--tint:#ff5263}
 html,body{height:100%;margin:0;overflow:hidden;background:var(--bg)}
 body{color:var(--fg);font:15px/1.35 var(--ui);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
 img{max-width:100%}
+img.lgo{transition:opacity .15s}
+img.lgo:not([style]){opacity:0}
 /* no zooming: no double-tap zoom anywhere (pinch is blocked in script, text fields stay at 16px so iOS doesn't zoom on focus) */
 html,body{touch-action:manipulation}
 [hidden]{display:none!important}
@@ -629,6 +631,13 @@ const LOGO_FIT = {}, LOGO_PENDING = {};
 const LOGO_NUDGE = { 'nhl/tb': .84 }; // hand adjustments for logos that still read too big or small
 const LOGO_TRIM = { 'nhl/tor': .96, 'nhl/wsh': .96, 'nhl/ott': 1.02 }; // applied after the size caps, for marks that still read big (Eric's eye)
 const LOGO_NUDGE_DARK = { 'nhl/wpg': 1.1 }; // on dark backgrounds only: the Jets' navy disc fades into the dark, so it reads smaller
+/* Fitted sizes are remembered on the device, so logos appear at their final size on launch instead of
+   popping. The cache is dropped when the tuning above changes; calendar fits also when the width changes. */
+const FIT_SIG = JSON.stringify([6, LOGO_NUDGE, LOGO_NUDGE_DARK, LOGO_TRIM]);
+const FIT_STORE = (() => { const c = LS.get('logofit', null); return c && c.sig === FIT_SIG && c.m ? c : { sig: FIT_SIG, w: innerWidth, m: {} }; })();
+if (FIT_STORE.w !== innerWidth) { for (const u in FIT_STORE.m) { delete FIT_STORE.m[u].cal1; delete FIT_STORE.m[u].cal2; } FIT_STORE.w = innerWidth; }
+for (const u in FIT_STORE.m) LOGO_FIT[u] = Object.assign({}, FIT_STORE.m[u]);
+function saveFit(u) { const f = LOGO_FIT[u]; if (!f) return; FIT_STORE.m[u] = { std: f.std, cal1: f.cal1, cal2: f.cal2 }; clearTimeout(saveFit.t); saveFit.t = setTimeout(() => LS.set('logofit', FIT_STORE), 400); }
 function measureLogo(url) {
   if (LOGO_PENDING[url]) return LOGO_PENDING[url];
   return LOGO_PENDING[url] = new Promise(res => {
@@ -653,7 +662,7 @@ function measureLogo(url) {
       const trim = LOGO_TRIM[key] || 1;
       const mk = wcap => `scale(${(Math.min(want, wcap / bw, 1.06 / bh, 1.5) * trim).toFixed(3)}) ${tr}`;
       // calendar size is settled per cell by calFit (it keeps logos clear of the day number)
-      LOGO_FIT[url] = { std: mk(1.1), calMax: Math.min(want, 1.3 / bw, 1.06 / bh, 1.5) * trim, tx: (.5 - cx) * 100, ty: (.5 - cy) * 100, mask: solid, N }; res(LOGO_FIT[url]);
+      LOGO_FIT[url] = { ...(LOGO_FIT[url] || {}), std: mk(1.1), calMax: Math.min(want, 1.3 / bw, 1.06 / bh, 1.5) * trim, tx: (.5 - cx) * 100, ty: (.5 - cy) * 100, mask: solid, N }; res(LOGO_FIT[url]);
     } catch (e) { res(null); } };
     im.onerror = () => res(null); im.src = url + (url.includes('?') ? '&' : '?') + 'fcm=1'; // separate fetch so Safari doesn't reuse a non-CORS cached copy
   });
@@ -679,7 +688,7 @@ function calFit(img, f) {
   return `scale(${s.toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
   return `scale(${(f.calMax * .7).toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
 }
-function fitLogos(root) { (root || document).querySelectorAll('img.lgo:not([style])').forEach(img => { const u = img.getAttribute('src'); measureLogo(u).then(f => { if (!f || !img.isConnected || img.getAttribute('src') !== u) return; const ctx = img.dataset.ctx || 'std'; if (ctx.startsWith('cal') && !f[ctx]) f[ctx] = calFit(img, f); if (f[ctx]) img.style.transform = f[ctx]; }); }); }
+function fitLogos(root) { (root || document).querySelectorAll('img.lgo:not([style])').forEach(img => { const u = img.getAttribute('src'); setTimeout(() => { if (!img.hasAttribute('style')) img.style.transform = 'none'; }, 4000); measureLogo(u).then(f => { if (!img.isConnected || img.getAttribute('src') !== u) return; if (!f) { img.style.transform = 'none'; return; } const ctx = img.dataset.ctx || 'std'; if (ctx.startsWith('cal') && !f[ctx]) f[ctx] = calFit(img, f); img.style.transform = f[ctx] || 'none'; saveFit(u); }); }); }
 function fitBugs() {
   document.querySelectorAll('.bug.inl').forEach(b => {
     b.classList.remove('stk');
