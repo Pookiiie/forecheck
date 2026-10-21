@@ -485,6 +485,7 @@ body[data-sport="nfl"] .pre2 .when b{color:var(--fg)}
 .inj i{font-style:normal;color:var(--fg2);font-size:11px}
 .inj em{font-style:normal;font:600 11px var(--ui)}
 .inj em.o{color:var(--red)} .inj em.d{color:var(--amber)} .inj em.r{color:var(--fg2)}
+.inj .maybe,.inj .none{flex-basis:100%;font-size:12px;color:var(--fg2);white-space:normal}
 .gl{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;align-items:baseline;gap:9px;padding:5px 0}
 .gl+.gl{border-top:1px solid var(--sep)}
 .gl .tag{margin:0}
@@ -1760,12 +1761,21 @@ function nhlPreview(g, s, ink) {
     const left = (ss.totalCompetitions || 0) - done.length;
     h += sec('Season series', esc(done.length ? ss.summary || '' : 'First meeting'), (rows || '') + `<p class="foot" style="margin:${rows ? '2px 0 0' : '0'}">${ss.totalCompetitions ? `${ss.totalCompetitions} meeting${ss.totalCompetitions === 1 ? '' : 's'} this season${left > 1 ? ` · ${left - 1} more after this one` : left === 1 ? ' · this is the last one' : ''}` : ''}</p>`);
   }
-  // injuries
-  const inj = (s.injuries || []).map(t => ({ tm: teamAb(t.team && t.team.abbreviation), list: t.injuries || [] })).filter(x => x.tm && x.list.length).sort((x, y) => (x.tm === g.away ? -1 : 1));
+  // injuries: ESPN lists who's hurt today, with an expected return date. For this game, only players still
+  // expected out on game day are listed; those due back by then go on a muted "may return" line.
+  const gday = ymd(g.date).replace(/(\d{4})(\d\d)(\d\d)/, '$1-$2-$3');
+  const back = i => { const d = i.details && i.details.returnDate; return d && String(d).slice(0, 10) <= gday ? String(d).slice(0, 10) : null; };
+  const inj = (s.injuries || []).map(t => ({ tm: teamAb(t.team && t.team.abbreviation), list: t.injuries || [] })).filter(x => x.tm && x.list.length).sort((x) => (x.tm === g.away ? -1 : 1));
   if (inj.length) {
     const cls = st => /out/i.test(st) ? 'o' : /day/i.test(st) ? 'd' : 'r';
     const short = st => /injured reserve/i.test(st) ? 'IR' : /day-to-day/i.test(st) ? 'Day-to-day' : st;
-    h += sec('Injuries', '', inj.map(x => `<div class="inj">${tagOf(x.tm)}<div>${x.list.map(i => `<span><b>${esc(i.athlete.shortName || i.athlete.displayName)}</b> <i>${esc((i.athlete.position && i.athlete.position.abbreviation) || '')}</i> <em class="${cls(i.status || '')}">${esc(short(i.status || ''))}</em></span>`).join('')}</div></div>`).join(''));
+    const nm = i => esc(i.athlete.shortName || i.athlete.displayName);
+    const body = inj.map(x => {
+      const out = x.list.filter(i => !back(i)), maybe = x.list.filter(back);
+      if (!out.length && !maybe.length) return '';
+      return `<div class="inj">${tagOf(x.tm)}<div>${out.map(i => `<span><b>${nm(i)}</b> <i>${esc((i.athlete.position && i.athlete.position.abbreviation) || '')}</i> <em class="${cls(i.status || '')}">${esc(short(i.status || ''))}</em></span>`).join('')}${out.length ? '' : '<span class="none">No one expected out</span>'}${maybe.length ? `<span class="maybe">May return: ${maybe.map(nm).join(', ')}</span>` : ''}</div></div>`;
+    }).join('');
+    if (body) h += sec('Injuries', 'expected for this game', body);
   }
   return h;
 }
