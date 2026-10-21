@@ -654,8 +654,8 @@ function measureLogo(url) {
     im.onerror = () => res(null); im.src = url + (url.includes('?') ? '&' : '?') + 'fcm=1'; // separate fetch so Safari doesn't reuse a non-CORS cached copy
   });
 }
-/* Calendar logos: as big as allowed, then nudged down/left (or shrunk a little) until no opaque pixel
-   touches the day number or spills out of the cell. Worked out once per logo and cached. */
+/* Calendar logos: centred, a touch under full size, and shrunk further only if a pixel would touch the
+   day number or spill out of the cell. Worked out once per logo and cached. */
 function calFit(img, f) {
   const cell = img.closest('.cd'); if (!cell) return null; const dn = cell.querySelector('.dn');
   const W = img.offsetWidth, H = img.offsetHeight, cw = cell.clientWidth, ch = cell.clientHeight; if (!W || !cw) return null;
@@ -664,7 +664,7 @@ function calFit(img, f) {
   const N = f.N, M = f.mask, tx = f.tx / 100 * W, ty = f.ty / 100 * H;
   const pts = []; for (let y = 0; y < N; y += 2) for (let x = 0; x < N; x += 2) if (M[y * N + x]) pts.push([(x + .5) / N * W - W / 2 + tx, (y + .5) / N * H - H / 2 + ty]);
   const ok = (s, dx, dy) => { for (const [a, b] of pts) { const px = ox + dx + s * a, py = oy + dy + s * b; if (px < .5 || py < .5 || px > cw - .5 || py > ch - .5) return false; if (R && px > R.l && px < R.r && py > R.t && py < R.b) return false; } return true; };
-  for (let s = f.calMax; s > f.calMax * .7; s -= .02) for (const dy of [0, 1, 2, 3]) for (const dx of [0, -1, -2, -3]) if (ok(s, dx, dy)) return `translate(${dx}px,${dy}px) scale(${s.toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
+  for (let s = f.calMax * .96; s > f.calMax * .7; s -= .01) if (ok(s, 0, 0)) return `scale(${s.toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
   return `scale(${(f.calMax * .7).toFixed(3)}) translate(${f.tx.toFixed(1)}%,${f.ty.toFixed(1)}%)`;
 }
 function fitLogos(root) { (root || document).querySelectorAll('img.lgo:not([style])').forEach(img => { const u = img.getAttribute('src'); measureLogo(u).then(f => { if (!f || !img.isConnected || img.getAttribute('src') !== u) return; const ctx = img.dataset.ctx || 'std'; if (ctx.startsWith('cal') && !f[ctx]) f[ctx] = calFit(img, f); if (f[ctx]) img.style.transform = f[ctx]; }); }); }
