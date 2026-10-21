@@ -1477,7 +1477,7 @@ function watchSec(g) {
 }
 function compareRows(rows, g) {
   const ink = pairInk(g);
-  return `<div class="cmp">${rows.map(r => { const tot = (r.a || 0) + (r.h || 0); const pa = tot ? r.a / tot * 100 : 50; return `<div><div class="cmp-v"><span>${esc(r.ad)}</span><span>${esc(r.label)}</span><span>${esc(r.hd)}</span></div><div class="cmp-b"><i style="width:${pa}%;background:${ink.a};opacity:${r.a >= r.h ? 1 : .4}"></i><i style="flex:1;background:${ink.h};opacity:${r.h >= r.a ? 1 : .4}"></i></div></div>`; }).join('')}</div>`;
+  return `<div class="cmp">${rows.map(r => { const tot = (r.a || 0) + (r.h || 0); const pa = tot ? r.a / tot * 100 : 50; return `<div><div class="cmp-v"><span>${esc(r.ad)}</span><span>${esc(r.label)}</span><span>${esc(r.hd)}</span></div><div class="cmp-b"><i style="width:${pa}%;background:${ink.a};opacity:${(r.low ? r.a <= r.h : r.a >= r.h) ? 1 : .4}"></i><i style="flex:1;background:${ink.h};opacity:${(r.low ? r.h <= r.a : r.h >= r.a) ? 1 : .4}"></i></div></div>`; }).join('')}</div>`;
 }
 const MY_NAMES = new Map();
 const normName = n => String(n || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\b(jr|sr|ii|iii|iv|v)\b\.?/g, '').replace(/[^a-z]/g, '');
@@ -1794,7 +1794,16 @@ function nhlDetail(g, s) {
   const flow = nhlFlow(g, plays); if (flow) h += sec('Shots on goal', 'dots are goals', flow);
   const goals = plays.filter(p => p.type && p.type.text === 'Goal');
   if (goals.length) h += sec('Goals', '', `<div>${goals.map(p => { const t = String(p.team && p.team.id) === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a; const str = p.strength && p.strength.abbreviation !== 'even-strength' ? ` <span class="chip">${esc(p.strength.text === 'Power Play' ? 'PP' : p.strength.text === 'Shorthanded' ? 'SH' : p.strength.text)}</span>` : ''; return `<div class="play"><span class="t">${esc(pLab(p.period.number))} ${esc(p.clock && p.clock.displayValue)}</span><div><span class="tag" style="background:${col};color:${onInk(col)}">${esc(t.abbr)}</span>${esc(p.text)}${str} <span class="n" style="color:var(--fg2)">${esc(p.awayScore)}–${esc(p.homeScore)}</span></div></div>`; }).join('')}</div>`);
-  if (A && Hm) {
+  if (A && Hm && g.state === 'pre') {
+    // before the game ESPN gives season figures; compare per-game rates so teams with different games played line up
+    const gp = t => { const m = /^(\d+)-(\d+)(?:-(\d+))?/.exec(t.rec || ''); return m ? (+m[1]) + (+m[2]) + (+(m[3] || 0)) : 0; };
+    const num = (t, k) => { const x = v(t, k); return x == null ? null : parseFloat(x); };
+    const spec = [['avgGoals', 'Goals / game', 2], ['avgGoalsAgainst', 'Goals against / game', 2, true], ['avgShots', 'Shots / game', 1], ['avgShotsAgainst', 'Shots against / game', 1, true], ['powerPlayPct', 'Power play %', 1], ['penaltyKillPct', 'Penalty kill %', 1]];
+    const rows = spec.map(([k, l, d, low]) => { const a = num(A, k), b = num(Hm, k); if (a == null || b == null) return null; return { label: l, ad: a.toFixed(d), hd: b.toFixed(d), a, h: b, low }; }).filter(Boolean);
+    const ga = gp(g.away), gh = gp(g.home), pa = num(A, 'penaltyMinutes'), ph = num(Hm, 'penaltyMinutes');
+    if (ga && gh && pa != null && ph != null) rows.push({ label: 'PIM / game', ad: (pa / ga).toFixed(1), hd: (ph / gh).toFixed(1), a: pa / ga, h: ph / gh, low: true });
+    if (rows.length) h += sec('Season averages', `${esc(g.away.abbr)} · ${esc(g.home.abbr)}`, compareRows(rows, g));
+  } else if (A && Hm) {
     const rows = [['shotsTotal', 'Shots'], ['hits', 'Hits'], ['blockedShots', 'Blocked'], ['faceoffPercent', 'Faceoff %'], ['takeaways', 'Takeaways'], ['giveaways', 'Giveaways'], ['penaltyMinutes', 'PIM']].map(([k, l]) => { const a = v(A, k), b = v(Hm, k); if (a == null && b == null) return null; return { label: l, ad: a ?? '–', hd: b ?? '–', a: parseFloat(a) || 0, h: parseFloat(b) || 0 }; }).filter(Boolean);
     const ppo = v(A, 'powerPlayOpportunities'); if (ppo != null) rows.splice(1, 0, { label: 'Power play', ad: `${v(A, 'powerPlayGoals')}/${ppo}`, hd: `${v(Hm, 'powerPlayGoals')}/${v(Hm, 'powerPlayOpportunities')}`, a: +v(A, 'powerPlayGoals') || 0, h: +v(Hm, 'powerPlayGoals') || 0 });
     if (rows.length) h += sec('Team stats', `${esc(g.away.abbr)} · ${esc(g.home.abbr)}`, compareRows(rows, g));
