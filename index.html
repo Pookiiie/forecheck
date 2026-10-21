@@ -149,6 +149,12 @@ body[data-ice="light"] .hero + .stc{background:var(--well);border-color:rgba(12,
 .cal-h{display:flex;align-items:center;justify-content:space-between;font:700 13px var(--bc);letter-spacing:.14em;text-transform:uppercase;color:var(--fg2);padding:0 0 3px}
 .cal-h button{width:32px;height:24px;color:var(--tint);display:grid;place-items:center}
 .cal-h button svg{width:8px;height:13px}
+.cal-t{display:flex;align-items:center;gap:8px}
+/* 'back to this month' pill, only when looking at another month */
+.cal-h .cal-now{width:auto;height:20px;display:inline-flex;align-items:center;gap:3px;padding:0 8px 0 6px;border-radius:999px;background:color-mix(in srgb,var(--tint) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tint) 35%,transparent);color:var(--tint);font:700 10.5px/1 var(--bc);letter-spacing:.1em;animation:pillIn .2s ease-out}
+.cal-h .cal-now svg{width:10px;height:10px}
+.cal-h .cal-now:active{background:color-mix(in srgb,var(--tint) 28%,transparent)}
+@keyframes pillIn{from{opacity:0;transform:scale(.85)}}
 .cal-dw,.cal-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
 .cal-dw span{font:600 10px var(--ui);color:var(--fg3);text-align:center;padding-bottom:2px}
 .cd{height:38px;border-radius:4px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--well);min-width:0}
@@ -1239,7 +1245,7 @@ function habsCalendar(games, ab) {
   }
   const label = first.toLocaleDateString('en-CA', { month: 'long', year: cur.y === now.getFullYear() ? undefined : 'numeric' });
   const chev = d => `<svg viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
-  return `<div class="cal"><div class="cal-h"><button data-cal="-1" aria-label="Previous month">${chev('M6.5 1.5L1.5 6.5l5 5')}</button><span>${esc(label)}</span><button data-cal="1" aria-label="Next month">${chev('M1.5 1.5l5 5-5 5')}</button></div>
+  return `<div class="cal"><div class="cal-h"><button data-cal="-1" aria-label="Previous month">${chev('M6.5 1.5L1.5 6.5l5 5')}</button><span class="cal-t">${esc(label)}${S.cal && (S.cal.y !== +ymd(now).slice(0, 4) || S.cal.m !== +ymd(now).slice(4, 6) - 1) ? `<button class="cal-now" data-calnow aria-label="Back to this month"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5h5a2.5 2.5 0 0 1 0 5H5"/><path d="M4.5 2.5l-2 2 2 2"/></svg>${esc(now.toLocaleDateString('en-CA', { month: 'short' }).replace('.', ''))}</button>` : ''}</span><button data-cal="1" aria-label="Next month">${chev('M1.5 1.5l5 5-5 5')}</button></div>
     <div class="cal-dw"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div class="cal-g">${cells}</div>
     <div class="cal-k"><span><i class="cd W" style="height:10px"></i>Win</span><span><i class="cd L" style="height:10px"></i>Loss</span><span><i class="cd O" style="height:10px"></i>OT loss</span><span>@ away</span></div></div>`;
 }
@@ -1849,6 +1855,7 @@ document.addEventListener('click', e => {
   const so = e.target.closest('[data-stand]'); if (so) { openStand(so.dataset.stand); return; }
   const t = e.target.closest('[data-tab]'); if (t) { if (S.sheetMode) { S.sheetMode = null; S.detail = null; $('#sheet').classList.remove('open'); } setTab(t.dataset.tab); return; }
   if (e.target.closest('[data-now]')) { S.nfl.q = null; refresh(true); return; }
+  if (e.target.closest('[data-calnow]')) { S.cal = null; refresh(true); return; }
   const cm = e.target.closest('[data-cal]'); if (cm) { shiftMonth(+cm.dataset.cal); return; }
   const p = e.target.closest('[data-ptab]'); if (p && S.detail) { S.detail.tab = p.dataset.ptab; renderDetail(); return; }
   const f = e.target.closest('[data-fx]'); if (f) { const [k, v] = f.dataset.fx.split(':'); S.fx[k] = v; const m = FX.data[k]; if (m && S.sheetMode === 'fx') { const keep = $('#shScroll').scrollTop; $('#shBody').innerHTML = renderFx(m); $('#shScroll').scrollTop = keep; } return; }
