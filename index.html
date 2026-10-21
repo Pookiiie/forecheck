@@ -624,7 +624,8 @@ const logo = (t, onColour, ctx = 'std') => { const u = !onColour && lightIce() ?
 /* Optical logo sizing: logos fill their square very differently (a round crest ~70%, a wordmark ~20%).
    Measure each logo's opaque area once and scale it toward the same visual weight. */
 const LOGO_FIT = {}, LOGO_PENDING = {};
-const LOGO_NUDGE = { 'nhl/tb': .84, 'nhl/tor': .98 }; // hand adjustments for logos that still read too big or small
+const LOGO_NUDGE = { 'nhl/tb': .84 }; // hand adjustments for logos that still read too big or small
+const LOGO_TRIM = { 'nhl/tor': .98 }; // applied after the size caps: the Leafs' tall mark still reads big
 const LOGO_NUDGE_DARK = { 'nhl/wpg': 1.1 }; // on dark backgrounds only: the Jets' navy disc fades into the dark, so it reads smaller
 function measureLogo(url) {
   if (LOGO_PENDING[url]) return LOGO_PENDING[url];
@@ -647,9 +648,10 @@ function measureLogo(url) {
       const key = (url.match(/teamlogos\/(\w+)\/.*?(\w+)\.png/) || []).slice(1).join('/');
       const nudge = (LOGO_NUDGE[key] || 1) * (url.includes('500-dark') ? LOGO_NUDGE_DARK[key] || 1 : 1);
       const want = Math.pow(.40 / area, .3) * nudge, tr = `translate(${((.5 - cx) * 100).toFixed(1)}%,${((.5 - cy) * 100).toFixed(1)}%)`;
-      const mk = wcap => `scale(${Math.min(want, wcap / bw, 1.06 / bh, 1.5).toFixed(3)}) ${tr}`;
+      const trim = LOGO_TRIM[key] || 1;
+      const mk = wcap => `scale(${(Math.min(want, wcap / bw, 1.06 / bh, 1.5) * trim).toFixed(3)}) ${tr}`;
       // calendar size is settled per cell by calFit (it keeps logos clear of the day number)
-      LOGO_FIT[url] = { std: mk(1.1), calMax: Math.min(want, 1.3 / bw, 1.06 / bh, 1.5), tx: (.5 - cx) * 100, ty: (.5 - cy) * 100, mask: solid, N }; res(LOGO_FIT[url]);
+      LOGO_FIT[url] = { std: mk(1.1), calMax: Math.min(want, 1.3 / bw, 1.06 / bh, 1.5) * trim, tx: (.5 - cx) * 100, ty: (.5 - cy) * 100, mask: solid, N }; res(LOGO_FIT[url]);
     } catch (e) { res(null); } };
     im.onerror = () => res(null); im.src = url + (url.includes('?') ? '&' : '?') + 'fcm=1'; // separate fetch so Safari doesn't reuse a non-CORS cached copy
   });
