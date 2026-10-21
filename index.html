@@ -660,7 +660,10 @@ function calFit(img, f) {
   const cell = img.closest('.cd'); if (!cell) return null; const dn = cell.querySelector('.dn');
   const W = img.offsetWidth, H = img.offsetHeight, cw = cell.clientWidth, ch = cell.clientHeight; if (!W || !cw) return null;
   const ox = img.offsetLeft + W / 2, oy = img.offsetTop + H / 2;
-  const R = dn ? { l: dn.offsetLeft - .5, t: dn.offsetTop, r: dn.offsetLeft + dn.offsetWidth + .5, b: dn.offsetTop + dn.offsetHeight - 1 } : null;
+  // the day number's box from fixed metrics (9px digits ~5.2px wide, top-right inset 3px/1px), so the fit
+  // doesn't depend on whether the font has finished loading
+  const digits = dn ? dn.textContent.trim().length : 0;
+  const R = dn ? { l: cw - 3 - digits * 5.2 - .5, t: 1, r: cw - 2.5, b: 8 } : null;
   const N = f.N, M = f.mask, tx = f.tx / 100 * W, ty = f.ty / 100 * H;
   const pts = []; for (let y = 0; y < N; y += 2) for (let x = 0; x < N; x += 2) if (M[y * N + x]) pts.push([(x + .5) / N * W - W / 2 + tx, (y + .5) / N * H - H / 2 + ty]);
   const ok = (s, dx, dy) => { for (const [a, b] of pts) { const px = ox + dx + s * a, py = oy + dy + s * b; if (px < .5 || py < .5 || px > cw - .5 || py > ch - .5) return false; if (R && px > R.l && px < R.r && py > R.t && py < R.b) return false; } return true; };
