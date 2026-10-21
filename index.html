@@ -145,7 +145,7 @@ body[data-ice="light"] .hero + .stc{background:var(--well);border-color:rgba(12,
 .mt .bye{font:500 11.5px var(--ui);color:var(--fg2)}
 
 /* ---------- Habs month calendar ---------- */
-.cal{background:var(--card);border-radius:10px;padding:5px 6px 6px}
+.cal{background:var(--card);border-radius:10px;padding:5px 6px 6px;overflow:hidden}
 .cal-h{display:flex;align-items:center;justify-content:space-between;font:700 13px var(--bc);letter-spacing:.14em;text-transform:uppercase;color:var(--fg2);padding:0 0 3px}
 .cal-h button{width:32px;height:24px;color:var(--tint);display:grid;place-items:center}
 .cal-h button svg{width:8px;height:13px}
@@ -1249,7 +1249,25 @@ function habsCalendar(games, ab) {
     <div class="cal-dw"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div class="cal-g">${cells}</div>
     <div class="cal-k"><span><i class="cd W" style="height:10px"></i>Win</span><span><i class="cd L" style="height:10px"></i>Loss</span><span><i class="cd O" style="height:10px"></i>OT loss</span><span>@ away</span></div></div>`;
 }
-function shiftMonth(d) { const n = new Date(); const c = S.cal || { y: +ymd(n).slice(0, 4), m: +ymd(n).slice(4, 6) - 1 }; const t = new Date(c.y, c.m + d, 1); S.cal = { y: t.getFullYear(), m: t.getMonth() }; refresh(true); }
+const curMonth = () => { const n = new Date(); return { y: +ymd(n).slice(0, 4), m: +ymd(n).slice(4, 6) - 1 }; };
+function shiftMonth(d) { const c = S.cal || curMonth(); const t = new Date(c.y, c.m + d, 1); calSlide(d, { y: t.getFullYear(), m: t.getMonth() }); }
+/* Month change: the day grid slides fully out (continuing from wherever the finger left it), the new month
+   slides in from the other side. ~140ms out + 200ms in. */
+function calSlide(d, to) {
+  const cal = $('#view .cal'), g = cal && cal.querySelector('.cal-g');
+  const cur = curMonth(); const isCur = to && to.y === cur.y && to.m === cur.m;
+  if (!g || !S.calGames) { S.cal = isCur ? null : to; refresh(true); return; }
+  if (calSlide.busy) return; calSlide.busy = true;
+  const w = cal.clientWidth;
+  g.style.transition = 'transform .14s cubic-bezier(.4,0,1,1)'; g.style.transform = `translateX(${-d * w}px)`;
+  setTimeout(() => {
+    S.cal = isCur ? null : to;
+    const tmp = document.createElement('div'); tmp.innerHTML = habsCalendar(S.calGames, S.calAb); const fresh = tmp.firstElementChild; const ng = fresh.querySelector('.cal-g');
+    ng.style.transform = `translateX(${d * w}px)`; cal.replaceWith(fresh);
+    requestAnimationFrame(() => requestAnimationFrame(() => { ng.style.transition = 'transform .2s cubic-bezier(0,0,.2,1)'; ng.style.transform = ''; }));
+    setTimeout(() => { ng.style.transition = ''; calSlide.busy = false; }, 240);
+  }, 140);
+}
 
 /* ---------- Canadiens ---------- */
 const nhlName = t => (CFG.favNHL || 'MTL') === 'MTL' ? 'Habs' : ((t && (t.shortDisplayName || t.name)) || CFG.favNHL || 'Hockey');
@@ -1271,6 +1289,7 @@ async function loadNHL() {
   const shown = hero.id || (fresh[0] && fresh[0].id);
   const upcoming = games.filter(g => g.state !== 'post' && g.id !== shown && g.date > Date.now() - 6 * 36e5).slice(0, 8);
   const results = games.filter(g => g.state === 'post' && g.id !== shown).slice(-8).reverse();
+  S.calGames = games; S.calAb = ab;
   $('#view').innerHTML = hero.html + standCard(stM) + habsCalendar(games, ab) + tiles('Coming up', upcoming.slice(0, 4)) + tiles('Results', results.slice(0, 4)) + (!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : '');
   if (hero.g) applyFlash($('#view .hero'), scoreFlash(hero.g));
   return live;
@@ -1855,7 +1874,7 @@ document.addEventListener('click', e => {
   const so = e.target.closest('[data-stand]'); if (so) { openStand(so.dataset.stand); return; }
   const t = e.target.closest('[data-tab]'); if (t) { if (S.sheetMode) { S.sheetMode = null; S.detail = null; $('#sheet').classList.remove('open'); } setTab(t.dataset.tab); return; }
   if (e.target.closest('[data-now]')) { S.nfl.q = null; refresh(true); return; }
-  if (e.target.closest('[data-calnow]')) { S.cal = null; refresh(true); return; }
+  if (e.target.closest('[data-calnow]')) { const c = S.cal || curMonth(), n = curMonth(); calSlide((n.y - c.y) * 12 + n.m - c.m > 0 ? 1 : -1, n); return; }
   const cm = e.target.closest('[data-cal]'); if (cm) { shiftMonth(+cm.dataset.cal); return; }
   const p = e.target.closest('[data-ptab]'); if (p && S.detail) { S.detail.tab = p.dataset.ptab; renderDetail(); return; }
   const f = e.target.closest('[data-fx]'); if (f) { const [k, v] = f.dataset.fx.split(':'); S.fx[k] = v; const m = FX.data[k]; if (m && S.sheetMode === 'fx') { const keep = $('#shScroll').scrollTop; $('#shBody').innerHTML = renderFx(m); $('#shScroll').scrollTop = keep; } return; }
@@ -1891,7 +1910,8 @@ function gestures(scroller, ptr, mode) {
     if (G.lock === 'h') {
       if (G.noSwipe && !(mode === 'sheet' && G.x < 30)) { G.lock = 'x'; return; }
       if (mode === 'sheet') { if (G.dx > 0) { e.preventDefault(); const sh = $('#sheet'); sh.style.transition = 'none'; sh.style.transform = `translateX(${G.dx}px)`; } }
-      else { const el = G.inCal ? ($('#view .cal-g') || $('#view')) : $('#view'); G.el = el; el.style.transition = 'none'; el.style.transform = `translateX(${G.dx * .25}px)`; el.style.opacity = 1 - Math.min(.5, Math.abs(G.dx) / 600); }
+      else if (G.inCal) { const el = $('#view .cal-g'); if (el && !calSlide.busy) { G.el = el; el.style.transition = 'none'; el.style.transform = `translateX(${G.dx}px)`; } }
+      else { const el = $('#view'); G.el = el; el.style.transition = 'none'; el.style.transform = `translateX(${G.dx * .25}px)`; el.style.opacity = 1 - Math.min(.5, Math.abs(G.dx) / 600); }
     }
   }, { passive: false });
   const end = () => {
@@ -1910,7 +1930,9 @@ function gestures(scroller, ptr, mode) {
       else { sh.style.transition = 'transform .2s ease-out'; sh.style.transform = ''; setTimeout(() => { sh.style.transition = ''; }, 220); }
       return;
     }
-    const el = g.el; if (el) { el.style.transition = 'transform .2s ease-out,opacity .2s'; el.style.transform = ''; el.style.opacity = ''; setTimeout(() => { el.style.transition = ''; }, 220); }
+    const el = g.el;
+    if (g.inCal && go && el && el.isConnected) { shiftMonth(g.dx < 0 ? 1 : -1); return; }
+    if (el) { el.style.transition = 'transform .2s ease-out,opacity .2s'; el.style.transform = ''; el.style.opacity = ''; setTimeout(() => { el.style.transition = ''; }, 220); }
     if (!go) return;
     if (g.inCal) { shiftMonth(g.dx < 0 ? 1 : -1); return; }
     const to = g.dx < 0 ? 'nhl' : 'nfl'; if (to === S.tab) return;
