@@ -1575,10 +1575,16 @@ function scoringNFL(g, s) {
 function teamStatsNFL(g, s) {
   const T = (s.boxscore && s.boxscore.teams) || []; const A = T.find(t => String(t.team.id) === g.away.id), Hm = T.find(t => String(t.team.id) === g.home.id); if (!A || !Hm) return '';
   const val = (t, k) => { const x = (t.statistics || []).find(z => z.name === k); return x ? x.displayValue : null; };
+  if (g.state === 'pre') {
+    // before kickoff ESPN sends season per-game averages under different names
+    const pre = [['totalPointsPerGame', 'Points / game'], ['yardsPerGame', 'Yards / game'], ['passingYardsPerGame', 'Passing / game'], ['rushingYardsPerGame', 'Rushing / game'], ['totalPointsPerGameAllowed', 'Points allowed', 1], ['yardsPerGameAllowed', 'Yards allowed', 1], ['passingYardsPerGameAllowed', 'Passing allowed', 1], ['rushingYardsPerGameAllowed', 'Rushing allowed', 1]];
+    const rows = pre.map(([k, label, low]) => { const ad = val(A, k), hd = val(Hm, k); if (ad == null || hd == null) return null; return { label, ad, hd, a: parseFloat(ad) || 0, h: parseFloat(hd) || 0, low: !!low }; }).filter(Boolean);
+    return rows.length ? sec('Season averages', `${esc(g.away.abbr)} · ${esc(g.home.abbr)}`, compareRows(rows, g)) : '';
+  }
   const spec = [['totalYards', 'Total yards'], ['netPassingYards', 'Passing'], ['rushingYards', 'Rushing'], ['firstDowns', 'First downs'], ['thirdDownEff', '3rd down', 'eff'], ['redZoneAttempts', 'Red zone', 'eff'], ['turnovers', 'Turnovers'], ['sacksYardsLost', 'Sacks taken'], ['totalPenaltiesYards', 'Penalties'], ['possessionTime', 'Possession', 'time']];
   const num = (v, how) => { if (v == null) return 0; if (how === 'time') return secs(v); const m = String(v).match(/^(\d+)[-/](\d+)$/); if (m) return how === 'eff' ? (+m[2] ? +m[1] / +m[2] : 0) : +m[1]; return parseFloat(v) || 0; };
   const rows = spec.map(([k, label, how]) => { const ad = val(A, k), hd = val(Hm, k); if (ad == null && hd == null) return null; return { label, ad: ad ?? '–', hd: hd ?? '–', a: num(ad, how), h: num(hd, how), low: ['turnovers', 'sacksYardsLost', 'totalPenaltiesYards'].includes(k) }; }).filter(Boolean);
-  return sec('Team stats', `${esc(g.away.abbr)} · ${esc(g.home.abbr)}`, compareRows(rows, g));
+  return rows.length ? sec('Team stats', `${esc(g.away.abbr)} · ${esc(g.home.abbr)}`, compareRows(rows, g)) : '';
 }
 function playersNFL(g, s) {
   const P = (s.boxscore && s.boxscore.players) || []; const side = S.detail.tab === 'home' ? g.home : g.away;
