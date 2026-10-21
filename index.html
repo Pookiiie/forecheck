@@ -53,6 +53,10 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 .ttl h1{margin:0;font:800 22px/1 var(--bc);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ttl small{font:500 11.5px/1.3 var(--ui);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ttl small u{color:var(--blue);text-decoration:none}
+.ttl-t{display:flex;align-items:baseline;gap:8px;min-width:0}
+.ttl-t .rec{font:600 14px/1 var(--bc);letter-spacing:.04em;color:var(--fg2);white-space:nowrap;flex:none}
+.ttl small .in{color:var(--green)}.ttl small .out{color:var(--red)}
+.ttl[data-stand]{cursor:pointer;-webkit-tap-highlight-color:transparent}.ttl[data-stand]:active{opacity:.6}
 .chev{width:30px;height:38px;display:grid;place-items:center;color:var(--tint);flex:none}
 .chev svg{width:11px;height:19px}
 .nav-r{margin-left:auto;display:flex;align-items:center;gap:0;flex:none}
@@ -586,7 +590,7 @@ textarea{display:block;width:100%;min-height:76px;border:0;background:none;color
   <header class="nav">
     <div class="nav-in">
       <button class="chev" id="prevBtn" aria-label="Previous week" hidden><svg viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg></button>
-      <div class="ttl"><h1 id="title">Forecheck</h1><small id="subtitle"></small></div>
+      <div class="ttl"><div class="ttl-t"><h1 id="title">Forecheck</h1><span class="rec" id="titleRec" hidden></span></div><small id="subtitle"></small></div>
       <button class="chev" id="nextBtn" aria-label="Next week" hidden><svg viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l8 8-8 8"/></svg></button>
       <div class="nav-r">
         <span class="upd" id="refreshBtn" role="button" aria-label="Refresh"><i class="dot" id="livedot"></i><span id="updtxt"></span></span>
@@ -1007,7 +1011,14 @@ async function heroHTML(sp, games, extra = {}) {
 /* ---------- state + header ---------- */
 const S = { tab: LS.get('tab', 'nfl'), nfl: { q: null, cur: null }, detail: null, sheetMode: null, fxKey: null, live: false, timer: null, busy: false, fx: { sv: 'me', cv: 'me' } };
 function setSport(sp) { document.body.dataset.sport = sp; }
-function setHeader(title, sub, arrows) { $('#title').textContent = title; $('#subtitle').innerHTML = sub || ''; $('#subtitle').hidden = !sub; $('#prevBtn').hidden = $('#nextBtn').hidden = !arrows; }
+function setHeader(title, sub, arrows, opt = {}) {
+  $('#title').textContent = title; $('#titleRec').textContent = opt.rec || ''; $('#titleRec').hidden = !opt.rec;
+  const el = $('#subtitle'); el.innerHTML = sub || ''; el.hidden = !sub;
+  // too long for the screen: fall back to the shorter wording
+  if (opt.short && el.scrollWidth > el.clientWidth + 1) el.innerHTML = opt.short;
+  const t = $('.ttl'); if (opt.stand) t.dataset.stand = opt.stand; else delete t.dataset.stand;
+  $('#prevBtn').hidden = $('#nextBtn').hidden = !arrows;
+}
 function setTab(tab) {
   S.tab = tab; LS.set('tab', tab); setSport(tab);
   document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
@@ -1249,13 +1260,13 @@ function nhlStand(div, ab) {
   const pairs = [[leaders[0], wc[1], 'WC2'], [leaders[1], wc[0], 'WC1']].flatMap(([L, W, wl]) => { const D = dOf(L); return [[L, W, D.name[0] + '1', wl], [D.teams[1], D.teams[2], D.name[0] + '2', D.name[0] + '3']]; });
   const myDiv = divs.find(d => d.teams.some(t => t.t.abbr === ab)); const me = myDiv.teams.find(t => t.t.abbr === ab); const rank = myDiv.teams.indexOf(me) + 1;
   const late = Math.max(...divs.flatMap(d => d.teams.map(t => t.gp))) >= 60;
-  let status, cls, opp = null;
+  let status, cls, opp = null, main, extra = '';
   const pair = pairs.find(p => p[0] === me || p[1] === me); if (pair) opp = pair[0] === me ? pair[1] : pair[0];
-  if (rank <= 3) { const next = myDiv.teams[3]; cls = 'in'; status = `In a playoff spot` + (rank === 3 && next ? ` \u00b7 ${me.pts - next.pts} pt${me.pts - next.pts === 1 ? '' : 's'} up on ${next.t.abbr}` : ''); }
-  else if (wc.includes(me)) { const first = rest[2]; cls = 'in'; status = `Wild card ${wc.indexOf(me) + 1}` + (first ? ` \u00b7 ${me.pts - first.pts} pt${me.pts - first.pts === 1 ? '' : 's'} up on ${first.t.abbr}` : ''); }
-  else { const w2 = wc[1]; const back = w2.pts - me.pts, gih = w2.gp - me.gp; cls = 'out'; status = `${back} pt${back === 1 ? '' : 's'} out of a wild card` + (gih > 0 ? ` \u00b7 ${gih} game${gih === 1 ? '' : 's'} in hand` : ''); }
+  if (rank <= 3) { const next = myDiv.teams[3]; cls = 'in'; main = 'In a playoff spot'; if (rank === 3 && next) extra = `${me.pts - next.pts} pt${me.pts - next.pts === 1 ? '' : 's'} up on ${next.t.abbr}`; status = main + (extra ? ` \u00b7 ${extra}` : ''); }
+  else if (wc.includes(me)) { const first = rest[2]; cls = 'in'; main = `Wild card ${wc.indexOf(me) + 1}`; if (first) extra = `${me.pts - first.pts} pt${me.pts - first.pts === 1 ? '' : 's'} up on ${first.t.abbr}`; status = main + (extra ? ` \u00b7 ${extra}` : ''); }
+  else { const w2 = wc[1]; const back = w2.pts - me.pts, gih = w2.gp - me.gp; cls = 'out'; main = `${back} pt${back === 1 ? '' : 's'} out of a wild card`; if (gih > 0) extra = `${gih} GIH`; status = main + (gih > 0 ? ` \u00b7 ${gih} game${gih === 1 ? '' : 's'} in hand` : ''); }
   if (late && opp && cls === 'in') status += ` \u00b7 plays ${opp.t.abbr}`;
-  return { sp: 'nhl', conf: conf.name.replace(' Conference', ''), divs, myDiv, me, rank, rankLbl: ord(rank), group: ({ Atlantic: 'ATL', Metropolitan: 'METRO', Central: 'CEN', Pacific: 'PAC' })[myDiv.name] || myDiv.name, wc, rest, pairs, late, status, cls };
+  return { sp: 'nhl', conf: conf.name.replace(' Conference', ''), divs, myDiv, me, rank, rankLbl: ord(rank), group: ({ Atlantic: 'ATL', Metropolitan: 'METRO', Central: 'CEN', Pacific: 'PAC' })[myDiv.name] || myDiv.name, wc, rest, pairs, late, status, cls, main, extra };
 }
 function nflStand(conf, div, ab, week, stype) {
   const row = e => ({ t: stTeam('nfl', e), seed: stv(e, 'playoffSeed') || 99, w: stv(e, 'wins') || 0, l: stv(e, 'losses') || 0, tie: stv(e, 'ties') || 0, pct: std(e, 'winPercent'), div: std(e, 'vs. Div.') || std(e, 'divisionRecord'), strk: std(e, 'streak') });
@@ -1417,13 +1428,15 @@ async function loadNHL() {
   const t = sc.team || {};
   const stM = await standModel('nhl').catch(() => null);
   // header uses the same standings (and tiebreakers) as the standings strip, so the rank always matches
-  const hdr = stM && stM.me ? [`${stM.me.w}-${stM.me.l}-${stM.me.otl}`, `${ord(stM.rank)} in ${stM.myDiv.name}`] : [t.recordSummary, (t.standingSummary || '').replace(' Division', '')];
-  setHeader(nhlName(t), hdr.filter(Boolean).map(esc).join(' · '), false);
+  if (stM && stM.me) {
+    const lead = `${esc(stM.rankLbl)} ${esc(stM.group)} \u00b7 <span class="${stM.cls}">${esc(stM.main)}</span>`;
+    setHeader(nhlName(t), lead + (stM.extra ? ` \u00b7 ${esc(stM.extra)}` : ''), false, { rec: `${stM.me.w}-${stM.me.l}-${stM.me.otl}`, stand: 'nhl', short: lead });
+  } else setHeader(nhlName(t), esc((t.standingSummary || '').replace(' Division', '')), false, { rec: t.recordSummary });
   const shown = hero.id || (fresh[0] && fresh[0].id);
   const upcoming = games.filter(g => g.state !== 'post' && g.id !== shown && g.date > Date.now() - 6 * 36e5).slice(0, 8);
   const results = games.filter(g => g.state === 'post' && g.id !== shown).slice(-8).reverse();
   S.calGames = games; S.calAb = ab;
-  $('#view').innerHTML = hero.html + standCard(stM) + habsCalendar(games, ab) + tiles('Coming up', upcoming.slice(0, 4)) + tiles('Results', results.slice(0, 4)) + (!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : '') + `<div id="plWrap">${playerSec(ab)}</div>`;
+  $('#view').innerHTML = hero.html + habsCalendar(games, ab) + tiles('Coming up', upcoming.slice(0, 4)) + tiles('Results', results.slice(0, 4)) + (!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : '') + `<div id="plWrap">${playerSec(ab)}</div>`;
   loadPlayers(ab);
   if (hero.g) applyFlash($('#view .hero'), scoreFlash(hero.g));
   return live;
