@@ -1601,10 +1601,10 @@ function preInfo(g, s) {
   const extra = [];
   if (pc && pc.details) extra.push(`Line ${pc.details}${pc.overUnder ? ' · O/U ' + pc.overUnder : ''}`);
   if (gi.weather && gi.weather.temperature != null) extra.push(`${gi.weather.temperature}°F${gi.weather.displayValue ? ' ' + gi.weather.displayValue : ''}`);
-  // the score bug above already shows day and time, so the big line here counts down instead
+  // the score bug above already shows the weekday and time: here, just the date and a countdown
   const ms = g.date - Date.now(), hrs = ms / 36e5; const dd = Math.round((new Date(ymd(g.date).replace(/(\d{4})(\d\d)(\d\d)/, '$1-$2-$3T12:00')) - new Date(ymd(new Date()).replace(/(\d{4})(\d\d)(\d\d)/, '$1-$2-$3T12:00'))) / 864e5);
   const rel = ms <= 0 ? 'SOON' : hrs < 12 ? `IN ${Math.floor(hrs)}H ${String(Math.floor(ms / 6e4) % 60).padStart(2, '0')}M` : dd <= 0 ? 'TONIGHT' : dd === 1 ? 'TOMORROW' : `IN ${dd} DAYS`;
-  let h = `<div class="pre2"><div class="when"><span>${esc(day)} · ${esc(fmtTime(g.date))}</span><b>${esc(rel)}</b></div><div class="where"><b>${esc(vn.fullName || '')}</b><span>${esc(city)}</span></div></div>`;
+  let h = `<div class="pre2"><div class="when"><span>${esc(g.date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: TZ }).replace('.', '').toUpperCase())}</span><b>${esc(rel)}</b></div><div class="where"><b>${esc(vn.fullName || '')}</b><span>${esc(city)}</span></div></div>`;
   if (extra.length) h += `<div class="pre2x">${extra.map(esc).join(' · ')}</div>`;
   if (showWatch(g)) {
     const w = pickWatch(g);
