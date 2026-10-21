@@ -1912,7 +1912,6 @@ function gestures(scroller, ptr, mode) {
       if (G.noSwipe && !(mode === 'sheet' && G.x < 30)) { G.lock = 'x'; return; }
       if (mode === 'sheet') { if (G.dx > 0) { e.preventDefault(); const sh = $('#sheet'); sh.style.transition = 'none'; sh.style.transform = `translateX(${G.dx}px)`; } }
       else if (G.inCal) { const el = $('#view .cal-g'); if (el && !calSlide.busy) { G.el = el; el.style.transition = 'none'; el.style.transform = `translateX(${G.dx}px)`; } }
-      else { const el = $('#view'); G.el = el; el.style.transition = 'none'; el.style.transform = `translateX(${G.dx * .25}px)`; el.style.opacity = 1 - Math.min(.5, Math.abs(G.dx) / 600); }
     }
   }, { passive: false });
   const end = () => {
@@ -1935,10 +1934,7 @@ function gestures(scroller, ptr, mode) {
     if (g.inCal && go && el && el.isConnected) { shiftMonth(g.dx < 0 ? 1 : -1); return; }
     if (el) { el.style.transition = 'transform .2s ease-out,opacity .2s'; el.style.transform = ''; el.style.opacity = ''; setTimeout(() => { el.style.transition = ''; }, 220); }
     if (!go) return;
-    if (g.inCal) { shiftMonth(g.dx < 0 ? 1 : -1); return; }
-    const to = g.dx < 0 ? 'nhl' : 'nfl'; if (to === S.tab) return;
-    const v = $('#view'); v.classList.remove('slide-l', 'slide-r'); void v.offsetWidth; v.classList.add(g.dx < 0 ? 'slide-l' : 'slide-r');
-    setTab(to);
+    if (g.inCal) shiftMonth(g.dx < 0 ? 1 : -1);   // sideways swipes only page the calendar; tabs don't swipe
   };
   scroller.addEventListener('touchend', end); scroller.addEventListener('touchcancel', () => { G = null; ptr.classList.add('back'); ptr.style.opacity = 0; });
 }
