@@ -1258,11 +1258,13 @@ async function loadNHL() {
   const hero = await heroHTML('nhl', fresh);
   if (S.tab !== 'nhl' || S.sheetMode) return live;
   const t = sc.team || {};
-  setHeader(nhlName(t), [t.recordSummary, (t.standingSummary || '').replace(' Division', '')].filter(Boolean).map(esc).join(' · '), false);
+  const stM = await standModel('nhl').catch(() => null);
+  // header uses the same standings (and tiebreakers) as the standings strip, so the rank always matches
+  const hdr = stM && stM.me ? [`${stM.me.w}-${stM.me.l}-${stM.me.otl}`, `${ord(stM.rank)} in ${stM.myDiv.name}`] : [t.recordSummary, (t.standingSummary || '').replace(' Division', '')];
+  setHeader(nhlName(t), hdr.filter(Boolean).map(esc).join(' · '), false);
   const shown = hero.id || (fresh[0] && fresh[0].id);
   const upcoming = games.filter(g => g.state !== 'post' && g.id !== shown && g.date > Date.now() - 6 * 36e5).slice(0, 8);
   const results = games.filter(g => g.state === 'post' && g.id !== shown).slice(-8).reverse();
-  const stM = await standModel('nhl').catch(() => null);
   $('#view').innerHTML = hero.html + standCard(stM) + habsCalendar(games, ab) + tiles('Coming up', upcoming.slice(0, 4)) + tiles('Results', results.slice(0, 4)) + (!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : '');
   if (hero.g) applyFlash($('#view .hero'), scoreFlash(hero.g));
   return live;
