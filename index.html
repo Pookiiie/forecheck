@@ -416,6 +416,38 @@ button.hero:active{opacity:.85}
 .ypc tr.oth td{color:var(--fg2)}
 .ypc .ln{font:400 11.5px/1.3 var(--ui);color:var(--fg2)}
 .gls{display:grid}
+/* player stats */
+.ldt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.ldt > div{position:relative;overflow:hidden;background:var(--well);border-radius:6px;padding:7px 8px 6px;min-height:74px}
+.ldt img{position:absolute;right:-8px;bottom:-4px;width:64px;height:64px;object-fit:cover}
+.ldt small{display:block;font:700 10px var(--bc);letter-spacing:.12em;color:var(--fg2);text-transform:uppercase;position:relative}
+.ldt b{display:block;font:800 26px/1.05 var(--bc);position:relative;font-variant-numeric:tabular-nums}
+.ldt span{display:block;font:600 12px var(--ui);position:relative;white-space:nowrap}
+.pls{display:flex;gap:4px}
+.pls button{font:700 11px var(--bc);letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:var(--fill);color:var(--fg2)}
+.pls button.on{background:color-mix(in srgb,var(--tint) 22%,transparent);color:var(--tint)}
+.prh,.pr{display:grid;grid-template-columns:96px minmax(0,1fr) 34px 32px 40px;align-items:center;gap:8px}
+.prh{font:600 10.5px var(--ui);color:var(--fg2);margin-bottom:-4px}
+.prh span:nth-child(n+3){text-align:right}
+.prh .on{color:var(--tint)}
+.prh i{display:inline-block;width:8px;height:8px;border-radius:2px;margin:0 3px 0 6px;vertical-align:-0.5px}
+.prh i.g,.pr .br i.g{background:#e2384d} .prh i.a,.pr .br i.a{background:#7aa7d9}
+.pr{padding:4px 0;border-top:1px solid var(--sep)}
+.pr .nm{font:500 13.5px var(--ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr .nm i{font-style:normal;color:var(--fg2);font-size:11px;margin-left:4px}
+.pr .br{display:flex;gap:2px;height:14px}
+.pr .br i{display:flex;align-items:center;justify-content:center;border-radius:3px;font:700 10px var(--bc);font-style:normal;color:#fff;min-width:3px}
+.pr .br i.up{background:var(--green)} .pr .br i.dn{background:var(--red)} .pr .br i.t{background:color-mix(in srgb,var(--fg) 45%,transparent)}
+.pr b{font:800 16px var(--bc);text-align:right;font-variant-numeric:tabular-nums}
+.pr .o{font:600 13px var(--bc);color:var(--fg2);text-align:right;font-variant-numeric:tabular-nums}
+.pr .o .pos{color:var(--green)} .pr .o .neg{color:var(--red)}
+.plmore{justify-self:center;font:700 11px var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--tint);padding:4px 10px}
+.prh.g,.pg{grid-template-columns:minmax(0,1fr) 30px 58px 44px 40px}
+.prh.g{margin-top:6px}
+.pg{display:grid;align-items:center;gap:8px;padding:4px 0;border-top:1px solid var(--sep);font:600 13px var(--bc);color:var(--fg2);font-variant-numeric:tabular-nums}
+.pg span:nth-child(n+2),.pg b{text-align:right}
+.pg .nm{font:500 13.5px var(--ui);color:var(--fg)}
+.pg b{font:800 15px var(--bc);color:var(--fg)}
 .pre2c{gap:8px}
 .pre2{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center}
 .pre2 .when{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding-right:14px;border-right:1px solid var(--sep)}
@@ -1317,6 +1349,54 @@ function calSlide(d, to) {
   }, 140);
 }
 
+/* ---------- Habs player stats (season) ----------
+   ESPN only offers player season stats league-wide (a ~5 MB file), so it's fetched at most every 3 hours and
+   only this team's players are kept on the device. Leaders tiles + a sortable bar table + goalies. */
+async function loadPlayers(ab, force) {
+  const key = 'pl:' + ab, c = LS.get(key, null);
+  if (!force && c && Date.now() - c.t < 3 * 36e5) return;
+  if (loadPlayers.busy) return; loadPlayers.busy = true;
+  try {
+    const j = await getJSON('https://site.web.api.espn.com/apis/common/v3/sports/hockey/nhl/statistics/byathlete?region=us&lang=en&contentorigin=espn&isqualified=false&limit=1000', 45000);
+    const lab = {}; (j.categories || []).forEach(x => { lab[x.name] = x.labels || []; });
+    const val = (a, cat, l) => { const x = (a.categories || []).find(y => y.name === cat); const i = (lab[cat] || []).indexOf(l); const v = x && i >= 0 ? x.values[i] : null; return v == null || v === '' ? null : +v; };
+    const rows = (j.athletes || []).filter(a => a.athlete && (a.athlete.teamShortName === ab || (a.athlete.teamShortName === 'UTAH' && ab === 'UTA'))).map(a => ({
+      id: a.athlete.id, name: a.athlete.lastName || a.athlete.displayName, pos: (a.athlete.position && a.athlete.position.abbreviation) || '', head: (a.athlete.headshot && a.athlete.headshot.href) || '',
+      gp: val(a, 'general', 'GP') || 0, pm: val(a, 'general', '+/-') || 0, toi: val(a, 'general', 'TOI/G') || 0, g: val(a, 'offensive', 'G') || 0, a: val(a, 'offensive', 'A') || 0, p: val(a, 'offensive', 'PTS') || 0,
+      w: val(a, 'general', 'WINS') || 0, l: val(a, 'general', 'L') || 0, otl: val(a, 'defensive', 'OTL') || 0, sv: val(a, 'defensive', 'SV%'), gaa: val(a, 'defensive', 'GAA') }));
+    if (rows.length) { LS.set(key, { t: Date.now(), rows }); const w = $('#plWrap'); if (w && S.tab === 'nhl') w.innerHTML = playerSec(ab); }
+  } catch (e) {} finally { loadPlayers.busy = false; }
+}
+function playerSec(ab) {
+  const c = LS.get('pl:' + ab, null); if (!c || !c.rows.length) return '';
+  const sk = c.rows.filter(r => r.pos !== 'G' && r.gp > 0), gl = c.rows.filter(r => r.pos === 'G' && r.gp > 0).sort((x, y) => y.gp - x.gp);
+  if (!sk.length) return '';
+  const mmss = v => `${Math.floor(v / 60)}:${String(Math.round(v % 60)).padStart(2, '0')}`;
+  const pmTxt = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
+  const top = k => sk.slice().sort((x, y) => y[k] - x[k] || y.p - x.p)[0];
+  const tile = (lab, r, txt) => `<div><small>${lab}</small><b>${esc(txt)}</b><span>${esc(r.name)}</span>${r.head ? `<img src="${esc(r.head)}" alt="" loading="lazy">` : ''}</div>`;
+  const tP = top('p'), tG = top('g'), tM = top('pm');
+  let h = `<div class="ldt">${tile('Points', tP, String(tP.p))}${tile('Goals', tG, String(tG.g))}${tile('Plus/minus', tM, pmTxt(tM.pm))}</div>`;
+  const sorts = [['p', 'Points'], ['g', 'Goals'], ['pm', '+/−'], ['toi', 'Ice time']]; const k = S.plSort || 'p';
+  h += `<div class="pls">${sorts.map(([v, l]) => `<button data-pls="${v}" class="${v === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  const list = sk.slice().sort((x, y) => y[k] - x[k] || y.p - x.p || y.g - x.g); const shown = S.plAll ? list : list.slice(0, 8);
+  const max = Math.max(1, ...list.map(r => k === 'pm' ? Math.abs(r.pm) : r[k]));
+  const others = ['p', 'pm', 'toi'].filter(x => x !== k).slice(0, 2); const head = { p: 'P', pm: '+/−', toi: 'TOI', g: 'G' };
+  const cell = (r, x) => x === 'toi' ? mmss(r.toi) : x === 'pm' ? `<span class="${r.pm > 0 ? 'pos' : r.pm < 0 ? 'neg' : ''}">${pmTxt(r.pm)}</span>` : r[x];
+  const bar = r => {
+    if (k === 'p') { const gw = r.g / max * 100, aw = r.a / max * 100; return `${r.g ? `<i class="g" style="width:${gw}%">${gw > 9 ? r.g : ''}</i>` : ''}${r.a ? `<i class="a" style="width:${aw}%">${aw > 9 ? r.a : ''}</i>` : ''}`; }
+    if (k === 'g') return r.g ? `<i class="g" style="width:${r.g / max * 100}%"></i>` : '';
+    if (k === 'pm') return r.pm ? `<i class="${r.pm > 0 ? 'up' : 'dn'}" style="width:${Math.abs(r.pm) / max * 100}%"></i>` : '';
+    return `<i class="t" style="width:${r.toi / max * 100}%"></i>`;
+  };
+  h += `<div class="prh"><span></span><span>${k === 'p' ? '<i class="g"></i>G <i class="a"></i>A' : ''}</span><span class="on">${head[k]}</span>${others.map(x => `<span>${head[x]}</span>`).join('')}</div>`;
+  h += shown.map(r => `<div class="pr"><span class="nm">${esc(r.name)}<i>${esc(r.pos)}</i></span><span class="br">${bar(r)}</span><b>${k === 'toi' ? mmss(r.toi) : k === 'pm' ? pmTxt(r.pm) : r[k]}</b>${others.map(x => `<span class="o">${cell(r, x)}</span>`).join('')}</div>`).join('');
+  if (list.length > 8) h += `<button class="plmore" data-plall>${S.plAll ? 'Show fewer' : `All ${list.length} skaters`}</button>`;
+  if (gl.length) h += `<div class="prh g"><span>Goalies</span><span>GP</span><span>W-L-OT</span><span class="on">SV%</span><span>GAA</span></div>` + gl.map(r => `<div class="pg"><span class="nm">${esc(r.name)}</span><span>${r.gp}</span><span>${r.w}-${r.l}-${r.otl}</span><b>${r.sv != null ? r.sv.toFixed(3).replace(/^0/, '') : '–'}</b><span>${r.gaa != null ? r.gaa.toFixed(2) : '–'}</span></div>`).join('');
+  const gp = Math.max(...c.rows.map(r => r.gp));
+  return sec('Player stats', `${gp} game${gp === 1 ? '' : 's'}`, h);
+}
+
 /* ---------- Canadiens ---------- */
 const nhlName = t => (CFG.favNHL || 'MTL') === 'MTL' ? 'Habs' : ((t && (t.shortDisplayName || t.name)) || CFG.favNHL || 'Hockey');
 async function loadNHL() {
@@ -1338,7 +1418,8 @@ async function loadNHL() {
   const upcoming = games.filter(g => g.state !== 'post' && g.id !== shown && g.date > Date.now() - 6 * 36e5).slice(0, 8);
   const results = games.filter(g => g.state === 'post' && g.id !== shown).slice(-8).reverse();
   S.calGames = games; S.calAb = ab;
-  $('#view').innerHTML = hero.html + standCard(stM) + habsCalendar(games, ab) + tiles('Coming up', upcoming.slice(0, 4)) + tiles('Results', results.slice(0, 4)) + (!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : '');
+  $('#view').innerHTML = hero.html + standCard(stM) + habsCalendar(games, ab) + tiles('Coming up', upcoming.slice(0, 4)) + tiles('Results', results.slice(0, 4)) + (!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : '') + `<div id="plWrap">${playerSec(ab)}</div>`;
+  loadPlayers(ab);
   if (hero.g) applyFlash($('#view .hero'), scoreFlash(hero.g));
   return live;
 }
@@ -1985,6 +2066,8 @@ document.addEventListener('click', e => {
   const so = e.target.closest('[data-stand]'); if (so) { openStand(so.dataset.stand); return; }
   const t = e.target.closest('[data-tab]'); if (t) { if (S.sheetMode) { S.sheetMode = null; S.detail = null; $('#sheet').classList.remove('open'); } setTab(t.dataset.tab); return; }
   if (e.target.closest('[data-now]')) { S.nfl.q = null; refresh(true); return; }
+  const pls = e.target.closest('[data-pls]'); if (pls) { S.plSort = pls.dataset.pls; const w = $('#plWrap'); if (w) w.innerHTML = playerSec(CFG.favNHL || 'MTL'); return; }
+  if (e.target.closest('[data-plall]')) { S.plAll = !S.plAll; const w = $('#plWrap'); if (w) w.innerHTML = playerSec(CFG.favNHL || 'MTL'); return; }
   if (e.target.closest('[data-calnow]')) { const c = S.cal || curMonth(), n = curMonth(); calSlide((n.y - c.y) * 12 + n.m - c.m > 0 ? 1 : -1, n); return; }
   const cm = e.target.closest('[data-cal]'); if (cm) { shiftMonth(+cm.dataset.cal); return; }
   const p = e.target.closest('[data-ptab]'); if (p && S.detail) { S.detail.tab = p.dataset.ptab; renderDetail(); return; }
