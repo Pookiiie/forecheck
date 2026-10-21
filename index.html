@@ -57,12 +57,13 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 .ttl-t .rec{font:600 14px/1 var(--bc);letter-spacing:.04em;color:var(--fg2);white-space:nowrap;flex:none}
 .ttl small .in{color:var(--green)}.ttl small .out{color:var(--red)}
 .ttl[data-stand]{cursor:pointer;-webkit-tap-highlight-color:transparent}.ttl[data-stand]:active{opacity:.6}
-.chev{width:26px;height:28px;display:grid;place-items:center;color:var(--tint);flex:none}
-.chev svg{width:7px;height:12px}
-.wk{display:flex;align-items:center;height:28px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);margin-right:8px;flex:none}
+.chev{width:38px;height:34px;display:grid;place-items:center;color:var(--tint);flex:none}
+.chev svg{width:8px;height:14px}
+.wk{display:flex;align-items:center;height:34px;border-radius:17px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);margin-right:8px;flex:none}
 .wk[hidden]{display:none}
-.wk b{font:700 13px/1 var(--bc);letter-spacing:.08em;white-space:nowrap;text-transform:uppercase}
-.wk.off{border-color:var(--tint)}.wk.off b{color:var(--tint);cursor:pointer}
+.wk b{font:700 14px/1 var(--bc);letter-spacing:.08em;white-space:nowrap;text-transform:uppercase}
+.wk.off{border-color:var(--tint)}
+.nav-r:has(.wk:not([hidden])) #updtxt{display:none} /* room for the week pill: live dot only */.wk.off b{color:var(--tint);cursor:pointer}
 .nav-r{margin-left:auto;display:flex;align-items:center;gap:0;flex:none}
 .upd{cursor:pointer;display:flex;align-items:center;gap:5px;font:600 13px var(--bc);letter-spacing:.04em;color:var(--fg2);margin-right:4px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--fg3)}
