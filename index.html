@@ -57,8 +57,12 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 .ttl-t .rec{font:600 14px/1 var(--bc);letter-spacing:.04em;color:var(--fg2);white-space:nowrap;flex:none}
 .ttl small .in{color:var(--green)}.ttl small .out{color:var(--red)}
 .ttl[data-stand]{cursor:pointer;-webkit-tap-highlight-color:transparent}.ttl[data-stand]:active{opacity:.6}
-.chev{width:30px;height:38px;display:grid;place-items:center;color:var(--tint);flex:none}
-.chev svg{width:11px;height:19px}
+.chev{width:26px;height:28px;display:grid;place-items:center;color:var(--tint);flex:none}
+.chev svg{width:7px;height:12px}
+.wk{display:flex;align-items:center;height:28px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);margin-right:8px;flex:none}
+.wk[hidden]{display:none}
+.wk b{font:700 13px/1 var(--bc);letter-spacing:.08em;white-space:nowrap;text-transform:uppercase}
+.wk.off{border-color:var(--tint)}.wk.off b{color:var(--tint);cursor:pointer}
 .nav-r{margin-left:auto;display:flex;align-items:center;gap:0;flex:none}
 .upd{cursor:pointer;display:flex;align-items:center;gap:5px;font:600 13px var(--bc);letter-spacing:.04em;color:var(--fg2);margin-right:4px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--fg3)}
@@ -589,10 +593,9 @@ textarea{display:block;width:100%;min-height:76px;border:0;background:none;color
 <div class="app">
   <header class="nav">
     <div class="nav-in">
-      <button class="chev" id="prevBtn" aria-label="Previous week" hidden><svg viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg></button>
       <div class="ttl"><div class="ttl-t"><h1 id="title">Forecheck</h1><span class="rec" id="titleRec" hidden></span></div><small id="subtitle"></small></div>
-      <button class="chev" id="nextBtn" aria-label="Next week" hidden><svg viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l8 8-8 8"/></svg></button>
       <div class="nav-r">
+        <div class="wk" id="wk" hidden><button class="chev" id="prevBtn" aria-label="Previous week"><svg viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 1.5l-5 5 5 5"/></svg></button><b id="wkLbl"></b><button class="chev" id="nextBtn" aria-label="Next week"><svg viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l5 5-5 5"/></svg></button></div>
         <span class="upd" id="refreshBtn" role="button" aria-label="Refresh"><i class="dot" id="livedot"></i><span id="updtxt"></span></span>
         <button class="ib" id="settingsBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
       </div>
@@ -1017,7 +1020,8 @@ function setHeader(title, sub, arrows, opt = {}) {
   // too long for the screen: fall back to the shorter wording
   if (opt.short && el.scrollWidth > el.clientWidth + 1) el.innerHTML = opt.short;
   const t = $('.ttl'); if (opt.stand) t.dataset.stand = opt.stand; else delete t.dataset.stand;
-  $('#prevBtn').hidden = $('#nextBtn').hidden = !arrows;
+  $('#wk').hidden = !arrows;
+  if (arrows) { $('#wkLbl').textContent = opt.week || ''; $('#wk').classList.toggle('off', !!opt.off); if (opt.off) $('#wkLbl').dataset.now = ''; else delete $('#wkLbl').dataset.now; }
 }
 function setTab(tab) {
   S.tab = tab; LS.set('tab', tab); setSport(tab);
@@ -1158,7 +1162,7 @@ function fxCards() {
   if (!CFG.cbsToken && CFG.cbsTeam) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>BELL</span></div><div class="fxm" style="white-space:normal">Add your CBS token in Settings to see this matchup</div></button>`);
   if (!CFG.sleeperLeague && !CFG.cbsToken && !CFG.cbsTeam) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>Fantasy</span></div><div class="fxm" style="white-space:normal">Paste your setup code in Settings to see your matchups here</div></button>`);
   if (cards.length === 1) cards[0] = cards[0].replace('class="fxc', 'class="fxc solo');
-  return cards.length ? `<div class="lbl">Your matchups<span class="r">Week ${esc(FX.week || '')}</span></div><div class="g2">${cards.join('')}</div>` : '';
+  return cards.length ? `<div class="lbl">Your matchups</div><div class="g2">${cards.join('')}</div>` : '';
 }
 async function loadNFL() {
   const q = S.nfl.q; const j = q ? await espn('nfl', `scoreboard?week=${q.week}&seasontype=${q.st}&dates=${q.yr}`) : await nflScoreboardNow();
@@ -1173,14 +1177,17 @@ async function loadNFL() {
   const live = games.some(g => g.state === 'in');
   if (S.tab !== 'nfl' || S.sheetMode) return live;
   const view = q || cur;
-  const label = +view.st === 3 ? (['', 'Wild Card', 'Divisional', 'Conference', 'Pro Bowl', 'Super Bowl'][view.week] || 'Playoffs') : +view.st === 1 ? 'Preseason ' + view.week : 'Week ' + view.week;
-  setHeader(label, isCur ? `${view.yr} season` : `${view.yr} · <u data-now>back to this week</u>`, true);
+  const wk = +view.st === 3 ? (['', 'Wild card', 'Divisional', 'Conf', 'Pro Bowl', 'Super Bowl'][view.week] || 'Playoffs') : +view.st === 1 ? 'Pre ' + view.week : 'Wk ' + view.week;
+  const stM = await standModel('nfl').catch(() => null);
+  if (stM && stM.me) {
+    const lead = `${stM.rankLbl ? esc(stM.rankLbl + ' ' + stM.group) + ' \u00b7 ' : ''}<span class="${stM.cls}">${esc(stM.main)}</span>`;
+    setHeader(stM.me.t.name || stM.me.t.abbr, lead, true, { rec: `${stM.me.w}-${stM.me.l}` + (stM.me.tie ? `-${stM.me.tie}` : ''), stand: 'nfl', week: wk, off: !isCur });
+  } else setHeader('Football', `${view.yr} season`, true, { week: wk, off: !isCur });
   const score = g => (hasFav(g) ? 100 : 0) + minesIn(g).length;
   const L = games.filter(g => g.state === 'in').sort((a, b) => score(b) - score(a));
   const P = games.filter(g => g.state === 'pre').sort((a, b) => a.date - b.date || score(b) - score(a));
   const F = games.filter(g => g.state === 'post').sort((a, b) => score(b) - score(a) || b.date - a.date);
-  const stM = isCur ? await standModel('nfl').catch(() => null) : null;
-  let h = hero.html + (isCur ? standCard(stM) + fxCards() : '');
+  let h = hero.html + (isCur ? fxCards() : '');
   const notHero = g => g.id !== hero.id;
   h += tiles(`Live · ${L.filter(notHero).length}`, L.filter(notHero), 'live');
   const slots = {}; P.forEach(g => { const k = dayWord(g.date) + ' · ' + fmtTime(g.date); (slots[k] = slots[k] || []).push(g); });
@@ -1279,12 +1286,13 @@ function nflStand(conf, div, ab, week, stype) {
   const gb = x => s7 ? ((s7.w - x.w) + (x.l - s7.l)) / 2 : 0;
   const cn = c.name.includes('National') ? 'NFC' : 'AFC'; const dn = d ? d.name : '';
   let status, cls;
-  if (me.seed <= 4) { cls = 'in'; status = `${ord(me.seed)} seed \u00b7 leads the ${dn}`; }
-  else if (me.seed <= 7) { cls = 'in'; status = `${ord(me.seed)} seed \u00b7 wild card`; }
-  else { cls = 'out'; const g = gb(me); status = `${g % 1 ? g.toFixed(1) : g} game${g === 1 ? '' : 's'} out of the 7 seed`; }
+  let main;
+  if (me.seed <= 4) { cls = 'in'; main = `leads the ${dn}`; status = `${ord(me.seed)} seed \u00b7 leads the ${dn}`; }
+  else if (me.seed <= 7) { cls = 'in'; main = 'wild card'; status = `${ord(me.seed)} seed \u00b7 wild card`; }
+  else { cls = 'out'; const g = gb(me); status = main = `${g % 1 ? g.toFixed(1) : g} game${g === 1 ? '' : 's'} out of the 7 seed`; }
   const late = +stype === 3 || (+stype === 2 && +week >= 12);
   const pairs = [[rows[1], rows[6], '2', '7'], [rows[2], rows[5], '3', '6'], [rows[3], rows[4], '4', '5']];
-  return { sp: 'nfl', conf: cn, rows, dteams, dname: dn, me, rank: me.seed, rankLbl: me.seed <= 16 ? ord(rows.indexOf(me) + 1) : '', group: cn, s7, gb, pairs, late, status, cls };
+  return { sp: 'nfl', conf: cn, rows, dteams, dname: dn, me, rank: me.seed, rankLbl: me.seed <= 16 ? ord(rows.indexOf(me) + 1) : '', group: cn, s7, gb, pairs, late, status, cls, main, extra: '' };
 }
 async function standModel(sp) {
   const ab = sp === 'nfl' ? CFG.favNFL : CFG.favNHL; if (!ab) return null;
