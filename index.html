@@ -1157,7 +1157,8 @@ function fxCards() {
       const o = oddsOf(m); const lead = m.opp && m.me.pts >= m.opp.pts; const iss = lineupIssues(m); const wc = iss.length ? (iss.some(i => i.lvl === 2) ? ' warn' : ' warnq') : '';
       const side = (t, me) => `<div class="fxt${me ? ' me' : ''}"><b>${fmtP(t.pts)}</b><small>proj ${fmtP(t.est)}</small></div>`;
       cards.push(`<button class="fxc${wc}" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span>${o != null ? `<span class="pc">Win ${o}%</span>` : ''}</div><div class="fxv">${side(m.me, true)}${m.opp ? `<span class="vs">vs</span>${side(m.opp, false)}` : ''}</div>${o != null ? `<div class="bar"><u style="width:${o}%"></u></div>` : ''}<div class="fxm">${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} players left</div>${lineupCard(iss)}</button>`);
-    } else if (k === 'cv' && d.cvErr === CBS_EXPIRED) cards.push(`<button class="fxc" data-cbspaste><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">Token expired</div><div class="fxm" style="white-space:normal">Run your CBS shortcut in Safari, then tap here to paste the new one</div></button>`);
+    } else if (k === 'cv' && d.cvErr === CBS_DOWN) cards.push(`<button class="fxc" data-cbspaste><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--amber)">CBS isn\u2019t answering (error 500)</div><div class="fxm" style="white-space:normal">Often CBS\u2019s side \u2014 it retries on its own. If your league works in Safari, run your CBS shortcut and tap here for a new token</div></button>`);
+    else if (k === 'cv' && d.cvErr === CBS_EXPIRED) cards.push(`<button class="fxc" data-cbspaste><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">Token expired</div><div class="fxm" style="white-space:normal">Run your CBS shortcut in Safari, then tap here to paste the new one</div></button>`);
     else if (d[k + 'Err']) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">${esc(d[k + 'Err'])}</div><div class="fxm">Tap to fix in Settings</div></button>`);
     else if (m) cards.push(`<button class="fxc" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span></div><div class="fxm">Pick your team in Settings</div></button>`);
   });
@@ -1962,7 +1963,7 @@ async function cbsDiagnostics() {
   try { out.schedules = shapeOf(await cbsCall('league/schedules')); } catch (e) { out.schedErr = e.message; }
   return JSON.stringify(out);
 }
-const CBS_EXPIRED = 'Your CBS token has expired.';
+const CBS_EXPIRED = 'Your CBS token has expired.', CBS_DOWN = 'CBS error 500';
 /* one-tap token refresh from the BELL card: read the token the Shortcut copied, save it, reload */
 async function pasteCbsToken() {
   let t = '';
@@ -1973,8 +1974,10 @@ async function pasteCbsToken() {
 }
 async function cbsData(nfl) {
   const wk = nfl.week;
-  // CBS answers an expired token with 500 (an unknown one gets 400/401), so all of these mean "get a new token"
-  const live = async extra => { try { return await cbsCall('league/scoring/live', extra); } catch (e) { if (/HTTP (40[013]|500)|internal server error|load failed|failed to fetch|networkerror|invalid|expired|token/i.test(e.message)) throw new Error(CBS_EXPIRED); throw e; } };
+  // 400/401/403 = CBS rejected the token. 500 = CBS failed: either its own trouble or a stale token, so say both.
+  const live = async extra => { try { return await cbsCall('league/scoring/live', extra); } catch (e) {
+    if (/HTTP 5\d\d|internal server error/i.test(e.message)) throw new Error(CBS_DOWN);
+    if (/HTTP 40[013]|load failed|failed to fetch|networkerror|invalid|expired|token/i.test(e.message)) throw new Error(CBS_EXPIRED); throw e; } };
   const [b0, pm] = await Promise.all([live('&period=' + wk), projRows(nfl.year, wk).then(cbsProjMap).catch(() => ({ k: {}, n: {} }))]);
   let b = b0; if (!((b.live_scoring || b).teams || []).length) b = await live('');   // fall back to whatever week CBS considers live
   const ls = b.live_scoring || b; const teams = ls.teams || []; if (!teams.length) throw new Error('CBS returned no teams for week ' + wk);
