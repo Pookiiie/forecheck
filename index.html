@@ -1157,7 +1157,8 @@ function fxCards() {
       const o = oddsOf(m); const lead = m.opp && m.me.pts >= m.opp.pts; const iss = lineupIssues(m); const wc = iss.length ? (iss.some(i => i.lvl === 2) ? ' warn' : ' warnq') : '';
       const side = (t, me) => `<div class="fxt${me ? ' me' : ''}"><b>${fmtP(t.pts)}</b><small>proj ${fmtP(t.est)}</small></div>`;
       cards.push(`<button class="fxc${wc}" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span>${o != null ? `<span class="pc">Win ${o}%</span>` : ''}</div><div class="fxv">${side(m.me, true)}${m.opp ? `<span class="vs">vs</span>${side(m.opp, false)}` : ''}</div>${o != null ? `<div class="bar"><u style="width:${o}%"></u></div>` : ''}<div class="fxm">${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} players left</div>${lineupCard(iss)}</button>`);
-    } else if (d[k + 'Err']) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">${esc(d[k + 'Err'])}</div><div class="fxm">Tap to fix in Settings</div></button>`);
+    } else if (k === 'cv' && d.cvErr === CBS_EXPIRED) cards.push(`<button class="fxc" data-cbspaste><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">Token expired</div><div class="fxm" style="white-space:normal">Run your CBS shortcut in Safari, then tap here to paste the new one</div></button>`);
+    else if (d[k + 'Err']) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">${esc(d[k + 'Err'])}</div><div class="fxm">Tap to fix in Settings</div></button>`);
     else if (m) cards.push(`<button class="fxc" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span></div><div class="fxm">Pick your team in Settings</div></button>`);
   });
   if (!CFG.cbsToken && CFG.cbsTeam) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>BELL</span></div><div class="fxm" style="white-space:normal">Add your CBS token in Settings to see this matchup</div></button>`);
@@ -1961,10 +1962,19 @@ async function cbsDiagnostics() {
   try { out.schedules = shapeOf(await cbsCall('league/schedules')); } catch (e) { out.schedErr = e.message; }
   return JSON.stringify(out);
 }
+const CBS_EXPIRED = 'Your CBS token has expired.';
+/* one-tap token refresh from the BELL card: read the token the Shortcut copied, save it, reload */
+async function pasteCbsToken() {
+  let t = '';
+  try { t = (await navigator.clipboard.readText()).trim(); } catch (e) { toast('Couldn\u2019t read the clipboard \u2014 paste it in Settings'); openSettings(); return; }
+  if (!/^[A-Za-z0-9_\-.+\/=%]{20,}$/.test(t)) { toast(/^No token found/.test(t) ? t : 'Clipboard doesn\u2019t hold a CBS token yet \u2014 run your shortcut first'); return; }
+  if (t === CFG.cbsToken) { toast('That\u2019s the same token \u2014 run your shortcut again for a new one'); return; }
+  CFG.cbsToken = t; saveCfg(); for (const k in memo) delete memo[k]; toast('New CBS token saved'); refresh(true);
+}
 async function cbsData(nfl) {
   const wk = nfl.week;
-  const tokenMsg = 'CBS refused the request. Your CBS token has probably expired: get a fresh one (Settings → CBS).';
-  const live = async extra => { try { return await cbsCall('league/scoring/live', extra); } catch (e) { if (/HTTP 40[13]|load failed|failed to fetch|networkerror|invalid|expired|token/i.test(e.message)) throw new Error(tokenMsg); throw e; } };
+  // CBS answers an expired token with 500 (an unknown one gets 400/401), so all of these mean "get a new token"
+  const live = async extra => { try { return await cbsCall('league/scoring/live', extra); } catch (e) { if (/HTTP (40[013]|500)|internal server error|load failed|failed to fetch|networkerror|invalid|expired|token/i.test(e.message)) throw new Error(CBS_EXPIRED); throw e; } };
   const [b0, pm] = await Promise.all([live('&period=' + wk), projRows(nfl.year, wk).then(cbsProjMap).catch(() => ({ k: {}, n: {} }))]);
   let b = b0; if (!((b.live_scoring || b).teams || []).length) b = await live('');   // fall back to whatever week CBS considers live
   const ls = b.live_scoring || b; const teams = ls.teams || []; if (!teams.length) throw new Error('CBS returned no teams for week ' + wk);
@@ -2021,8 +2031,8 @@ async function warmMine() { try { const nfl = await nflNow(); FX.week = nfl.week
    SETTINGS
    ===================================================================== */
 // same search, written for the iPhone Shortcuts action "Run JavaScript on Web Page" (it must end with completion())
-const SHORTCUT_JS = "(function(){var h=document.documentElement.outerHTML,m=h.match(/token[\"']?\\s*[:=]\\s*[\"']([A-Za-z0-9_\\-.]{20,})[\"']/)||document.cookie.match(/token=([A-Za-z0-9_\\-.%]{20,})/i);completion(m?decodeURIComponent(m[1]):'No token found on '+location.hostname+(/Mobile/.test(navigator.userAgent)?' (phone version of the page: use Request Desktop Website)':''));})();";
-const CONSOLE_LINE = "m=document.documentElement.outerHTML.match(/token[\"']?\\s*[:=]\\s*[\"']([A-Za-z0-9_\\-.]{20,})[\"']/); m ? (copy(m[1]), 'Copied: ' + m[1].length + ' characters') : 'No token found'";
+const SHORTCUT_JS = "(function(){var h=document.documentElement.outerHTML,m=h.match(/var token\\s*=\\s*[\"']([^\"'\\s]{20,})[\"']/)||h.match(/token[\"']?\\s*[:=]\\s*[\"']([A-Za-z0-9_\\-.+\\/=]{20,})[\"']/)||document.cookie.match(/token=([A-Za-z0-9_\\-.%+\\/=]{20,})/i);completion(m?decodeURIComponent(m[1]):'No token found on '+location.hostname+(/Mobile/.test(navigator.userAgent)?' (phone version of the page: use Request Desktop Website)':''));})();";
+const CONSOLE_LINE = "m=document.documentElement.outerHTML.match(/var token\\s*=\\s*[\"']([^\"'\\s]{20,})[\"']/)||document.documentElement.outerHTML.match(/token[\"']?\\s*[:=]\\s*[\"']([A-Za-z0-9_\\-.+\\/=]{20,})[\"']/); m ? (copy(m[1]), 'Copied: ' + m[1].length + ' characters') : 'No token found'";
 function decodeSetup(raw) { const j = JSON.parse(decodeURIComponent(escape(atob(String(raw || '').replace(/\s+/g, '').replace(/^FC1/, ''))))); if (!j || typeof j !== 'object') throw new Error('bad'); return j; }
 function fillSleeperTeams(users, rosters) {
   const sel = $('#sfSlTeam'); if (!sel) return;
@@ -2095,7 +2105,7 @@ function openSettings(banner) {
   $('#sfJs').onclick = selJs;
   $('#sfCopyJs').onclick = () => { const ok = () => toast('Script copied'); const legacy = () => { selJs(); let done = false; try { done = document.execCommand('copy'); } catch (e) {} done ? ok() : toast('Tap the box below, then Copy'); };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(SHORTCUT_JS).then(ok, legacy); else legacy(); };
-  $('#sfCbsPaste').onclick = async () => { try { const t = (await navigator.clipboard.readText()).trim(); if (/^[A-Za-z0-9_\-.]{20,}$/.test(t)) { $('#sfCbs').value = t; toast('Token pasted \u2014 tap Load teams, then Save'); } else toast(/^No token found/.test(t) ? t : 'Clipboard doesn\u2019t look like a token'); } catch (e) { toast('Couldn\u2019t read the clipboard \u2014 long-press the Token box and Paste'); } };
+  $('#sfCbsPaste').onclick = async () => { try { const t = (await navigator.clipboard.readText()).trim(); if (/^[A-Za-z0-9_\-.+\/=%]{20,}$/.test(t)) { $('#sfCbs').value = t; toast('Token pasted \u2014 tap Load teams, then Save'); } else toast(/^No token found/.test(t) ? t : 'Clipboard doesn\u2019t look like a token'); } catch (e) { toast('Couldn\u2019t read the clipboard \u2014 long-press the Token box and Paste'); } };
   $('#sfCbsDiag').onclick = async () => { if (!CFG.cbsToken) { toast('Add your CBS token first'); return; } const txt = await cbsDiagnostics(); try { await navigator.clipboard.writeText(txt); toast('Copied (field names only, no scores or token)'); } catch (e) { $('#sfMsg').textContent = txt; } };
   let watchSel = myWatch().slice();
   const drawWatch = () => { $('#sfWatch').innerHTML = Object.entries(PROV).map(([k, P]) => { const i = watchSel.indexOf(k); return `<button class="row svc${i >= 0 ? ' on' : ''}" data-svc="${k}" aria-pressed="${i >= 0}"><span class="n">${i >= 0 ? i + 1 : ''}</span><span class="k">${esc(P.app)}<small>${esc([P.tv && P.tv !== P.app ? P.tv + ' on TV' : '', P.lang].filter(Boolean).join(' · '))}</small></span></button>`; }).join(''); };
@@ -2142,6 +2152,7 @@ document.addEventListener('click', e => {
   const p = e.target.closest('[data-ptab]'); if (p && S.detail) { S.detail.tab = p.dataset.ptab; renderDetail(); return; }
   const f = e.target.closest('[data-fx]'); if (f) { const [k, v] = f.dataset.fx.split(':'); S.fx[k] = v; const m = FX.data[k]; if (m && S.sheetMode === 'fx') { const keep = $('#shScroll').scrollTop; $('#shBody').innerHTML = renderFx(m); $('#shScroll').scrollTop = keep; } return; }
   if (e.target.closest('[data-settings]')) { openSettings(); return; }
+  if (e.target.closest('[data-cbspaste]')) { pasteCbsToken(); return; }
 });
 $('#prevBtn').onclick = () => shiftWeek(-1);
 $('#nextBtn').onclick = () => shiftWeek(1);
