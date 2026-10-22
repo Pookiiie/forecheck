@@ -2020,6 +2020,8 @@ async function warmMine() { try { const nfl = await nflNow(); FX.week = nfl.week
 /* =====================================================================
    SETTINGS
    ===================================================================== */
+// same search, written for the iPhone Shortcuts action "Run JavaScript on Web Page" (it must end with completion())
+const SHORTCUT_JS = "var m=document.documentElement.outerHTML.match(/token[\"']?\\s*[:=]\\s*[\"']([A-Za-z0-9_\\-.]{20,})[\"']/);completion(m?m[1]:'No token found');";
 const CONSOLE_LINE = "m=document.documentElement.outerHTML.match(/token[\"']?\\s*[:=]\\s*[\"']([A-Za-z0-9_\\-.]{20,})[\"']/); m ? (copy(m[1]), 'Copied: ' + m[1].length + ' characters') : 'No token found'";
 function decodeSetup(raw) { const j = JSON.parse(decodeURIComponent(escape(atob(String(raw || '').replace(/\s+/g, '').replace(/^FC1/, ''))))); if (!j || typeof j !== 'object') throw new Error('bad'); return j; }
 function fillSleeperTeams(users, rosters) {
@@ -2065,11 +2067,14 @@ function openSettings(banner) {
     <button class="row btn" id="sfSlLoad">Load teams</button></div></section>
   <section class="sec flush"><h2><span>CBS</span></h2><div>
     <label class="row"><span class="k">Token</span><input id="sfCbs" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(CFG.cbsToken)}" placeholder="Paste token"></label>
+    <button class="row btn" id="sfCbsPaste">Paste token from clipboard</button>
     <label class="row"><span class="k">Your team</span><select id="sfCbsTeam"><option value="${esc(CFG.cbsTeam)}">${CFG.cbsTeam ? 'Team ' + esc(CFG.cbsTeam) : 'Load teams first'}</option></select></label>
     <button class="row btn" id="sfCbsLoad">Load teams</button>
     <button class="row btn" id="sfCbsDiag">Copy CBS diagnostics</button></div></section>
   <p class="foot">CBS has no public login for apps like this, so Forecheck uses the token CBS gives your own league page. On a computer, open your league\u2019s rules page in Chrome or Edge while signed in, press F12, open Console, paste the line below and press Enter. It copies the token; send it to your phone and paste it above. Tokens can expire; if CBS stops loading, repeat this.</p>
   <code class="code">${esc(CONSOLE_LINE)}</code>
+  <p class="foot"><b>On iPhone</b> (one-time setup): in the Shortcuts app, create a shortcut, open its \u24D8 details and turn on <i>Show in Share Sheet</i>. Add the action <i>Run JavaScript on Web Page</i>, replace its text with the script copied by the button below, then add <i>Copy to Clipboard</i>. In iPhone Settings \u203A Apps \u203A Shortcuts \u203A Advanced, turn on <i>Allow Running Scripts</i>.<br>Each time: in Safari, open your league\u2019s rules page signed in, tap the <i>aA</i> button \u203A <i>Request Desktop Website</i>, then Share \u203A your shortcut. Come back here and tap <i>Paste token from clipboard</i>.</p>
+  <section class="sec flush"><button class="row btn" id="sfCopyJs">Copy iPhone Shortcut script</button></section>
   <section class="sec flush"><button class="row btn red" id="sfReset">Clear saved data</button></section>
   <p class="foot" id="sfMsg">Settings are stored only on this device.</p>`;
   renderStatus(banner);
@@ -2084,6 +2089,8 @@ function openSettings(banner) {
   };
   $('#sfSlLoad').onclick = async () => { const L = $('#sfSl').value.trim(); if (!L) return; try { const [users, rosters] = await Promise.all([SL('league/' + L + '/users'), SL('league/' + L + '/rosters')]); fillSleeperTeams(users, rosters); toast('Teams loaded'); } catch (e) { $('#sfMsg').textContent = 'Sleeper: ' + e.message; } };
   $('#sfCbsLoad').onclick = async () => { const tok = $('#sfCbs').value.trim(); if (!tok) return; const old = CFG.cbsToken; CFG.cbsToken = tok; try { const b = await cbsCall('league/teams'); $('#sfCbsTeam').innerHTML = (b.teams || []).map(t => `<option value="${esc(t.id)}" ${String(t.id) === String(CFG.cbsTeam) ? 'selected' : ''}>${esc(t.name)}</option>`).join(''); toast('Teams loaded'); } catch (e) { $('#sfMsg').textContent = 'CBS: ' + e.message; } finally { CFG.cbsToken = old; } };
+  $('#sfCopyJs').onclick = async () => { try { await navigator.clipboard.writeText(SHORTCUT_JS); toast('Script copied'); } catch (e) { $('#sfMsg').textContent = SHORTCUT_JS; } };
+  $('#sfCbsPaste').onclick = async () => { try { const t = (await navigator.clipboard.readText()).trim(); if (/^[A-Za-z0-9_\-.]{20,}$/.test(t)) { $('#sfCbs').value = t; toast('Token pasted \u2014 tap Load teams, then Save'); } else toast(t === 'No token found' ? 'No token on that page \u2014 try Request Desktop Website' : 'Clipboard doesn\u2019t look like a token'); } catch (e) { toast('Couldn\u2019t read the clipboard \u2014 long-press the Token box and Paste'); } };
   $('#sfCbsDiag').onclick = async () => { if (!CFG.cbsToken) { toast('Add your CBS token first'); return; } const txt = await cbsDiagnostics(); try { await navigator.clipboard.writeText(txt); toast('Copied (field names only, no scores or token)'); } catch (e) { $('#sfMsg').textContent = txt; } };
   let watchSel = myWatch().slice();
   const drawWatch = () => { $('#sfWatch').innerHTML = Object.entries(PROV).map(([k, P]) => { const i = watchSel.indexOf(k); return `<button class="row svc${i >= 0 ? ' on' : ''}" data-svc="${k}" aria-pressed="${i >= 0}"><span class="n">${i >= 0 ? i + 1 : ''}</span><span class="k">${esc(P.app)}<small>${esc([P.tv && P.tv !== P.app ? P.tv + ' on TV' : '', P.lang].filter(Boolean).join(' · '))}</small></span></button>`; }).join(''); };
