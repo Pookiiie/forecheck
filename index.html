@@ -1931,14 +1931,15 @@ function bellDefProj(st) {
 }
 const CBS_SC = { pass_yd: .04, pass_td: 6, pass_int: -2, rush_yd: .1, rush_td: 6, rec_yd: .1, rec_td: 6, fum_lost: -2, pass_2pt: 2, rush_2pt: 2, rec_2pt: 2 };
 function cbsProjMap(rows) {
-  const k = {}, n = {};
+  const k = {}, n = {}, ik = {}, iname = {};   // projections by name|team and name; injury status the same way (CBS live scoring has none)
   (rows || []).forEach(r => {
     const p = r.player || {}, s = r.stats || {}, pos = p.position; const team = nflAbbr(p.team || r.team || '');
     let v; if (pos === 'K') v = +(s.pts_std || 0); else if (pos === 'DEF') v = bellDefProj(s); else { v = 0; for (const [key, w] of Object.entries(CBS_SC)) v += (s[key] || 0) * w; }
     if (pos === 'DEF') { k['DEF|' + team] = v; return; }
     const nm = normName((p.first_name || '') + ' ' + (p.last_name || '')); k[nm + '|' + team] = v; if (!(nm in n)) n[nm] = v;
+    if (p.injury_status) { ik[nm + '|' + team] = p.injury_status; if (!(nm in iname)) iname[nm] = p.injury_status; }
   });
-  return { k, n };
+  return { k, n, ik, iname };
 }
 async function cbsCall(path, extra = '') {
   const j = await getJSON(`https://api.cbssports.com/fantasy/${path}?version=3.0&response_format=JSON&access_token=${encodeURIComponent(CFG.cbsToken)}${extra}`);
@@ -1978,7 +1979,7 @@ async function cbsData(nfl) {
   const live = async extra => { try { return await cbsCall('league/scoring/live', extra); } catch (e) {
     if (/HTTP 5\d\d|internal server error/i.test(e.message)) throw new Error(CBS_DOWN);
     if (/HTTP 40[013]|load failed|failed to fetch|networkerror|invalid|expired|token/i.test(e.message)) throw new Error(CBS_EXPIRED); throw e; } };
-  const [b0, pm] = await Promise.all([live('&period=' + wk), projRows(nfl.year, wk).then(cbsProjMap).catch(() => ({ k: {}, n: {} }))]);
+  const [b0, pm] = await Promise.all([live('&period=' + wk), projRows(nfl.year, wk).then(cbsProjMap).catch(() => ({ k: {}, n: {}, ik: {}, iname: {} }))]);
   let b = b0; if (!((b.live_scoring || b).teams || []).length) b = await live('');   // fall back to whatever week CBS considers live
   const ls = b.live_scoring || b; const teams = ls.teams || []; if (!teams.length) throw new Error('CBS returned no teams for week ' + wk);
   const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
@@ -1990,7 +1991,7 @@ async function cbsData(nfl) {
       let pj = num(p.proj_fpts ?? p.proj_pts ?? p.projected_points ?? p.fpts_proj);
       if (pj == null) pj = isD ? (pm.k['DEF|' + nflAbbr(team)] ?? null) : (pm.k[normName(nm) + '|' + nflAbbr(team)] ?? pm.n[normName(nm)] ?? null);
       const g = nfl.map[nflAbbr(team)]; const rem = nfl.byes.includes(nflAbbr(team)) ? 0 : remainFrac(g);
-      return { name: p.fullname || p.full_name || p.name || '?', pos: p.position || '', team, slot: st ? (p.position || '') : 'BN', st, pts, proj: pj, est: pj != null ? pts + pj * rem : pts, left: rem > 0 && g && g.state !== 'post', inj: p.injury || p.injury_status || '' };
+      return { name: p.fullname || p.full_name || p.name || '?', pos: p.position || '', team, slot: st ? (p.position || '') : 'BN', st, pts, proj: pj, est: pj != null ? pts + pj * rem : pts, left: rem > 0 && g && g.state !== 'post', inj: (typeof (p.injury_status ?? p.injury) === 'string' && (p.injury_status ?? p.injury)) || (isD ? '' : (pm.ik[normName(nm) + '|' + nflAbbr(team)] ?? pm.iname[normName(nm)] ?? '')) };
     }); rows.sort((a, b) => b.st - a.st);
     const sp = rows.filter(r => r.st);
     return { rid: String(t.id), name: t.name || t.long_name || 'Team ' + t.id, pts: num(t.pts ?? t.points ?? t.fpts) ?? sp.reduce((a, r) => a + r.pts, 0), est: sp.reduce((a, r) => a + r.est, 0), rows, left: sp.filter(r => r.left).length, opp: t.opponent || t.opponent_id || (t.matchup && t.matchup.opponent_id) };
