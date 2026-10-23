@@ -1577,7 +1577,7 @@ function plogHTML(r, j) {
     const sv = e => { const x = parseFloat(v(e, 'savePct')); return isNaN(x) ? null : x; }; const lo = .8, hi = 1;
     const Y = x => pt + (1 - (Math.max(lo, Math.min(hi, x)) - lo) / (hi - lo)) * (H - pt - pb);
     const ptsA = ch.map((e, i) => { const s = sv(e); return s == null ? null : [4 + i * cw + cw / 2, Y(s), s, e]; }).filter(Boolean);
-    svg += `<line x1="4" x2="${W - 4}" y1="${Y(.9)}" y2="${Y(.9)}" stroke="rgba(255,255,255,.18)" stroke-dasharray="3 4"/><text x="${W - 4}" y="${Y(.9) - 3}" text-anchor="end" fill="rgba(255,255,255,.4)" font-size="9.5" font-family="system-ui">.900</text>`;
+    svg += `<line x1="4" x2="${W - 4}" y1="${Y(.9)}" y2="${Y(.9)}" stroke="rgba(255,255,255,.18)" stroke-dasharray="3 4"/><text x="4" y="${Y(.9) + 11}" text-anchor="start" fill="rgba(255,255,255,.4)" font-size="9.5" font-family="system-ui">.900</text>`;
     svg += `<polyline points="${ptsA.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--tint)" stroke-width="2" stroke-linejoin="round"/>`;
     ptsA.forEach(([x, y, s, e]) => { svg += `<circle cx="${x}" cy="${y}" r="3.2" fill="${s >= .9 ? 'var(--green)' : 'var(--red)'}"/><text x="${x}" y="${y - 6}" text-anchor="middle" fill="var(--fg)" font-size="10.5" font-weight="700" font-family="Barlow Condensed,system-ui">${s.toFixed(3).replace(/^0/, '')}</text><text x="${x}" y="${H - 4}" text-anchor="middle" fill="rgba(255,255,255,.45)" font-size="9.5" font-family="system-ui">${esc((e.m.opponent && e.m.opponent.abbreviation) || '')}</text>`; });
   }
