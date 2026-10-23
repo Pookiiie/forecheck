@@ -57,6 +57,18 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 .ttl-t .rec{font:600 14px/1 var(--bc);letter-spacing:.04em;color:var(--fg2);white-space:nowrap;flex:none}
 .ttl small .in{color:var(--green)}.ttl small .out{color:var(--red)}
 .ttl[data-stand]{cursor:pointer;-webkit-tap-highlight-color:transparent}.ttl[data-stand]:active{opacity:.6}
+/* (1) mini score bar: slides in under the header once the live score card scrolls away */
+.nav{position:relative}
+.mini{position:absolute;left:0;right:0;top:100%;display:block;width:100%;padding:5px max(10px,env(safe-area-inset-right,0px)) 5px max(10px,env(safe-area-inset-left,0px));background:rgba(11,13,16,.88);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--sep);transform:translateY(-8px);opacity:0;pointer-events:none;transition:transform .18s ease,opacity .18s ease}
+.mini.on{transform:none;opacity:1;pointer-events:auto}
+.mb{display:flex;max-width:740px;margin:0 auto;height:28px;border-radius:6px;overflow:hidden}
+.ms{flex:1;min-width:0;display:flex;align-items:center;gap:6px;padding:0 9px 0 6px;background:var(--c)}
+.ms img{width:22px;height:22px;object-fit:contain;flex:none}
+.ms b{font:800 15px/1 var(--bc);letter-spacing:.04em;color:#fff}
+.ms em{margin-left:auto;font:800 18px/1 var(--bc);font-style:normal;color:#fff;font-variant-numeric:tabular-nums}
+.mc{flex:none;min-width:78px;display:flex;align-items:center;justify-content:center;gap:5px;background:#000;font:700 13px/1 var(--bc);letter-spacing:.06em;color:#fff;padding:0 8px;white-space:nowrap}
+.mb.nhl .mc{color:#ffb020}
+.mc span{font-variant-numeric:tabular-nums}
 .chev{width:38px;height:34px;display:grid;place-items:center;color:var(--tint);flex:none}
 .chev svg{width:8px;height:14px}
 .wk{display:flex;align-items:center;height:34px;border-radius:17px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);margin-right:8px;flex:none}
@@ -337,6 +349,40 @@ button.hero:active{opacity:.85}
 .lc b{font:700 12px var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
 .lc.q{background:color-mix(in srgb,var(--amber) 14%,transparent)}.lc.q b{color:var(--amber)}
 .lc span em{font-style:normal;color:var(--fg2)}
+/* (5) all my players */
+.lbl .lnk{margin-left:auto;font:600 12px var(--ui);letter-spacing:0;text-transform:none;color:var(--tint);padding:2px 0 2px 8px}
+.swsum{display:flex;gap:6px;flex-wrap:wrap}
+.swsum span{flex:1;min-width:140px;display:flex;align-items:baseline;gap:6px;padding:6px 9px;border-radius:6px;background:var(--well);font:700 15px var(--bc);font-variant-numeric:tabular-nums}
+.swsum i{font-style:normal;font:700 11px var(--bc);letter-spacing:.1em;color:var(--mine)}
+.swsum small{margin-left:auto;font:600 12px var(--ui);color:var(--fg2)}
+.swsum .up{color:var(--green)} .swsum .dn{color:var(--red)}
+.swr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 12px}
+.swr+.swr{border-top:1px solid var(--sep)}
+.swl{display:flex;gap:5px}
+.swl span{display:grid;justify-items:end;min-width:46px;padding:3px 6px;border-radius:5px;background:var(--well)}
+.swl i{font-style:normal;font:700 9.5px var(--bc);letter-spacing:.1em;color:var(--mine)}
+.swl b{font:800 17px/1.05 var(--bc);font-variant-numeric:tabular-nums}
+.swl small{font:400 10.5px var(--ui);color:var(--fg2)}
+/* (7) points pace */
+.pace{display:grid;gap:6px}
+.pace .big{display:flex;align-items:baseline;gap:6px;font:500 13px var(--ui);color:var(--fg2);flex-wrap:wrap}
+.pace .big b{font:800 28px/1 var(--bc);color:var(--fg);font-variant-numeric:tabular-nums}
+.pace .big .ln{margin-left:auto;text-align:right}
+.pace .big .ln b{font-size:20px;color:var(--amber)}
+.pace svg{width:100%;height:auto;display:block}
+.pace .k{display:flex;gap:12px;font:500 11px var(--ui);color:var(--fg2)}
+.pace .k i{display:inline-block;width:14px;height:0;border-top:2px solid;vertical-align:3px;margin-right:4px}
+/* (9) player game log */
+[data-plog]{cursor:pointer}
+.plh{display:flex;align-items:center;gap:12px}
+.plh img{width:64px;height:64px;border-radius:50%;object-fit:cover;background:var(--well);flex:none}
+.plh b{display:block;font:800 22px/1.05 var(--bc);letter-spacing:.02em}
+.plh small{display:block;font:500 12.5px var(--ui);color:var(--fg2)}
+.plh .sl{margin-top:3px;font:700 14px var(--bc);color:var(--fg);letter-spacing:.02em}
+.spk{width:100%;height:auto;display:block}
+.plk{display:flex;gap:12px;font:500 11px var(--ui);color:var(--fg2)}
+.plk i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-0.5px}
+.stb td.W{color:var(--green)} .stb td.L{color:var(--red)} .stb td.O{color:var(--amber)}
 /* win chance graph */
 .wpg{position:relative;touch-action:pan-y}
 .wpg svg{display:block}
@@ -601,6 +647,7 @@ textarea{display:block;width:100%;min-height:76px;border:0;background:none;color
         <button class="ib" id="settingsBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
       </div>
     </div>
+    <button class="mini" id="mini" hidden aria-label="Back to the score"></button>
   </header>
   <div class="ptr" id="ptrMain" aria-hidden="true"></div>
   <main class="scroll" id="scroller"><div class="wrap" id="view" aria-live="polite"></div></main>
@@ -943,6 +990,23 @@ function pingTiles(games) {
   saveSeen();
 }
 
+/* ---------- (1) mini score bar ----------
+   While the favourite team is live, a slim copy of the score bug slides in under the header as soon as the
+   big one scrolls out of view. Tapping it scrolls back up. */
+let miniObs = null;
+function miniBar(g) {
+  const el = $('#mini'); if (miniObs) { miniObs.disconnect(); miniObs = null; }
+  const big = $('#view .hero .bug');
+  if (!g || g.state !== 'in' || !big) { el.classList.remove('on'); el.hidden = true; el.innerHTML = ''; return; }
+  const seg = t => `<span class="ms" style="--c:${slabColor(t)}">${logo(t, true)}<b>${esc(t.abbr)}</b><em>${esc(t.score)}</em></span>`;
+  const d = g.detail || '';
+  const clk = /half|end|intermission|delay/i.test(d) ? esc(d.replace(/^End of /i, 'End ')) : `${esc(g.sp === 'nfl' ? qLab(g.period) : pLab(g.period))} <span>${esc(g.clock || '')}</span>`;
+  el.innerHTML = `<span class="mb ${g.sp}">${seg(g.away)}${seg(g.home)}<span class="mc">${clk}</span></span>`;
+  el.hidden = false;
+  miniObs = new IntersectionObserver(([e]) => el.classList.toggle('on', !e.isIntersecting && e.boundingClientRect.top < (e.rootBounds ? e.rootBounds.top : 0)), { root: $('#scroller'), threshold: 0 });
+  miniObs.observe(big);
+}
+
 /* ---------- Habs post-game recap: three stars and the goalie ---------- */
 async function habsRecap(g, ab) {
   try {
@@ -1025,6 +1089,7 @@ function setHeader(title, sub, arrows, opt = {}) {
   if (arrows) { $('#wkLbl').textContent = opt.week || ''; $('#wk').classList.toggle('off', !!opt.off); if (opt.off) $('#wkLbl').dataset.now = ''; else delete $('#wkLbl').dataset.now; }
 }
 function setTab(tab) {
+  miniBar(null);
   S.tab = tab; LS.set('tab', tab); setSport(tab);
   document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
   setHeader(tab === 'nfl' ? 'Football' : nhlName(), '', tab === 'nfl');
@@ -1076,7 +1141,24 @@ function lineupIssues(m) {
     if (/^(questionable|q)$/i.test(inj)) out.push({ name: r.name, why: 'Questionable', lvl: 1 });
     else if (inj && INJ_OUT.test(inj)) out.push({ name: r.name, why: injWord(inj), lvl: 2 });
   });
-  return out.sort((a, b) => b.lvl - a.lvl);
+  return out.concat(benchCheck(m.me.rows, nfl)).sort((a, b) => b.lvl - a.lvl);
+}
+/* (4) bench check: a healthy bench player projected clearly higher than a starter he could replace,
+   while both games are still to come. Each starter is matched once, weakest first. */
+const SLOT_OK = { FLEX: ['RB', 'WR', 'TE'], SF: ['QB', 'RB', 'WR', 'TE'], RF: ['WR', 'TE'], 'W/R': ['WR', 'RB'], 'W/T': ['WR', 'TE'], 'R/T': ['RB', 'TE'], 'W/R/T': ['RB', 'WR', 'TE'] };
+function benchCheck(rows, nfl) {
+  const pos = r => isDef(r.pos) ? 'DEF' : String(r.pos || '').toUpperCase();
+  const fits = (slot, p) => { const s = isDef(slot) ? 'DEF' : String(slot || '').toUpperCase(); return s === p || (SLOT_OK[s] || []).includes(p); };
+  const ready = r => { const ab = nflAbbr(r.team || ''); if (!ab || nfl.byes.includes(ab)) return false; const g = nfl.map[ab]; if (g && g.state !== 'pre') return false; return r.proj != null && !INJ_OUT.test(String(r.inj || '').trim()); };
+  const starters = rows.filter(r => r.st && r.id !== '0' && r.name && ready(r)).sort((a, b) => a.proj - b.proj);
+  const bench = rows.filter(r => !r.st && ready(r) && !/^IR|RES/i.test(r.slot || '')).sort((a, b) => b.proj - a.proj);
+  const used = new Set(), out = [];
+  bench.forEach(b => {
+    const s = starters.find(x => !used.has(x) && fits(x.slot || x.pos, pos(b)) && b.proj - x.proj >= Math.max(3, x.proj * .25));
+    if (!s) return; used.add(s);
+    out.push({ name: b.name, why: 'Bench', lvl: 1, note: `proj ${fmtP(b.proj)} vs ${lastName(s.name)} ${fmtP(s.proj)}` });
+  });
+  return out;
 }
 function lineupCard(issues) {
   if (!issues.length) return '';
@@ -1084,12 +1166,13 @@ function lineupCard(issues) {
   const order = [], by = {};
   issues.forEach(i => { const k = i.why === 'Questionable' ? 'Q' : i.why === 'Empty' ? 'Empty' : i.why; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(i.why === 'Empty' ? i.name.replace(/ slot$/, '') : lastName(i.name)); });
   const bad = issues.some(i => i.lvl === 2);
-  return `<div class="fxw${bad ? '' : ' q'}">⚠ ${order.map(k => `<b>${esc(k === 'Empty' ? 'Empty slot' : k)}:</b>&nbsp;${esc(by[k].join(', '))}`).join(' · ')}</div>`;
+  const lab = k => k === 'Empty' ? 'Empty slot' : k === 'Bench' ? 'Start' : k;
+  return `<div class="fxw${bad ? '' : ' q'}">⚠ ${order.map(k => `<b>${esc(lab(k))}:</b>&nbsp;${esc(by[k].join(', '))}`).join(' · ')}</div>`;
 }
 function lineupSheet(issues) {
   if (!issues.length) return '';
   const bad = issues.filter(i => i.lvl === 2);
-  return `<div class="lc${bad.length ? '' : ' q'}"><b>${bad.length ? 'Fix your lineup' : 'Keep an eye on'}</b>${issues.map(i => `<span>${esc(i.name)} <em>· ${esc(i.why)}</em></span>`).join('')}</div>`;
+  return `<div class="lc${bad.length ? '' : ' q'}"><b>${bad.length ? 'Fix your lineup' : 'Keep an eye on'}</b>${issues.map(i => `<span>${esc(i.name)} <em>· ${esc(i.why === 'Bench' ? 'on your bench, ' + i.note : i.why)}</em></span>`).join('')}</div>`;
 }
 
 /* ---------- win chance over the week ----------
@@ -1165,7 +1248,7 @@ function fxCards() {
   if (!CFG.cbsToken && CFG.cbsTeam) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>BELL</span></div><div class="fxm" style="white-space:normal">Add your CBS token in Settings to see this matchup</div></button>`);
   if (!CFG.sleeperLeague && !CFG.cbsToken && !CFG.cbsTeam) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>Fantasy</span></div><div class="fxm" style="white-space:normal">Paste your setup code in Settings to see your matchups here</div></button>`);
   if (cards.length === 1) cards[0] = cards[0].replace('class="fxc', 'class="fxc solo');
-  return cards.length ? `<div class="lbl">Your matchups</div><div class="g2">${cards.join('')}</div>` : '';
+  return cards.length ? `<div class="lbl">Your matchups${[d.sv, d.cv].some(m => m && m.me) ? '<button class="lnk" data-sweat>All my players \u203a</button>' : ''}</div><div class="g2">${cards.join('')}</div>` : '';
 }
 async function loadNFL() {
   const q = S.nfl.q; const j = q ? await espn('nfl', `scoreboard?week=${q.week}&seasontype=${q.st}&dates=${q.yr}`) : await nflScoreboardNow();
@@ -1199,6 +1282,7 @@ async function loadNFL() {
   if (byes.length) h += `<p class="foot">On bye: ${byes.map(esc).join(', ')}</p>`;
   if (!games.length) h += '<div class="empty">No games this week.</div>';
   $('#view').innerHTML = h;
+  miniBar(hero.g);
   if (hero.g) applyFlash($('#view .hero'), scoreFlash(hero.g));
   pingTiles(games.filter(notHero));
   return live || Object.values(nfl.map).some(g => g.state === 'in');
@@ -1310,10 +1394,38 @@ function standCard(M, button = true) {
   return button ? `<button class="stc" data-stand="${M.sp}">${inner}${GO}</button>` : `<div class="stc">${inner}</div>`;
 }
 const tLogo = t => logo(t);
+/* (7) points pace: where the season is heading at the current rate, against the pace of the last playoff spot */
+function paceSec(M) {
+  const me = M.me; if (!me || !me.gp) return '';
+  const N = 82, pace = Math.round(me.pts / me.gp * N);
+  const line = M.wc && M.wc[1]; const lp = line && line.gp ? Math.round(line.pts / line.gp * N) : null;
+  // game-by-game points from the schedule (W 2, OT/SO loss 1, L 0), trimmed to the games the standings count
+  const ab = me.t.abbr; let cum = [0];
+  const done = (M.games || []).filter(g => g.state === 'post').slice(-me.gp);
+  done.forEach(g => { const mine = g.home.abbr === ab ? g.home : g.away; cum.push(cum[cum.length - 1] + (mine.winner ? 2 : /(OT|SO)/.test(g.detail || '') ? 1 : 0)); });
+  if (cum.length - 1 !== me.gp || cum[cum.length - 1] !== me.pts) cum = Array.from({ length: me.gp + 1 }, (_, i) => Math.round(me.pts * i / me.gp)); // schedule doesn't line up: straight line
+  const W = 320, H = 132, pl = 4, pr = 30, pt = 8, pb = 16;
+  const yMax = Math.max(100, pace, lp || 0) + 8;
+  const X = i => pl + i / N * (W - pl - pr), Y = v => pt + (1 - v / yMax) * (H - pt - pb);
+  const pts = cum.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  const lastX = X(me.gp), lastY = Y(me.pts);
+  const lab = (v, col, dy) => `<text x="${W - pr + 4}" y="${(Y(v) + 4 + dy).toFixed(1)}" fill="${col}" font-size="12" font-weight="700" font-family="Barlow Condensed,system-ui">${v}</text>`;
+  let dy1 = 0, dy2 = 0; if (lp != null && Math.abs(Y(pace) - Y(lp)) < 13) { if (pace >= lp) { dy1 = -7; dy2 = 7; } else { dy1 = 7; dy2 = -7; } }
+  const grid = [0, 25, 50, 75].map(f => Math.round(f / 100 * N)).concat([N]).map(g => `<line x1="${X(g)}" x2="${X(g)}" y1="${pt}" y2="${H - pb}" stroke="rgba(255,255,255,.06)"/><text x="${X(g)}" y="${H - 3}" fill="rgba(255,255,255,.35)" font-size="9.5" text-anchor="${g === 0 ? 'start' : g === N ? 'end' : 'middle'}" font-family="system-ui">${g === 0 ? 'GP 0' : g}</text>`).join('');
+  const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Points so far and pace">${grid}
+    ${lp != null ? `<line x1="${X(0)}" y1="${Y(0)}" x2="${X(N)}" y2="${Y(lp)}" stroke="var(--amber)" stroke-width="1.5" stroke-dasharray="4 4" opacity=".9"/>${lab(lp, 'var(--amber)', dy2)}` : ''}
+    <line x1="${lastX}" y1="${lastY}" x2="${X(N)}" y2="${Y(pace)}" stroke="var(--tint)" stroke-width="1.5" stroke-dasharray="1.5 3.5" stroke-linecap="round" opacity=".8"/>
+    <polyline points="${pts}" fill="none" stroke="var(--tint)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${lastX}" cy="${lastY}" r="3.5" fill="var(--tint)"/>${lab(pace, 'var(--fg)', dy1)}</svg>`;
+  const left = N - me.gp, need = lp != null ? Math.max(0, lp - me.pts) : null;
+  const sub = need != null && left > 0 ? `${esc(line.t.abbr)} holds the last spot at that pace \u00b7 ${esc(nhlName())} would need ${need} pts in ${left} games (${(need / left).toFixed(2)}/game)` : '';
+  return sec('Points pace', `${me.gp} of ${N} games`, `<div class="pace"><div class="big"><span>On pace for <b>${pace}</b> pts</span>${lp != null ? `<span class="ln">Playoff line <b>~${lp}</b></span>` : ''}</div>${svg}<div class="k"><span><i style="color:var(--tint)"></i>${esc(ab)} so far, then pace</span>${lp != null ? `<span><i style="color:var(--amber);border-top-style:dashed"></i>last playoff spot</span>` : ''}</div>${sub ? `<p class="foot" style="margin:0">${sub}</p>` : ''}</div>`);
+}
 function standDetail(M) {
   if (!M) return '<div class="empty">Standings aren\u2019t available right now.</div>';
   let h = standCard(M, false);
   if (M.sp === 'nhl') {
+    h += paceSec(M);
     const trow = (t, i, cls) => `<tr class="${[cls, t === M.me ? 'me' : ''].join(' ')}"><td>${i}</td><td>${tLogo(t.t)}${esc(t.t.abbr)}</td><td>${t.gp}</td><td>${t.pts}</td><td class="sub">${t.gp ? (t.pts / (2 * t.gp)).toFixed(3).replace(/^0/, '') : '\u2013'}</td><td class="sub">${esc(t.l10)}</td><td class="sub">${esc(t.strk)}</td></tr>`;
     const head = '<tr><th></th><th></th><th>GP</th><th>PTS</th><th>P%</th><th>L10</th><th>STK</th></tr>';
     h += sec(esc(M.myDiv.name), 'top 3 make it', `<div class="scroll-x"><table class="stb">${head}${M.myDiv.teams.map((t, i) => trow(t, i + 1, i === 3 ? 'cut' : '')).join('')}</table></div>`);
@@ -1332,7 +1444,8 @@ function standDetail(M) {
   return h;
 }
 async function openStand(sp) { S.standSp = sp; setSport(sp); openSheet('stand', 'Standings', sp === 'nfl' ? 'Scores' : 'Habs'); await loadStandSheet(); }
-async function loadStandSheet() { const M = await standModel(S.standSp).catch(() => null); if (S.sheetMode !== 'stand') return false; const keep = $('#shScroll').scrollTop; $('#shBody').innerHTML = standDetail(M); $('#shScroll').scrollTop = keep; return false; }
+async function loadStandSheet() { const M = await standModel(S.standSp).catch(() => null);
+  if (M && M.sp === 'nhl') { try { M.games = (await teamSchedule('nhl', M.me.t.abbr)).games; } catch (e) {} } if (S.sheetMode !== 'stand') return false; const keep = $('#shScroll').scrollTop; $('#shBody').innerHTML = standDetail(M); $('#shScroll').scrollTop = keep; return false; }
 
 /* ---------- Canadiens month calendar ---------- */
 function habsCalendar(games, ab) {
@@ -1401,7 +1514,7 @@ function playerSec(ab) {
   const mmss = v => `${Math.floor(v / 60)}:${String(Math.round(v % 60)).padStart(2, '0')}`;
   const pmTxt = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
   const top = k => sk.slice().sort((x, y) => y[k] - x[k] || y.p - x.p)[0];
-  const tile = (lab, r, txt) => `<div><small>${lab}</small><b>${esc(txt)}</b><span>${esc(r.name)}</span>${r.head ? `<img src="${esc(r.head)}" alt="" loading="lazy">` : ''}</div>`;
+  const tile = (lab, r, txt) => `<div data-plog="${esc(r.id)}"><small>${lab}</small><b>${esc(txt)}</b><span>${esc(r.name)}</span>${r.head ? `<img src="${esc(r.head)}" alt="" loading="lazy">` : ''}</div>`;
   const tP = top('p'), tG = top('g'), tM = top('pm');
   let h = `<div class="ldt">${tile('Points', tP, String(tP.p))}${tile('Goals', tG, String(tG.g))}${tile('Plus/minus', tM, pmTxt(tM.pm))}</div>`;
   const sorts = [['p', 'Points'], ['g', 'Goals'], ['pm', '+/−'], ['toi', 'Ice time']]; const k = S.plSort || 'p';
@@ -1417,11 +1530,67 @@ function playerSec(ab) {
     return `<i class="t" style="width:${r.toi / max * 100}%"></i>`;
   };
   h += `<div class="prh"><span></span><span>${k === 'p' ? '<i class="g"></i>G <i class="a"></i>A' : ''}</span><span class="on">${head[k]}</span>${others.map(x => `<span>${head[x]}</span>`).join('')}</div>`;
-  h += shown.map(r => `<div class="pr"><span class="nm">${esc(r.name)}<i>${esc(r.pos)}</i></span><span class="br">${bar(r)}</span><b>${k === 'toi' ? mmss(r.toi) : k === 'pm' ? pmTxt(r.pm) : r[k]}</b>${others.map(x => `<span class="o">${cell(r, x)}</span>`).join('')}</div>`).join('');
+  h += shown.map(r => `<div class="pr" data-plog="${esc(r.id)}"><span class="nm">${esc(r.name)}<i>${esc(r.pos)}</i></span><span class="br">${bar(r)}</span><b>${k === 'toi' ? mmss(r.toi) : k === 'pm' ? pmTxt(r.pm) : r[k]}</b>${others.map(x => `<span class="o">${cell(r, x)}</span>`).join('')}</div>`).join('');
   if (list.length > 8) h += `<button class="plmore" data-plall>${S.plAll ? 'Show fewer' : `All ${list.length} skaters`}</button>`;
-  if (gl.length) h += `<div class="prh g"><span>Goalies</span><span>GP</span><span>W-L-OT</span><span class="on">SV%</span><span>GAA</span></div>` + gl.map(r => `<div class="pg"><span class="nm">${esc(r.name)}</span><span>${r.gp}</span><span>${r.w}-${r.l}-${r.otl}</span><b>${r.sv != null ? r.sv.toFixed(3).replace(/^0/, '') : '–'}</b><span>${r.gaa != null ? r.gaa.toFixed(2) : '–'}</span></div>`).join('');
+  if (gl.length) h += `<div class="prh g"><span>Goalies</span><span>GP</span><span>W-L-OT</span><span class="on">SV%</span><span>GAA</span></div>` + gl.map(r => `<div class="pg" data-plog="${esc(r.id)}"><span class="nm">${esc(r.name)}</span><span>${r.gp}</span><span>${r.w}-${r.l}-${r.otl}</span><b>${r.sv != null ? r.sv.toFixed(3).replace(/^0/, '') : '–'}</b><span>${r.gaa != null ? r.gaa.toFixed(2) : '–'}</span></div>`).join('');
   const gp = Math.max(...c.rows.map(r => r.gp));
-  return `<div class="lbl">Player stats<span class="r">${gp} game${gp === 1 ? '' : 's'}</span></div><section class="sec">${h}</section>`;
+  return `<div class="lbl">Player stats<span class="r">${gp} game${gp === 1 ? '' : 's'} \u00b7 tap a player</span></div><section class="sec">${h}</section>`;
+}
+/* (9) player game log: last 10 games from ESPN (CORS-friendly), with a small chart */
+async function openPlog(id) {
+  const ab = CFG.favNHL || 'MTL'; const c = LS.get('pl:' + ab, null); const r = c && c.rows.find(x => String(x.id) === String(id));
+  S.plog = { id, r }; setSport('nhl'); openSheet('plog', r ? r.name : 'Player', 'Habs'); await loadPlog();
+}
+async function loadPlog() {
+  const P = S.plog; if (!P) return false;
+  let j; try { j = await cached('plog:' + P.id, 10 * 60e3, () => getJSON(`https://site.web.api.espn.com/apis/common/v3/sports/hockey/nhl/athletes/${P.id}/gamelog`)); }
+  catch (e) { if (S.sheetMode === 'plog') $('#shBody').innerHTML = `<div class="err">Couldn\u2019t load the game log (${esc(e.message)}).</div>`; return false; }
+  if (S.sheetMode !== 'plog' || S.plog !== P) return false;
+  $('#shBody').innerHTML = plogHTML(P.r, j); return false;
+}
+function plogHTML(r, j) {
+  const names = j.names || []; const ix = n => names.indexOf(n);
+  const st = (j.seasonTypes || []).find(s => /regular/i.test(s.displayName || '')) || (j.seasonTypes || [])[0] || {};
+  const evs = (st.categories || []).flatMap(c => c.events || []).map(e => ({ id: e.eventId, s: e.stats || [], m: (j.events || {})[e.eventId] || {} }))
+    .filter(e => e.m.gameDate).sort((a, b) => new Date(b.m.gameDate) - new Date(a.m.gameDate));
+  const G = r ? r.pos === 'G' : ix('saves') >= 0;
+  const v = (e, n) => { const i = ix(n); return i >= 0 ? e.s[i] : null; };
+  const last = evs.slice(0, 10);
+  const day = e => new Date(e.m.gameDate).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: TZ }).replace('.', '');
+  const opp = e => `${e.m.atVs === '@' ? '@' : 'vs'} ${esc((e.m.opponent && e.m.opponent.abbreviation) || '')}`;
+  const res = e => { const g = e.m.gameResult || ''; const ot = /(OT|SO)/.test(e.m.score || ''); const k = g === 'W' ? 'W' : g === 'L' && ot ? 'O' : g === 'L' ? 'L' : ''; return [k, `${esc(g)} ${esc(e.m.score || '')}`]; };
+  // header
+  const sl = r ? (G ? `${r.gp} GP \u00b7 ${r.w}-${r.l}-${r.otl} \u00b7 ${r.sv != null ? r.sv.toFixed(3).replace(/^0/, '') : '–'} SV% \u00b7 ${r.gaa != null ? r.gaa.toFixed(2) : '–'} GAA` : `${r.gp} GP \u00b7 ${r.g} G \u00b7 ${r.a} A \u00b7 ${r.p} P \u00b7 ${r.pm > 0 ? '+' : ''}${r.pm}`) : '';
+  let out = `<section class="sec"><div class="plh">${r && r.head ? `<img src="${esc(r.head)}" alt="">` : ''}<div><b>${esc(r ? r.name : 'Player')}</b><small>${esc(r ? r.pos : '')} \u00b7 ${esc(st.displayName || 'This season')}</small><div class="sl">${sl}</div></div></div></section>`;
+  if (!last.length) return out + '<div class="empty">No games yet this season.</div>';
+  // chart: oldest on the left
+  const ch = last.slice().reverse(); const W = 320, H = 110, pb = 18, pt = 14, n = ch.length, cw = (W - 8) / Math.max(n, 5);
+  let svg = '';
+  if (!G) {
+    const mx = Math.max(3, ...ch.map(e => +v(e, 'points') || 0)); const u = (H - pt - pb) / mx;
+    ch.forEach((e, i) => { const x = 4 + i * cw + cw * .18, w = cw * .64; const g = +v(e, 'goals') || 0, a = +v(e, 'assists') || 0; let y = H - pb;
+      svg += g ? `<rect x="${x}" y="${y - g * u}" width="${w}" height="${g * u - 1}" rx="2" fill="#e2384d"/>` : ''; y -= g * u;
+      svg += a ? `<rect x="${x}" y="${y - a * u}" width="${w}" height="${a * u - (g ? 0 : 1)}" rx="2" fill="#7aa7d9"/>` : ''; y -= a * u;
+      svg += g + a ? `<text x="${x + w / 2}" y="${y - 3}" text-anchor="middle" fill="var(--fg)" font-size="11" font-weight="700" font-family="Barlow Condensed,system-ui">${g + a}</text>` : `<rect x="${x}" y="${H - pb - 2}" width="${w}" height="2" rx="1" fill="rgba(255,255,255,.18)"/>`;
+      svg += `<text x="${x + w / 2}" y="${H - 4}" text-anchor="middle" fill="rgba(255,255,255,.45)" font-size="9.5" font-family="system-ui">${esc((e.m.opponent && e.m.opponent.abbreviation) || '')}</text>`; });
+  } else {
+    const sv = e => { const x = parseFloat(v(e, 'savePct')); return isNaN(x) ? null : x; }; const lo = .8, hi = 1;
+    const Y = x => pt + (1 - (Math.max(lo, Math.min(hi, x)) - lo) / (hi - lo)) * (H - pt - pb);
+    const ptsA = ch.map((e, i) => { const s = sv(e); return s == null ? null : [4 + i * cw + cw / 2, Y(s), s, e]; }).filter(Boolean);
+    svg += `<line x1="4" x2="${W - 4}" y1="${Y(.9)}" y2="${Y(.9)}" stroke="rgba(255,255,255,.18)" stroke-dasharray="3 4"/><text x="${W - 4}" y="${Y(.9) - 3}" text-anchor="end" fill="rgba(255,255,255,.4)" font-size="9.5" font-family="system-ui">.900</text>`;
+    svg += `<polyline points="${ptsA.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--tint)" stroke-width="2" stroke-linejoin="round"/>`;
+    ptsA.forEach(([x, y, s, e]) => { svg += `<circle cx="${x}" cy="${y}" r="3.2" fill="${s >= .9 ? 'var(--green)' : 'var(--red)'}"/><text x="${x}" y="${y - 6}" text-anchor="middle" fill="var(--fg)" font-size="10.5" font-weight="700" font-family="Barlow Condensed,system-ui">${s.toFixed(3).replace(/^0/, '')}</text><text x="${x}" y="${H - 4}" text-anchor="middle" fill="rgba(255,255,255,.45)" font-size="9.5" font-family="system-ui">${esc((e.m.opponent && e.m.opponent.abbreviation) || '')}</text>`; });
+  }
+  const key = G ? '<span><i style="background:var(--green)"></i>.900 or better</span><span><i style="background:var(--red)"></i>under .900</span>' : '<span><i style="background:#e2384d"></i>Goals</span><span><i style="background:#7aa7d9"></i>Assists</span>';
+  out += sec(`Last ${last.length} game${last.length === 1 ? '' : 's'}`, G ? 'save %' : 'points', `<svg class="spk" viewBox="0 0 ${W} ${H}" role="img" aria-label="Last games chart">${svg}</svg><div class="plk">${key}</div>`);
+  // table, newest first
+  const head = G ? '<tr><th></th><th></th><th></th><th>SA</th><th>GA</th><th>SV%</th><th>TOI</th></tr>' : '<tr><th></th><th></th><th></th><th>G</th><th>A</th><th>P</th><th>+/\u2212</th><th>S</th><th>TOI</th></tr>';
+  const rowH = e => { const [k, t] = res(e); const pm = +v(e, 'plusMinus') || 0;
+    return `<tr><td style="width:auto;color:var(--fg2);font-size:12px">${esc(day(e))}</td><td>${opp(e)}</td><td class="${k}" style="font-size:12.5px">${t}</td>` + (G
+      ? `<td>${esc(v(e, 'shotsAgainst') ?? '–')}</td><td>${esc(v(e, 'goalsAgainst') ?? '–')}</td><td>${esc(v(e, 'savePct') ?? '–')}</td><td class="sub">${esc(v(e, 'timeOnIcePerGame') ?? '–')}</td>`
+      : `<td>${esc(v(e, 'goals') ?? '–')}</td><td>${esc(v(e, 'assists') ?? '–')}</td><td><b>${esc(v(e, 'points') ?? '–')}</b></td><td class="sub" style="color:${pm > 0 ? 'var(--green)' : pm < 0 ? 'var(--red)' : ''}">${pm > 0 ? '+' + pm : pm < 0 ? '\u2212' + Math.abs(pm) : '0'}</td><td class="sub">${esc(v(e, 'shotsTotal') ?? '–')}</td><td class="sub">${esc(v(e, 'timeOnIcePerGame') ?? '–')}</td>`) + '</tr>'; };
+  out += sec('Game by game', '', `<div class="scroll-x"><table class="stb">${head}${last.map(rowH).join('')}</table></div>`);
+  return out;
 }
 
 /* ---------- Canadiens ---------- */
@@ -1449,6 +1618,7 @@ async function loadNHL() {
   S.calGames = games; S.calAb = ab;
   $('#view').innerHTML = hero.html + habsCalendar(games, ab) + tiles('Coming up', upcoming.slice(0, 4)) + tiles('Results', results.slice(0, 4)) + (!upcoming.length && !results.length ? '<div class="empty">No games found.</div>' : '') + `<div id="plWrap">${playerSec(ab)}</div>`;
   loadPlayers(ab);
+  miniBar(hero.g);
   if (hero.g) applyFlash($('#view .hero'), scoreFlash(hero.g));
   return live;
 }
@@ -2029,6 +2199,39 @@ function renderFx(M) {
   }
   return `<section class="sec"><h2><span>${esc(M.title)}</span><span class="r">${esc(src)} · Week ${esc(week)}</span></h2>${top}</section>${body ? `<section class="sec flush">${body}</section>` : ''}`;
 }
+/* (5) all my players: every starter from both leagues on one screen, grouped by game state */
+async function openSweat() { setSport('nfl'); openSheet('sweat', 'My players', 'Scores'); await loadSweat(); }
+async function loadSweat() {
+  const nfl = await nflNow(); await loadFantasy(nfl);
+  if (S.sheetMode !== 'sweat') return false;
+  const keep = $('#shScroll').scrollTop; $('#shBody').innerHTML = sweatHTML(nfl); $('#shScroll').scrollTop = keep;
+  const live = Object.values(nfl.map).some(g => g.state === 'in'); const dot = $('#shdot'); if (dot) dot.classList.toggle('on', live);
+  return live;
+}
+function sweatHTML(nfl) {
+  const L = [['sv', 'PFL'], ['cv', 'BELL']].map(([k, def]) => ({ k, tag: (FX.data[k] && FX.data[k].short) || def, m: FX.data[k] })).filter(x => x.m && x.m.me);
+  if (!L.length) return '<div class="empty">Set up your leagues in Settings to see your players here.</div>';
+  // one entry per real player, with a points chip for each league he starts in
+  const by = {}, order = [];
+  L.forEach(({ k, tag, m }) => m.me.rows.filter(r => r.st && r.id !== '0' && r.name).forEach(r => {
+    const team = nflAbbr(r.team || ''); const D = isDef(r.pos); const key = D ? 'DEF|' + team : normName(r.name);
+    if (!by[key]) { by[key] = { name: D ? team + ' D/ST' : r.name, pos: D ? 'DEF' : r.pos, team, inj: '', lg: [] }; order.push(key); }
+    const e = by[key]; if (!e.inj && r.inj) e.inj = r.inj; e.lg.push({ tag, pts: r.pts, proj: r.proj });
+  }));
+  const gOf = e => e.team ? nfl.map[e.team] : null;
+  const grp = { in: [], pre: [], post: [], none: [] };
+  order.map(k => by[k]).forEach(e => { const g = gOf(e); grp[!g || nfl.byes.includes(e.team) ? 'none' : g.state === 'in' ? 'in' : g.state === 'pre' ? 'pre' : 'post'].push(e); });
+  const tot = e => e.lg.reduce((a, x) => a + (x.pts || 0), 0);
+  grp.in.sort((a, b) => tot(b) - tot(a)); grp.post.sort((a, b) => tot(b) - tot(a));
+  grp.pre.sort((a, b) => gOf(a).date - gOf(b).date || (b.lg[0].proj || 0) - (a.lg[0].proj || 0));
+  const injTag = v => v ? ` <span style="color:${/^(questionable|q)$/i.test(v) ? 'var(--amber)' : 'var(--red)'};font-size:11px;font-weight:700">${esc(String(v).slice(0, 3).toUpperCase())}</span>` : '';
+  const row = (e, showProj) => `<div class="swr"><div class="pn"><div class="n">${esc(e.name)}${injTag(e.inj)}</div><div class="m">${esc(e.pos)}${e.team ? ' ' + esc(e.team) : ''}${gameTag(e.team, nfl) || ' · no game'}</div></div><div class="swl">${e.lg.map(x => `<span><i>${esc(x.tag)}</i><b>${showProj ? (x.proj != null ? fmtP(x.proj) : '–') : fmtP(x.pts)}</b><small>${showProj ? 'proj' : x.proj != null ? 'proj ' + fmtP(x.proj) : ''}</small></span>`).join('')}</div></div>`;
+  const sum = `<div class="swsum">${L.map(({ tag, m }) => { const o = oddsOf(m); return `<span><i>${esc(tag)}</i>${fmtP(m.me.pts)}${m.opp ? ` <em style="font-style:normal;color:var(--fg3)">–</em> ${fmtP(m.opp.pts)}` : ''}<small class="${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? 'Win ' + o + '%' : ''}</small></span>`; }).join('')}</div>`;
+  let out = sec('This week', `Week ${esc(nfl.week || '')}`, sum);
+  const block = (title, list, cls, showProj) => list.length ? `<div class="lbl ${cls}">${title}<span class="r">${list.length}</span></div><section class="sec flush">${list.map(e => row(e, showProj)).join('')}</section>` : '';
+  out += block('Playing now', grp.in, 'live', false) + block('Still to play', grp.pre, '', true) + block('Done', grp.post, '', false) + block('Not playing', grp.none, '', false);
+  return out;
+}
 async function warmMine() { try { const nfl = await nflNow(); FX.week = nfl.week; await loadFantasy(nfl); } catch (e) {} }
 
 /* =====================================================================
@@ -2131,6 +2334,8 @@ async function refresh(force) {
     if (S.sheetMode === 'game') live = await loadDetail();
     else if (S.sheetMode === 'fx') live = await loadFxSheet();
     else if (S.sheetMode === 'stand') live = await loadStandSheet();
+    else if (S.sheetMode === 'sweat') live = await loadSweat();
+    else if (S.sheetMode === 'plog') live = await loadPlog();
     else if (S.sheetMode === 'settings') live = S.live;
     else if (S.tab === 'nhl') live = await loadNHL();
     else live = await loadNFL();
@@ -2157,10 +2362,13 @@ document.addEventListener('click', e => {
   const f = e.target.closest('[data-fx]'); if (f) { const [k, v] = f.dataset.fx.split(':'); S.fx[k] = v; const m = FX.data[k]; if (m && S.sheetMode === 'fx') { const keep = $('#shScroll').scrollTop; $('#shBody').innerHTML = renderFx(m); $('#shScroll').scrollTop = keep; } return; }
   if (e.target.closest('[data-settings]')) { openSettings(); return; }
   if (e.target.closest('[data-cbspaste]')) { pasteCbsToken(); return; }
+  if (e.target.closest('[data-sweat]')) { openSweat(); return; }
+  const pg = e.target.closest('[data-plog]'); if (pg) { openPlog(pg.dataset.plog); return; }
 });
 $('#prevBtn').onclick = () => shiftWeek(-1);
 $('#nextBtn').onclick = () => shiftWeek(1);
 $('#sheetBack').onclick = closeSheet;
+$('#mini').onclick = () => $('#scroller').scrollTo({ top: 0, behavior: 'smooth' });
 $('#settingsBtn').onclick = () => openSettings();
 $('#refreshBtn').onclick = () => { delete memo.nflnow; refresh(true); };
 
