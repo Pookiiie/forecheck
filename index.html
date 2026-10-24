@@ -322,6 +322,8 @@ button.hero:active{opacity:.85}
 .lastg .rs .ot{font-size:10.5px;color:var(--fg2);letter-spacing:.1em}
 .lastg .rs .dt{margin-left:auto;font:700 10.5px var(--bc);letter-spacing:.1em;color:var(--fg2)}
 .under > .recap{border-top:1px solid var(--sep);padding-top:7px}
+.under > .tmine{padding:7px 2px 0;font-size:13px;gap:3px 14px}
+.under > .tmine b{font-size:10.5px}
 .recap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.15fr)}
 .recap .s{padding:0 7px;min-width:0}
 .recap .s + .s{border-left:1px solid var(--sep)}
@@ -921,10 +923,14 @@ function tLine(g, t, si) {
   const lose = g.state === 'post' && !t.winner && (g.home.winner || g.away.winner);
   return `<div class="tl${lose ? ' lose' : ''}" style="--c:${teamInk(t)}">${logo(t)}<span class="ab">${esc(t.abbr)}</span>${si && si.off === t ? FOOT : ''}${g.state === 'pre' ? `<span class="rec">${esc(t.rec)}</span>` : ''}<span class="sc">${g.state === 'pre' ? '' : esc(t.score)}</span></div>`;
 }
+// my fantasy starters in this game, with live points once it has started (tiles and the big score card)
+function mineRow(g) {
+  const mine = g && g.sp === 'nfl' ? minesIn(g) : [];
+  return mine.length ? `<div class="tmine">${mine.map(p => `<span><b>${p.tag}</b>${esc(p.name)}${g.state !== 'pre' ? ` <i>${fmtP(p.pts)}</i>` : ''}</span>`).join('')}</div>` : '';
+}
 function tile(g, grouped) {
   const si = g.sp === 'nfl' ? nflSit(g) : null;
-  const mine = g.sp === 'nfl' ? minesIn(g) : [];
-  const mineH = mine.length ? `<div class="tmine">${mine.map(p => `<span><b>${p.tag}</b>${esc(p.name)}${g.state !== 'pre' ? ` <i>${fmtP(p.pts)}</i>` : ''}</span>`).join('')}</div>` : '';
+  const mineH = mineRow(g);
   let x = '';
   if (si && si.off) x = `<span class="x yl">${esc(si.dd)}${si.rz ? ' · RZ' : ''}</span>`;
   else if (showWatch(g)) { const w = pickWatch(g); x = `<span class="x">${w.main.length ? esc(PROV[w.main[0].p].short) : ''}</span>`; }
@@ -1052,7 +1058,7 @@ async function heroHTML(sp, games, extra = {}) {
   let next = null, last = null, team = {};
   try { const sc = await teamSchedule(sp, ab); team = sc.team; next = sc.games.find(x => x.state !== 'post' && x.date > Date.now() - 6 * 36e5 && (!g || x.id !== g.id)); const done = sc.games.filter(x => x.state === 'post' && (!g || x.id !== g.id)); last = done[done.length - 1]; } catch (e) {}
   if (g) {
-    const under = [flagUnder(g)];
+    const under = [flagUnder(g), mineRow(g)];
     if (g.state === 'post' && next) under.push(`<div class="meta">Next: ${nextLine(next, ab)}</div>`);
     if (sp === 'nhl' && g.state === 'post') under.push(await habsRecap(g, ab));
     const wg = showWatch(g) ? pickWatch(g) : null; if (wg && !wg.main.length) under.push(watchChips(g));
@@ -1065,13 +1071,13 @@ async function heroHTML(sp, games, extra = {}) {
       <div class="under"><div class="meta">${next ? 'Next: ' + nextLine(next, ab) : ''}${last ? ` · Last: ${resultLine(last, ab)}` : ''}</div></div></button>`, id: null };
   }
   if (next) {
-    const under = [];
+    const under = [mineRow(next)];
     const wn = showWatch(next) ? pickWatch(next) : null; if (wn && !wn.main.length) under.push(watchChips(next));
     if (last) {
       const rc = sp === 'nhl' && Date.now() - last.date < 30 * 36e5 ? await habsRecap(last, ab) : '';
       under.push(lastLine(last, ab, rc));
     }
-    return { html: `<button class="hero" data-open="${sp}:${next.id}">${bug(next, { watch: wn })}${under.length ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: next.id, g: next };
+    return { html: `<button class="hero" data-open="${sp}:${next.id}">${bug(next, { watch: wn })}${under.join('') ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: next.id, g: next };
   }
   return { html: '', id: null };
 }
@@ -1258,8 +1264,8 @@ async function loadNFL() {
   const byes = ((j.week && j.week.teamsOnBye) || []).map(t => t.abbreviation);
   const nfl = await nflNow(); FX.week = nfl.week;
   const fxP = loadFantasy(nfl).then(() => { if (!FX.ready) { FX.ready = true; if (S.tab === 'nfl' && !S.sheetMode) refresh(true); } }).catch(() => {});
-  const hero = isCur ? await heroHTML('nfl', games, { byes }) : { html: '', id: null };
   if (FX.ready) await fxP;
+  const hero = isCur ? await heroHTML('nfl', games, { byes }) : { html: '', id: null };
   const live = games.some(g => g.state === 'in');
   if (S.tab !== 'nfl' || S.sheetMode) return live;
   const view = q || cur;
