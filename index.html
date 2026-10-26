@@ -363,23 +363,35 @@ button.hero:active{opacity:.85}
 .lc span em{font-style:normal;color:var(--fg2)}
 .inb{font:700 10.5px var(--ui);letter-spacing:.02em;color:var(--red);vertical-align:1px} .inb.q{color:var(--amber)}
 /* Goblin GM: strip under Your matchups + report sheet */
-.grh{display:grid;gap:3px;padding:2px 2px 4px}
-.grh .k{font:700 11px var(--bc);letter-spacing:.12em;text-transform:uppercase;color:#9be37a}
-.grh .t{font:800 24px/1.1 var(--bc);letter-spacing:.02em}
-.grh .s{font:400 12.5px var(--ui);color:var(--fg2)}
-.glg{margin:14px 2px 0;padding:8px 10px;border-radius:8px;background:var(--card2);font:800 17px/1.2 var(--bc);letter-spacing:.04em;text-transform:uppercase}
+.grh{display:grid;gap:2px;padding:2px 2px 0}
+.grh .t{font:800 22px/1.15 var(--bc);letter-spacing:.02em}
+.grh .s{font:400 12px/1.35 var(--ui);color:var(--fg2)}
+.glg{margin:6px 0 0;padding:8px 12px;border-radius:10px;background:var(--card2);font:800 16px/1.2 var(--bc);letter-spacing:.05em;text-transform:uppercase}
 .glg small{display:block;font:400 12px var(--ui);letter-spacing:0;text-transform:none;color:var(--fg2);margin-top:1px}
-.gbx{border-left:3px solid var(--amber);background:color-mix(in srgb,var(--amber) 9%,transparent);border-radius:0 6px 6px 0;padding:8px 10px;font:400 13.5px/1.45 var(--ui)}
+.gsec{gap:7px}
+.gsec>h2{font-size:12.5px;color:var(--fg)}
+.gsub{margin-top:-5px;font:400 12px/1.35 var(--ui);color:var(--fg2)}
+.gbx{border-left:3px solid var(--amber);background:color-mix(in srgb,var(--amber) 9%,var(--card));border-radius:4px 10px 10px 4px;padding:9px 12px;font:400 13.5px/1.45 var(--ui)}
 .gbx b:first-child{display:block;margin-bottom:2px}
-.gh2{margin:14px 2px 0;padding-bottom:3px;border-bottom:2px solid color-mix(in srgb,var(--amber) 70%,transparent);font:800 16px/1.2 var(--bc);letter-spacing:.03em}
-.gh2 small{display:block;font:400 12px/1.35 var(--ui);color:var(--fg2);margin-top:3px;letter-spacing:0}
-.gpp{font:400 13.5px/1.5 var(--ui);color:color-mix(in srgb,var(--fg) 88%,transparent)}
+.gpp{font:400 13.5px/1.5 var(--ui);color:color-mix(in srgb,var(--fg) 90%,transparent)}
 .gtb{width:100%;border-collapse:collapse;font:500 12.5px/1.35 var(--ui);font-variant-numeric:tabular-nums}
-.gtb th{font:700 10px/1.2 var(--ui);letter-spacing:.04em;text-transform:uppercase;color:var(--fg2);text-align:left;padding:4px 6px;border-bottom:1px solid var(--sep);vertical-align:bottom}
-.gtb td{padding:5px 6px;border-top:1px solid var(--sep);vertical-align:top;min-width:44px}
+.gtb th{font:700 10px/1.2 var(--ui);letter-spacing:.04em;text-transform:uppercase;color:var(--fg2);text-align:left;padding:0 6px 4px;vertical-align:bottom}
+.gtb td{padding:5px 6px;border-top:1px solid var(--sep);vertical-align:top}
+.gtb th:first-child,.gtb td:first-child{padding-left:2px}
 .gtb .c{text-align:center}
+.gtb.fx td:first-child{min-width:108px}
+.gtb.fx td{padding-left:4px;padding-right:4px}
+.gtb th small{display:block;font:400 10px/1.25 var(--ui);text-transform:none;letter-spacing:0;color:var(--fg3);margin-top:1px}
 .gtb th.pk{color:var(--green)}
-.gtb tr.gg td{font:700 10.5px var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);background:var(--well)}
+.gtb tr.gg td{font:700 10px var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);background:var(--well);padding:3px 6px}
+.gtb.gd td:first-child{color:var(--fg2);font-size:12px}
+.gst{display:grid;gap:6px}
+.gr{border-left:3px solid var(--sep);background:var(--well);border-radius:3px 8px 8px 3px;padding:6px 9px;display:grid;gap:3px}
+.gr .gt{font:600 13.5px/1.35 var(--ui)}
+.gr .gt .tag{display:inline-block;min-width:22px;margin-right:6px;padding:1px 5px;border-radius:4px;background:var(--fill);font:700 11px/1.4 var(--bc);letter-spacing:.06em;text-align:center;color:var(--fg2);vertical-align:1px}
+.gr .kv{display:flex;flex-wrap:wrap;gap:3px 12px;font:600 12.5px/1.3 var(--ui);font-variant-numeric:tabular-nums}
+.gr .kv i,.gr .ln i{font-style:normal;font:600 9.5px var(--ui);letter-spacing:.05em;text-transform:uppercase;color:var(--fg3);margin-right:4px}
+.gr .ln{font:400 12.5px/1.4 var(--ui);color:color-mix(in srgb,var(--fg) 88%,transparent)}
 .gsrc{font:400 11.5px/1.5 var(--ui);color:var(--fg2);padding:0 2px}
 .gsrc a{color:var(--blue)}
 /* (5) all my players */
@@ -2356,33 +2368,58 @@ async function loadGoblinSheet() {
   if (id === B.latest) LS.set('gobSeen', B.latest);
   const keep = S.gobShown === id ? $('#shScroll').scrollTop : 0; S.gobShown = id;
   const chips = ids.length > 1 ? `<div class="pls" style="flex-wrap:wrap">${ids.map(x => `<button data-goblin="${esc(x)}" class="${x === id ? 'on' : ''}">${esc((B.reports[x].label || x).replace(/ (analysis|refresh|check|inactives)$/i, ''))}</button>`).join('')}</div>` : '';
-  $('#shTitle').textContent = 'Week ' + (r.week || '');
+  $('#shTitle').textContent = 'Goblin GM';
   $('#shBody').innerHTML = chips + gobReport(r); $('#shScroll').scrollTop = keep;
   return false;
 }
 const GOB_TINT = { '#e8f6ee': 'color-mix(in srgb,var(--green) 16%,transparent)', '#fdecec': 'color-mix(in srgb,var(--red) 16%,transparent)', '#fff4db': 'color-mix(in srgb,var(--amber) 16%,transparent)', '#eef1f6': 'var(--well)', '#fff8e6': 'color-mix(in srgb,var(--amber) 9%,transparent)' };
 function gobCellTint(c) { const s = String(c); return /^❌/.test(s) || /^🟥/.test(s) ? GOB_TINT['#fdecec'] : /^✅/.test(s) ? GOB_TINT['#e8f6ee'] : s.includes('🛌') && s.length < 8 ? GOB_TINT['#fff4db'] : null; }
 function gobReport(r) {
-  let h = `<div class="grh"><div class="k">${gobTxt(r.kicker || '')}</div><div class="t">${gobTxt(r.title || '')}</div><div class="s">${gobTxt(r.sub || '')}${r.updated ? ' \u00b7 ' + esc(r.updated) : ''}</div></div>`;
-  let open = false; const flush = () => { if (open) { h += '</section>'; open = false; } }; const sect = () => { if (!open) { h += '<section class="sec" style="gap:8px">'; open = true; } };
+  // header: the report's title and when it was written (the sheet title already says Goblin GM, so no kicker)
+  let h = `<div class="grh"><div class="t">${gobTxt(r.title || '')}</div><div class="s">${[r.sub, r.updated].filter(Boolean).map(gobTxt).join(' · ')}</div></div>`;
+  // each heading starts a card that holds the blocks after it; boxes are cards of their own
+  let open = false; const flush = () => { if (open) { h += '</section>'; open = false; } }; const card = () => { if (!open) { h += '<section class="sec gsec">'; open = true; } };
+  const tintOf = (c, rowTint) => gobCellTint(c) || GOB_TINT[rowTint] || null;
   for (const b of r.blocks || []) {
     const k = b[0];
     if (k === 'league') { flush(); h += `<div class="glg">${gobTxt(b[1])}${b[2] ? `<small>${gobTxt(b[2])}</small>` : ''}</div>`; }
-    else if (k === 'h2') { flush(); h += `<div class="gh2">${gobTxt(b[1])}${b[2] ? `<small>${gobTxt(b[2])}</small>` : ''}</div>`; }
-    else if (k === 'box') { sect(); h += `<div class="gbx"><b>${gobTxt(b[1])}</b>${gobTxt(b[2])}</div>`; }
-    else if (k === 'p') { sect(); h += `<div class="gpp">${b[1] ? `<b>${gobTxt(b[1])}</b> ` : ''}${gobTxt(b[2])}</div>`; }
-    else if (k === 't') {
-      sect(); const o = b[3] || {}, al = o.c || [], tint = o.tint || [];
-      h += `<div class="scroll-x"><table class="gtb"><tr>${(b[1] || []).map((x, i) => `<th class="${al[i] ? 'c' : ''}">${gobTxt(x)}</th>`).join('')}</tr>${(b[2] || []).map((row, ri) => `<tr>${row.map((c, ci) => { const bg = gobCellTint(c) || GOB_TINT[tint[ri]] || null; return `<td class="${al[ci] ? 'c' : ''}"${bg ? ` style="background:${bg}"` : ''}>${gobTxt(c)}</td>`; }).join('')}</tr>`).join('')}</table></div>`;
-    } else if (k === 'd') {
-      sect(); const P = b[1] || [], G = b[2] || [];
-      h += `<div class="scroll-x"><table class="gtb"><tr><th></th>${P.map(p => `<th class="c${p[2] ? ' pk' : ''}">${gobTxt(p[0])}<br><span style="text-transform:none;font-weight:400">${gobTxt(p[1] || '')}</span></th>`).join('')}</tr>${G.map(([g, ms]) => `<tr class="gg"><td colspan="${P.length + 1}">${gobTxt(g)}</td></tr>` + (ms || []).map(([m, vals]) => `<tr><td>${gobTxt(m)}</td>${(vals || []).map((v, j) => { const bg = gobCellTint(v) || (P[j] && P[j][2] ? GOB_TINT['#e8f6ee'] : null); return `<td class="c"${bg ? ` style="background:${bg}"` : ''}>${gobTxt(v)}</td>`; }).join('')}</tr>`).join('')).join('')}</table></div>`;
+    else if (k === 'h2') { flush(); card(); h += `<h2><span>${gobTxt(b[1])}</span></h2>${b[2] ? `<div class="gsub">${gobTxt(b[2])}</div>` : ''}`; }
+    else if (k === 'box') { flush(); h += `<div class="gbx"><b>${gobTxt(b[1])}</b>${gobTxt(b[2])}</div>`; }
+    else if (k === 'p') { card(); h += `<div class="gpp">${b[1] ? `<b>${gobTxt(b[1])}</b> ` : ''}${gobTxt(b[2])}</div>`; }
+    else if (k === 't') { card(); h += gobTable(b[1] || [], b[2] || [], b[3] || {}); }
+    else if (k === 'd') {
+      card(); const P = b[1] || [], G = b[2] || [];
+      h += `<div class="scroll-x"><table class="gtb gd"><tr><th></th>${P.map(p => `<th class="c${p[2] ? ' pk' : ''}">${gobTxt(p[0])}<small>${gobTxt(p[1] || '')}</small></th>`).join('')}</tr>${G.map(([g, ms]) => `<tr class="gg"><td colspan="${P.length + 1}">${gobTxt(g)}</td></tr>` + (ms || []).map(([m, vals]) => `<tr><td>${gobTxt(m)}</td>${(vals || []).map((v, j) => { const bg = gobCellTint(v) || (P[j] && P[j][2] ? GOB_TINT['#e8f6ee'] : null); return `<td class="c"${bg ? ` style="background:${bg}"` : ''}>${gobTxt(v)}</td>`; }).join('')}</tr>`).join('')).join('')}</table></div>`;
     }
   }
   flush();
-  if ((r.sources || []).length) h += `<p class="gsrc">\u{1F4DA} ${r.sources.map(s => /^https:\/\//.test(s[1] || '') ? `<a href="${esc(s[1])}" target="_blank" rel="noopener">${esc(s[0])}</a>` : esc(s[0])).join(' \u00b7 ')}</p>`;
+  if ((r.sources || []).length) h += `<p class="gsrc">\u{1F4DA} ${r.sources.map(s => /^https:\/\//.test(s[1] || '') ? `<a href="${esc(s[1])}" target="_blank" rel="noopener">${esc(s[0])}</a>` : esc(s[0])).join(' · ')}</p>`;
   return h;
 }
+/* Tables: short ones stay tables. Wide ones (5+ columns with long text, e.g. lineup, trades, waivers) become one compact
+   block per row (title, short values as labelled chips, long values as labelled lines), so nothing wraps into a sliver
+   or runs off the screen. Grids of short cells (the bye grid) stay tables. */
+function gobTable(head, rows, o) {
+  const al = o.c || [], tint = o.tint || [];
+  const plain = v => gobPlain(String(v ?? ''));
+  const avgLen = c => rows.reduce((a, r) => a + plain(r[c]).length, 0) / Math.max(1, rows.length);
+  const wide = (head.length >= 5 && head.slice(1).some((_, i) => avgLen(i + 1) > 12)) || (head.length >= 4 && head.slice(1).some((_, i) => avgLen(i + 1) > 22));
+  // grids (bye weeks): keep the name column from collapsing to one word per line
+  if (!wide) return `<div class="scroll-x"><table class="gtb${head.length >= 5 ? ' fx' : ''}"><tr>${head.map((x, i) => `<th class="${al[i] ? 'c' : ''}">${gobTxt(x)}</th>`).join('')}</tr>${rows.map((row, ri) => `<tr>${row.map((c, ci) => { const bg = gobCellTint(c) || GOB_TINT[tint[ri]] || null; return `<td class="${al[ci] ? 'c' : ''}"${bg ? ` style="background:${bg}"` : ''}>${gobTxt(c)}</td>`; }).join('')}</tr>`).join('')}</table></div>`;
+  const EDGE = { '#e8f6ee': 'var(--green)', '#fdecec': 'var(--red)', '#fff4db': 'var(--amber)', '#fff8e6': 'var(--amber)' };
+  return `<div class="gst">${rows.map((row, ri) => {
+    const short0 = plain(row[0]).length <= 4;  // a slot, a number or a dash leads the title as a small tag
+    const title = short0 ? `${plain(row[0]) ? `<span class="tag">${gobTxt(row[0])}</span>` : ''}${gobTxt(row[1])}` : gobTxt(row[0]);
+    let rest = row.map((c, ci) => [ci, c]).filter(([ci, c]) => ci > (short0 ? 1 : 0) && plain(c) && !/^[-–—]$/.test(plain(c)));
+    // a value that is only an emoji (a 🟢 note) reads better at the end of the title than behind a label
+    const marks = rest.filter(([, c]) => !/[\p{L}\p{N}]/u.test(plain(c))); rest = rest.filter(x => !marks.includes(x));
+    const chips = rest.filter(([, c]) => plain(c).length <= 14).map(([ci, c]) => `<span><i>${gobTxt(head[ci])}</i>${gobTxt(c)}</span>`).join('');
+    const lines = rest.filter(([, c]) => plain(c).length > 14).map(([ci, c]) => `<div class="ln"><i>${gobTxt(head[ci])}</i> ${gobTxt(c)}</div>`).join('');
+    const edge = EDGE[tint[ri]] || (/^✅/.test(plain(row[0])) ? 'var(--green)' : /^❌/.test(plain(row[0])) ? 'var(--red)' : '');
+    return `<div class="gr"${edge ? ` style="border-left-color:${edge}"` : ''}><div class="gt">${title}${marks.map(([, c]) => ' ' + gobTxt(c)).join('')}</div>${chips ? `<div class="kv">${chips}</div>` : ''}${lines}</div>`;
+  }).join('')}</div>`;
+}
+
 async function warmMine() { try { const nfl = await nflNow(); FX.week = nfl.week; await loadFantasy(nfl); } catch (e) {} }
 
 /* =====================================================================
