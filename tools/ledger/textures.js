@@ -39,4 +39,9 @@ const deckle = (n = 44, a = 5) => { const P = []; for (let i = 0; i <= n; i++) P
   for (let i = 7; i > 0; i--) P.push(`${(rnd() * 3).toFixed(1)}px ${(i / 8 * 100).toFixed(1)}%`); return `polygon(${P.join(',')})`; };
 
 
-module.exports = { STONE, WOOD, WOOD_TAG, PAPER, CLOTH, WEB, deckle };
+// knots and nail heads for the header plank, placed at its edges so they never sit behind the text
+const KNOT = svg(`<svg xmlns='http://www.w3.org/2000/svg' width='34' height='12'><ellipse cx='17' cy='6' rx='15' ry='5' fill='rgba(60,32,12,.35)' stroke='rgba(35,18,6,.55)' stroke-width='1.6'/><ellipse cx='17' cy='6' rx='9' ry='3' fill='none' stroke='rgba(35,18,6,.35)' stroke-width='1'/><ellipse cx='17' cy='6' rx='4' ry='1.6' fill='rgba(35,18,6,.75)'/></svg>`);
+const NAIL = svg(`<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'><circle cx='4.5' cy='4.5' r='3.6' fill='#2a1a0c'/><circle cx='4.5' cy='4.5' r='3.6' fill='none' stroke='rgba(255,220,170,.18)' stroke-width='.8'/><circle cx='3.5' cy='3.4' r='1.2' fill='rgba(255,225,180,.4)'/></svg>`);
+const PLANK_BITS = [`${NAIL} left 7px top 6px/9px 9px no-repeat`, `${NAIL} left 7px bottom 6px/9px 9px no-repeat`, `${NAIL} right 7px top 6px/9px 9px no-repeat`, `${NAIL} right 7px bottom 6px/9px 9px no-repeat`, `${KNOT} right 9% bottom 4px/30px 11px no-repeat`, `${KNOT} right 21% top 4px/22px 8px no-repeat`].join(',');
+
+module.exports = { PLANK_BITS, STONE, WOOD, WOOD_TAG, PAPER, CLOTH, WEB, deckle };
