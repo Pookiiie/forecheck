@@ -26,7 +26,7 @@
   --bc:"Barlow Condensed","SF Pro Display",-apple-system,system-ui,sans-serif;
   --bg:#0b0d10;--card:#161a20;--card2:#1e232b;--well:#101318;--fill:rgba(255,255,255,.07);--sep:rgba(255,255,255,.09);
   --fg:#f2f4f7;--fg2:#8f99a8;--fg3:#5b6574;
-  --red:#ff5a4f;--green:#3ddc84;--blue:#5aa9ff;--amber:#ffb020;--yellow:#f6d32d;--mine:#a8a2ff;
+  --red:#ff5a4f;--green:#3ddc84;--blue:#5aa9ff;--amber:#ffb020;--yellow:#f6d32d;--mine:#a8a2ff;--bell:#5fd4c4;
   --tint:#f6d32d;--ice:#18222d;--iceline:#2c3b4a;
   color-scheme:dark;
 }
@@ -327,9 +327,10 @@ button.hero:active{opacity:.85}
 .pls3{display:flex;flex-direction:column;gap:1px;padding:3px 5px 4px 6px;border-top:1px solid var(--sep);background:var(--well);font:500 11px/1.3 var(--ui);letter-spacing:-.01em;color:var(--fg)}
 .pls3.wide{flex-direction:row;flex-wrap:wrap;gap:2px 14px;padding:6px 2px 0;background:none;border:0;font-size:13px;letter-spacing:0}
 .pln{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 4px}
-.pv{white-space:nowrap;font-weight:700;font-variant-numeric:tabular-nums} .pv.P{color:#b9b4ff} .pv.B{color:#5fd4c4}
-.pdot{width:7px;height:7px;border-radius:50%;align-self:center} .pdot.P{background:#a8a2ff} .pdot.B{background:#5fd4c4}
-.cf .tg.B{color:#5fd4c4}
+.pv{white-space:nowrap;font-weight:700;font-variant-numeric:tabular-nums} .pv.P{color:#b9b4ff} .pv.B{color:var(--bell)}
+.pdot{width:7px;height:7px;border-radius:50%;align-self:center} .pdot.P{background:var(--mine)} .pdot.B{background:var(--bell)}
+.cf .tg.B{color:var(--bell)}
+.lgB,.mine.B{--mine:var(--bell)}
 @keyframes tping{50%{background:color-mix(in srgb,var(--c) 45%,transparent)}}
 /* post-game recap */
 .lastg{display:grid;gap:6px;border-top:1px solid var(--sep);padding:7px 2px 1px;cursor:pointer}
@@ -479,15 +480,16 @@ button.hero:active{opacity:.85}
 .bar u{display:block;height:3px;background:var(--mine)}
 .fxc.solo{grid-column:1/-1}
 /* Your matchups: compact block */
-.cfb{background:var(--card);border-radius:10px;overflow:hidden;border-top:3px solid var(--mine)}
-.cf{display:grid;grid-template-columns:34px 56px 8px 44px 1fr 58px;align-items:center;column-gap:5px;width:100%;padding:6px 10px 6px 9px;text-align:left;border-left:3px solid transparent}
+.cfb{position:relative;background:var(--card);border-radius:10px;overflow:hidden;padding-top:3px}
+.cfb::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--mine) 0 45%,var(--bell) 55% 100%)}
+.cf{display:grid;grid-template-columns:34px 56px 8px 44px 1fr 34px;align-items:center;column-gap:5px;width:100%;padding:6px 10px 6px 9px;text-align:left;border-left:3px solid transparent}
 .cf + .cf{border-top:1px solid var(--sep)}
 .cf:active,.cg:active{background:var(--fill)}
 .cf.warn{border-left-color:var(--red)} .cf.warnq{border-left-color:var(--amber)}
 .cf .tg{font:700 11px var(--bc);letter-spacing:.1em;color:var(--mine)}
 .cf > b{font:800 20px/1 var(--bc);font-variant-numeric:tabular-nums}
 .cf .vs{color:var(--fg3);text-align:center} .cf .op{font:700 16px/1 var(--bc);color:var(--fg2);font-variant-numeric:tabular-nums}
-.cf .wb{height:5px;border-radius:3px;background:var(--fill);overflow:hidden;margin:0 4px;min-width:20px}
+.cf .wb{height:5px;border-radius:3px;background:var(--fill);overflow:hidden;margin:0 2px 0 4px;min-width:20px}
 .cf .wb u{display:block;height:100%;background:var(--mine)}
 .cf .pc{font:700 12.5px var(--bc);letter-spacing:.04em;white-space:nowrap;text-align:right} .cf .pc.up{color:var(--green)} .cf .pc.dn{color:var(--red)}
 .cf .pj{font:500 12px var(--bc);letter-spacing:.02em;color:var(--fg3);font-variant-numeric:tabular-nums;margin-top:1px}
@@ -1224,7 +1226,7 @@ async function loadFantasy(nfl) {
 /* Rough win chance: projected margin over its uncertainty. ~12 pts of spread per player still to
    play (projection error + game variance), which lines up with Sleeper's own numbers in testing. */
 const isDone = m => !!(m && m.me && m.opp && !m.me.left && !m.opp.left);
-const oddsLabel = (m, o) => isDone(m) ? (o === 100 ? 'Won' : o === 0 ? 'Lost' : 'Tied') : `Win ${o}%`;
+const oddsLabel = (m, o) => isDone(m) ? (o === 100 ? 'Won' : o === 0 ? 'Lost' : 'Tied') : `${o}%`;
 function oddsOf(m) {
   if (!m || !m.me || !m.opp) return null;
   // nobody left to play on either side: the matchup is decided, so no uncertainty band
@@ -1348,7 +1350,7 @@ function fxCards(gob) {
       const o = oddsOf(m); const iss = lineupIssues(m); const wc = iss.length ? (iss.some(i => i.lvl === 2) ? ' warn' : ' warnq') : '';
       // second line: each projection under its score, players left (or Final) under the bar
       const sub = isDone(m) ? '<span></span><small class="sl">Final</small>' : `<span></span><small class="pj">${fmtP(m.me.est)}</small><small class="pj d">${m.opp ? '\u2013' : ''}</small><small class="pj">${m.opp ? fmtP(m.opp.est) : ''}</small><small class="sl">${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} players left</small>`;
-      rows.push(`<button class="cf${wc}" data-fxopen="${k}"><span class="tg${k === 'cv' ? ' B' : ''}">${esc(tag)}</span><b>${fmtP(m.me.pts)}</b>${m.opp ? `<span class="vs">–</span><span class="op">${fmtP(m.opp.pts)}</span>` : '<span></span><span></span>'}<span class="wb">${o != null ? `<u style="width:${o}%"></u>` : ''}</span><span class="pc ${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</span>${sub}${lineupCard(iss)}</button>`);
+      rows.push(`<button class="cf${wc}${k === 'cv' ? ' lgB' : ''}" data-fxopen="${k}"><span class="tg${k === 'cv' ? ' B' : ''}">${esc(tag)}</span><b>${fmtP(m.me.pts)}</b>${m.opp ? `<span class="vs">–</span><span class="op">${fmtP(m.opp.pts)}</span>` : '<span></span><span></span>'}<span class="wb">${o != null ? `<u style="width:${o}%"></u>` : ''}</span><span class="pc ${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</span>${sub}${lineupCard(iss)}</button>`);
     } else if (k === 'cv' && d.cvErr === CBS_DOWN) msg(k, def, 'data-cbspaste', 'CBS isn’t answering (error 500)', 'Often CBS’s side — it retries on its own. If your league works in Safari, run your CBS shortcut and tap here for a new token', 'amber');
     else if (k === 'cv' && d.cvErr === CBS_EXPIRED) msg(k, def, 'data-cbspaste', 'Token expired', 'Run your CBS shortcut in Safari, then tap here to paste the new one', 'red');
     else if (d[k + 'Err']) msg(k, def, 'data-settings', esc(d[k + 'Err']), 'Tap to fix in Settings', 'red');
@@ -1801,7 +1803,7 @@ function compareRows(rows, g) {
 }
 const MY_NAMES = new Map();
 const normName = n => String(n || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\b(jr|sr|ii|iii|iv|v)\b\.?/g, '').replace(/[^a-z]/g, '');
-const mineTags = name => { const t = MY_NAMES.get(normName(name)); return t ? t.map(x => `<span class="mine">${x}</span>`).join(' ') : ''; };
+const mineTags = name => { const t = MY_NAMES.get(normName(name)); return t ? t.map(x => `<span class="mine${x === 'BELL' ? ' B' : ''}">${x}</span>`).join(' ') : ''; };
 function teamSeg(g) { const D = S.detail; return `<div class="seg" role="group" aria-label="Team"><button data-ptab="away" aria-pressed="${D.tab !== 'home'}">${esc(g.away.name)}</button><button data-ptab="home" aria-pressed="${D.tab === 'home'}">${esc(g.home.name)}</button></div>`; }
 
 /* ---------- football detail ---------- */
@@ -1970,7 +1972,7 @@ function myPlayersSec(g, s) {
   const by = {}; mine.forEach(p => { const key = p.pos === 'DEF' ? 'DEF|' + p.team : normName(p.full || p.name); (by[key] = by[key] || { p, lg: [] }).lg.push(p); });
   const box = !pre && s ? boxLines(s) : {};
   const cards = Object.values(by).map(({ p, lg }) => {
-    const tot = `<div class="tt">${lg.map(x => `<span><span class="mine">${x.tag}</span><em>${pre ? fmtP(x.proj) : fmtP(x.pts)}</em></span>`).join('')}</div>`;
+    const tot = `<div class="tt">${lg.map(x => `<span><span class="mine${x.tag === 'BELL' ? ' B' : ''}">${x.tag}</span><em>${pre ? fmtP(x.proj) : fmtP(x.pts)}</em></span>`).join('')}</div>`;
     const head = `<div class="hd"><b>${esc(p.pos === 'DEF' ? p.team + ' D' : p.full || p.name)}</b><small>${esc(p.pos || '')}${pre ? ' \u00b7 proj' : ''}</small></div>`;
     if (pre) return `<div class="ypc">${head}${tot}</div>`;
     const L = box[normName(p.full || p.name)];
@@ -2315,7 +2317,7 @@ function renderFx(M) {
     const st = t.rows.filter(r => r.st), bn = t.rows.filter(r => !r.st);
     body = st.map(row).join('') + (bn.length ? `<div class="bh">Bench</div>` + bn.map(row).join('') : '');
   }
-  return `<section class="sec"><h2><span>${esc(M.title)}</span><span class="r">${esc(src)} · Week ${esc(week)}</span></h2>${top}</section>${body ? `<section class="sec flush">${body}</section>` : ''}`;
+  return `<div class="${key === 'cv' ? 'lgB' : ''}"><section class="sec"><h2><span>${esc(M.title)}</span><span class="r">${esc(src)} · Week ${esc(week)}</span></h2>${top}</section>${body ? `<section class="sec flush">${body}</section>` : ''}</div>`;
 }
 /* (5) all my players: every starter from both leagues on one screen, grouped by game state */
 async function openSweat() { setSport('nfl'); openSheet('sweat', 'My players', 'Scores'); await loadSweat(); }
@@ -2334,7 +2336,7 @@ function sweatHTML(nfl) {
   L.forEach(({ k, tag, m }) => m.me.rows.filter(r => r.st && r.id !== '0' && r.name).forEach(r => {
     const team = nflAbbr(r.team || ''); const D = isDef(r.pos); const key = D ? 'DEF|' + team : normName(r.name);
     if (!by[key]) { by[key] = { name: D ? team + ' D/ST' : r.name, pos: D ? 'DEF' : r.pos, team, inj: '', lg: [] }; order.push(key); }
-    const e = by[key]; if (!e.inj && r.inj) e.inj = r.inj; e.lg.push({ tag, pts: r.pts, proj: r.proj });
+    const e = by[key]; if (!e.inj && r.inj) e.inj = r.inj; e.lg.push({ tag, k, pts: r.pts, proj: r.proj });
   }));
   const gOf = e => e.team ? nfl.map[e.team] : null;
   const grp = { in: [], pre: [], post: [], none: [] };
@@ -2343,8 +2345,8 @@ function sweatHTML(nfl) {
   grp.in.sort((a, b) => tot(b) - tot(a)); grp.post.sort((a, b) => tot(b) - tot(a));
   grp.pre.sort((a, b) => gOf(a).date - gOf(b).date || (b.lg[0].proj || 0) - (a.lg[0].proj || 0));
   const injTag = v => v ? ` <span style="color:${/^(questionable|q)$/i.test(v) ? 'var(--amber)' : 'var(--red)'};font-size:11px;font-weight:700">${esc(String(v).slice(0, 3).toUpperCase())}</span>` : '';
-  const row = (e, showProj) => `<div class="swr"><div class="pn"><div class="n">${esc(e.name)}${injTag(e.inj)}</div><div class="m">${esc(e.pos)}${e.team ? ' ' + esc(e.team) : ''}${gameTag(e.team, nfl) || ' · no game'}</div></div><div class="swl">${e.lg.map(x => `<span><i>${esc(x.tag)}</i><b>${showProj ? (x.proj != null ? fmtP(x.proj) : '–') : fmtP(x.pts)}</b><small>${showProj ? 'proj' : x.proj != null ? 'proj ' + fmtP(x.proj) : ''}</small></span>`).join('')}</div></div>`;
-  const sum = `<div class="swsum">${L.map(({ tag, m }) => { const o = oddsOf(m); return `<span><i>${esc(tag)}</i>${fmtP(m.me.pts)}${m.opp ? ` <em style="font-style:normal;color:var(--fg3)">–</em> ${fmtP(m.opp.pts)}` : ''}<small class="${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</small></span>`; }).join('')}</div>`;
+  const row = (e, showProj) => `<div class="swr"><div class="pn"><div class="n">${esc(e.name)}${injTag(e.inj)}</div><div class="m">${esc(e.pos)}${e.team ? ' ' + esc(e.team) : ''}${gameTag(e.team, nfl) || ' · no game'}</div></div><div class="swl">${e.lg.map(x => `<span class="${x.k === 'cv' ? 'lgB' : ''}"><i>${esc(x.tag)}</i><b>${showProj ? (x.proj != null ? fmtP(x.proj) : '–') : fmtP(x.pts)}</b><small>${showProj ? 'proj' : x.proj != null ? 'proj ' + fmtP(x.proj) : ''}</small></span>`).join('')}</div></div>`;
+  const sum = `<div class="swsum">${L.map(({ k, tag, m }) => { const o = oddsOf(m); return `<span class="${k === 'cv' ? 'lgB' : ''}"><i>${esc(tag)}</i>${fmtP(m.me.pts)}${m.opp ? ` <em style="font-style:normal;color:var(--fg3)">–</em> ${fmtP(m.opp.pts)}` : ''}<small class="${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</small></span>`; }).join('')}</div>`;
   let out = sec('This week', `Week ${esc(nfl.week || '')}`, sum);
   const block = (title, list, cls, showProj) => list.length ? `<div class="lbl ${cls}">${title}<span class="r">${list.length}</span></div><section class="sec flush">${list.map(e => row(e, showProj)).join('')}</section>` : '';
   out += block('Playing now', grp.in, 'live', false) + block('Still to play', grp.pre, '', true) + block('Done', grp.post, '', false) + block('Not playing', grp.none, '', false);
