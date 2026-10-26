@@ -16,7 +16,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Pirata+One&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
 <style>
 /* Concept: the broadcast truck. Always dark. Every game is a TV score bug in team colours, two per row.
    Your fantasy players ride along on each game; your matchups sit on top. The page itself never scrolls
@@ -362,38 +362,108 @@ button.hero:active{opacity:.85}
 .lc.q{background:color-mix(in srgb,var(--amber) 14%,transparent)}.lc.q b{color:var(--amber)}
 .lc span em{font-style:normal;color:var(--fg2)}
 .inb{font:700 10.5px var(--ui);letter-spacing:.02em;color:var(--red);vertical-align:1px} .inb.q{color:var(--amber)}
-/* Goblin GM: strip under Your matchups + report sheet */
-.grh{display:grid;gap:2px;padding:2px 2px 0}
-.grh .t{font:800 22px/1.15 var(--bc);letter-spacing:.02em}
-.grh .s{font:400 12px/1.35 var(--ui);color:var(--fg2)}
-.glg{margin:6px 0 0;padding:8px 12px;border-radius:10px;background:var(--card2);font:800 16px/1.2 var(--bc);letter-spacing:.05em;text-transform:uppercase}
-.glg small{display:block;font:400 12px var(--ui);letter-spacing:0;text-transform:none;color:var(--fg2);margin-top:1px}
-.gsec{gap:7px}
-.gsec>h2{font-size:12.5px;color:var(--fg)}
-.gsub{margin-top:-5px;font:400 12px/1.35 var(--ui);color:var(--fg2)}
-.gbx{border-left:3px solid var(--amber);background:color-mix(in srgb,var(--amber) 9%,var(--card));border-radius:4px 10px 10px 4px;padding:9px 12px;font:400 13.5px/1.45 var(--ui)}
-.gbx b:first-child{display:block;margin-bottom:2px}
-.gpp{font:400 13.5px/1.5 var(--ui);color:color-mix(in srgb,var(--fg) 90%,transparent)}
-.gtb{width:100%;border-collapse:collapse;font:500 12.5px/1.35 var(--ui);font-variant-numeric:tabular-nums}
-.gtb th{font:700 10px/1.2 var(--ui);letter-spacing:.04em;text-transform:uppercase;color:var(--fg2);text-align:left;padding:0 6px 4px;vertical-align:bottom}
-.gtb td{padding:5px 6px;border-top:1px solid var(--sep);vertical-align:top}
-.gtb th:first-child,.gtb td:first-child{padding-left:2px}
-.gtb .c{text-align:center}
-.gtb.fx td:first-child{min-width:108px}
-.gtb.fx td{padding-left:4px;padding-right:4px}
-.gtb th small{display:block;font:400 10px/1.25 var(--ui);text-transform:none;letter-spacing:0;color:var(--fg3);margin-top:1px}
-.gtb th.pk{color:var(--green)}
-.gtb tr.gg td{font:700 10px var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);background:var(--well);padding:3px 6px}
-.gtb.gd td:first-child{color:var(--fg2);font-size:12px}
-.gst{display:grid;gap:6px}
-.gr{border-left:3px solid var(--sep);background:var(--well);border-radius:3px 8px 8px 3px;padding:6px 9px;display:grid;gap:3px}
-.gr .gt{font:600 13.5px/1.35 var(--ui)}
-.gr .gt .tag{display:inline-block;min-width:22px;margin-right:6px;padding:1px 5px;border-radius:4px;background:var(--fill);font:700 11px/1.4 var(--bc);letter-spacing:.06em;text-align:center;color:var(--fg2);vertical-align:1px}
-.gr .kv{display:flex;flex-wrap:wrap;gap:3px 12px;font:600 12.5px/1.3 var(--ui);font-variant-numeric:tabular-nums}
-.gr .kv i,.gr .ln i{font-style:normal;font:600 9.5px var(--ui);letter-spacing:.05em;text-transform:uppercase;color:var(--fg3);margin-right:4px}
-.gr .ln{font:400 12.5px/1.4 var(--ui);color:color-mix(in srgb,var(--fg) 88%,transparent)}
-.gsrc{font:400 11.5px/1.5 var(--ui);color:var(--fg2);padding:0 2px}
-.gsrc a{color:var(--blue)}
+/* Goblin GM report sheet: built from the shared Goblin's Ledger source */
+/*LEDGER-CSS*/
+/* ---- The Goblin's Ledger: stone wall, burnt parchment, wax and cobwebs ---- */
+#sheet.gob #shScroll{background-color:#141210;background-image:radial-gradient(60% 50% at 0% 0%,rgba(255,140,30,.28),transparent 70%),radial-gradient(60% 50% at 100% 60%,rgba(255,140,30,.18),transparent 70%),url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'252'%20height%3D'220'%3E%0A%3Cfilter%20id%3D'n'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.9'%20numOctaves%3D'3'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%20.55%200'%2F%3E%3C%2Ffilter%3E%0A%3Cfilter%20id%3D'b'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.035'%20numOctaves%3D'4'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%20.7%20-.05'%2F%3E%3C%2Ffilter%3E%0A%3Cfilter%20id%3D'm'%3E%3CfeTurbulence%20type%3D'turbulence'%20baseFrequency%3D'.08'%20numOctaves%3D'3'%20seed%3D'4'%2F%3E%3CfeDisplacementMap%20in%3D'SourceGraphic'%20scale%3D'14'%2F%3E%3C%2Ffilter%3E%0A%3Crect%20width%3D'252'%20height%3D'220'%20fill%3D'%23141210'%2F%3E%3Crect%20x%3D%22-82%22%20y%3D%222%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%2336322b%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%222%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%23333028%22%2F%3E%3Crect%20x%3D%2286%22%20y%3D%222%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232f2c26%22%2F%3E%3Crect%20x%3D%22170%22%20y%3D%222%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232f2c26%22%2F%3E%3Crect%20x%3D%22254%22%20y%3D%222%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232b2924%22%2F%3E%3Crect%20x%3D%22-40%22%20y%3D%2246%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%233a352d%22%2F%3E%3Crect%20x%3D%2244%22%20y%3D%2246%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232f2c26%22%2F%3E%3Crect%20x%3D%22128%22%20y%3D%2246%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232b2924%22%2F%3E%3Crect%20x%3D%22212%22%20y%3D%2246%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232b2924%22%2F%3E%3Crect%20x%3D%22296%22%20y%3D%2246%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%233a352d%22%2F%3E%3Crect%20x%3D%22-82%22%20y%3D%2290%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232b2924%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%2290%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232b2924%22%2F%3E%3Crect%20x%3D%2286%22%20y%3D%2290%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%23333028%22%2F%3E%3Crect%20x%3D%22170%22%20y%3D%2290%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232f2c26%22%2F%3E%3Crect%20x%3D%22254%22%20y%3D%2290%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232f2c26%22%2F%3E%3Crect%20x%3D%22-40%22%20y%3D%22134%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232b2924%22%2F%3E%3Crect%20x%3D%2244%22%20y%3D%22134%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232b2924%22%2F%3E%3Crect%20x%3D%22128%22%20y%3D%22134%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%2336322b%22%2F%3E%3Crect%20x%3D%22212%22%20y%3D%22134%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%232b2924%22%2F%3E%3Crect%20x%3D%22296%22%20y%3D%22134%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%233a352d%22%2F%3E%3Crect%20x%3D%22-82%22%20y%3D%22178%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%23333028%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%22178%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%23333028%22%2F%3E%3Crect%20x%3D%2286%22%20y%3D%22178%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%2336322b%22%2F%3E%3Crect%20x%3D%22170%22%20y%3D%22178%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%233a352d%22%2F%3E%3Crect%20x%3D%22254%22%20y%3D%22178%22%20width%3D%2280%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22%23333028%22%2F%3E%0A%3Crect%20width%3D'252'%20height%3D'220'%20filter%3D'url(%23b)'%2F%3E%3Crect%20width%3D'252'%20height%3D'220'%20filter%3D'url(%23n)'%20opacity%3D'.6'%2F%3E%0A%3Cg%20filter%3D'url(%23m)'%20opacity%3D'.55'%3E%3Cellipse%20cx%3D'42'%20cy%3D'44'%20rx%3D'26'%20ry%3D'8'%20fill%3D'%234d6b26'%2F%3E%3Cellipse%20cx%3D'210'%20cy%3D'132'%20rx%3D'20'%20ry%3D'7'%20fill%3D'%233f5c1f'%2F%3E%3Cellipse%20cx%3D'126'%20cy%3D'176'%20rx%3D'14'%20ry%3D'5'%20fill%3D'%235a7a2c'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");background-size:100% 900px,100% 900px,auto;background-repeat:no-repeat,no-repeat,repeat;background-attachment:local}
+#sheet.gob #shBody{--lg-ink:#3a2512;--lg-ink2:#6e5130;--lg-rule:#8a6a3c;--lg-blood:#8b1d10;--lg-gold:#f0c46a;--lg-paper:#e6d2a6;--lg-note-paper:#ead594;
+  --lg-good:rgba(70,130,40,.22);--lg-bad:rgba(170,40,20,.17);--lg-warn:rgba(205,145,30,.26);--lg-muted:rgba(110,70,20,.1);--lg-note:rgba(205,145,30,.14);--lg-pick:rgba(70,130,40,.14);
+  --lg-good-ink:#3f8f22;--lg-bad-ink:#b3301a;--lg-warn-ink:#c98a12;
+  --lg-ui:var(--ui,-apple-system,BlinkMacSystemFont,"Helvetica Neue",system-ui,sans-serif);--lg-fell:"IM Fell English",Georgia,"Times New Roman",serif;--lg-fellsc:"IM Fell English SC",Georgia,serif;--lg-pirate:"Pirata One","Palatino Linotype",Georgia,serif;--lg-frak:"UnifrakturMaguntia","Old English Text MT",Georgia,serif;
+  position:relative;display:flex;flex-direction:column;gap:14px;padding-top:14px;padding-bottom:10px}
+#sheet.gob #shBody::before{content:'';position:absolute;top:0;right:-6px;width:150px;height:150px;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'150'%20height%3D'150'%3E%3Cpath%20d%3D'M150%200L150.0%20150.0M150%200L111.2%20144.9M150%200L75.0%20129.9M150%200L43.9%20106.1M150%200L20.1%2075.0M150%200L5.1%2038.8M150%200L0.0%200.0M150.0%2022.0Q147.5%2018.8%20144.3%2021.3M144.3%2021.3Q142.8%2017.5%20139.0%2019.1M139.0%2019.1Q138.5%2015.0%20134.4%2015.6M134.4%2015.6Q135.0%2011.5%20130.9%2011.0M130.9%2011.0Q132.5%207.2%20128.7%205.7M128.7%205.7Q131.2%202.5%20128.0%200.0M150.0%2044.0Q145.1%2037.5%20138.6%2042.5M138.6%2042.5Q135.5%2035.0%20128.0%2038.1M128.0%2038.1Q127.0%2030.0%20118.9%2031.1M118.9%2031.1Q120.0%2023.0%20111.9%2022.0M111.9%2022.0Q115.0%2014.5%20107.5%2011.4M107.5%2011.4Q112.5%204.9%20106.0%200.0M150.0%2068.0Q142.4%2058.0%20132.4%2065.7M132.4%2065.7Q127.6%2054.0%20116.0%2058.9M116.0%2058.9Q114.4%2046.4%20101.9%2048.1M101.9%2048.1Q103.6%2035.6%2091.1%2034.0M91.1%2034.0Q96.0%2022.4%2084.3%2017.6M84.3%2017.6Q92.0%207.6%2082.0%200.0M150.0%2094.0Q139.4%2080.1%20125.7%2090.8M125.7%2090.8Q119.1%2074.7%20103.0%2081.4M103.0%2081.4Q100.8%2064.1%2083.5%2066.5M83.5%2066.5Q85.9%2049.2%2068.6%2047.0M68.6%2047.0Q75.3%2030.9%2059.2%2024.3M59.2%2024.3Q69.9%2010.6%2056.0%200.0M150.0%20122.0Q136.3%20104.0%20118.4%20117.8M118.4%20117.8Q109.8%2096.9%2089.0%20105.7M89.0%20105.7Q86.1%2083.2%2063.7%2086.3M63.7%2086.3Q66.8%2063.9%2044.3%2061.0M44.3%2061.0Q53.1%2040.2%2032.2%2031.6M32.2%2031.6Q46.0%2013.7%2028.0%200.0'%20fill%3D'none'%20stroke%3D'rgba(230%2C225%2C210%2C.42)'%20stroke-width%3D'.9'%2F%3E%3C%2Fsvg%3E");pointer-events:none;z-index:3}
+#sheet.gob #shBody::after{content:'🕷️';position:absolute;top:0;right:41px;padding-top:34px;font-size:17px;line-height:1;z-index:3;pointer-events:none;background:linear-gradient(rgba(230,225,210,.55),rgba(230,225,210,.55)) 50% 0/1px 38px no-repeat;filter:drop-shadow(0 2px 2px #000)}
+/* report tabs: wooden tags on nails */
+#sheet.gob #shBody .pls{display:flex;flex-wrap:wrap;gap:8px;padding:0 4px}
+#sheet.gob #shBody .pls button{position:relative;font:400 16px var(--lg-pirate);letter-spacing:.03em;text-transform:none;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'600'%20height%3D'120'%3E%0A%3Cfilter%20id%3D'w'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.004%20.18'%20numOctaves%3D'4'%20seed%3D'3'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.1%200%200%200%200%20.05%200%200%200%200%20.01%200%200%200%201.1%20-.35'%2F%3E%3C%2Ffilter%3E%0A%3Crect%20width%3D'600'%20height%3D'120'%20fill%3D'%235b3a1f'%2F%3E%3Crect%20width%3D'600'%20height%3D'120'%20filter%3D'url(%23w)'%2F%3E%3C%2Fsvg%3E"),#5b3a1f;color:#e9cf9b;border:0;border-radius:3px 3px 10px 10px;padding:9px 14px 6px;box-shadow:0 3px 6px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,160,.2);text-shadow:0 1px 0 #000;cursor:pointer}
+#sheet.gob #shBody .pls button::before{content:'';position:absolute;top:3px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#1a1006;box-shadow:0 1px 0 rgba(255,220,160,.3)}
+#sheet.gob #shBody .pls button.on{color:#fff1cf;box-shadow:0 0 0 2px #c0391f,0 3px 8px rgba(0,0,0,.6),0 0 16px rgba(255,90,40,.35)}
+/* parchment is drawn on a clipped layer so the torn edge keeps its drop shadow */
+#sheet.gob #shBody .grh,#sheet.gob #shBody .gsec,#sheet.gob #shBody .gbx,#sheet.gob #shBody .gempty{position:relative;isolation:isolate;filter:drop-shadow(0 6px 8px rgba(0,0,0,.65));color:var(--lg-ink)}
+#sheet.gob #shBody .grh::before,#sheet.gob #shBody .gsec::before,#sheet.gob #shBody .gbx::before,#sheet.gob #shBody .gempty::before{content:'';position:absolute;inset:0;z-index:-1;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'320'%20height%3D'320'%3E%0A%3Cfilter%20id%3D'g'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.85'%20numOctaves%3D'3'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.36%200%200%200%200%20.24%200%200%200%200%20.1%200%200%200%20.3%200'%2F%3E%3C%2Ffilter%3E%0A%3Cfilter%20id%3D'mo'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.012'%20numOctaves%3D'3'%20stitchTiles%3D'stitch'%20seed%3D'9'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.45%200%200%200%200%20.3%200%200%200%200%20.1%200%200%200%20.9%20-.32'%2F%3E%3C%2Ffilter%3E%0A%3Cfilter%20id%3D'f'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.02%20.6'%20numOctaves%3D'2'%20stitchTiles%3D'stitch'%20seed%3D'2'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.3%200%200%200%200%20.2%200%200%200%200%20.1%200%200%200%20.5%20-.25'%2F%3E%3C%2Ffilter%3E%0A%3Crect%20width%3D'320'%20height%3D'320'%20filter%3D'url(%23mo)'%2F%3E%3Crect%20width%3D'320'%20height%3D'320'%20filter%3D'url(%23f)'%2F%3E%3Crect%20width%3D'320'%20height%3D'320'%20filter%3D'url(%23g)'%2F%3E%3C%2Fsvg%3E"),var(--lg-paper);
+  box-shadow:inset 0 0 26px rgba(110,55,10,.6),inset 0 0 6px rgba(70,30,5,.9),inset 0 0 70px rgba(150,90,30,.25);clip-path:polygon(0.00% 3.4px,2.27% 3.2px,4.55% 2.9px,6.82% 4.6px,9.09% 4.5px,11.36% 1.9px,13.64% 1.7px,15.91% 4.2px,18.18% 1.7px,20.45% 0.8px,22.73% 1.5px,25.00% 2.1px,27.27% 1.5px,29.55% 4.7px,31.82% 2.8px,34.09% 3.6px,36.36% 4.4px,38.64% 0.3px,40.91% 1.4px,43.18% 2.8px,45.45% 2.5px,47.73% 2.1px,50.00% 1.0px,52.27% 4.5px,54.55% 0.3px,56.82% 1.8px,59.09% 1.7px,61.36% 3.3px,63.64% 4.6px,65.91% 2.6px,68.18% 0.8px,70.45% 2.0px,72.73% 1.4px,75.00% 1.8px,77.27% 2.1px,79.55% 1.7px,81.82% 2.7px,84.09% 3.1px,86.36% 1.2px,88.64% 4.5px,90.91% 2.3px,93.18% 4.3px,95.45% 3.2px,97.73% 3.2px,100.00% 2.6px,calc(100% - 1.5px) 12.5%,calc(100% - 2.1px) 25.0%,calc(100% - 2.8px) 37.5%,calc(100% - 1.2px) 50.0%,calc(100% - 2.1px) 62.5%,calc(100% - 0.8px) 75.0%,calc(100% - 1.8px) 87.5%,100.00% calc(100% - 1.8px),97.73% calc(100% - 1.7px),95.45% calc(100% - 2.0px),93.18% calc(100% - 4.0px),90.91% calc(100% - 4.4px),88.64% calc(100% - 0.6px),86.36% calc(100% - 4.1px),84.09% calc(100% - 0.4px),81.82% calc(100% - 2.0px),79.55% calc(100% - 0.8px),77.27% calc(100% - 0.4px),75.00% calc(100% - 5.0px),72.73% calc(100% - 1.1px),70.45% calc(100% - 3.2px),68.18% calc(100% - 0.7px),65.91% calc(100% - 2.3px),63.64% calc(100% - 3.0px),61.36% calc(100% - 0.7px),59.09% calc(100% - 4.6px),56.82% calc(100% - 4.4px),54.55% calc(100% - 4.5px),52.27% calc(100% - 4.4px),50.00% calc(100% - 4.5px),47.73% calc(100% - 3.8px),45.45% calc(100% - 1.4px),43.18% calc(100% - 0.1px),40.91% calc(100% - 1.2px),38.64% calc(100% - 0.4px),36.36% calc(100% - 0.0px),34.09% calc(100% - 3.1px),31.82% calc(100% - 1.2px),29.55% calc(100% - 3.7px),27.27% calc(100% - 2.4px),25.00% calc(100% - 3.4px),22.73% calc(100% - 1.2px),20.45% calc(100% - 4.4px),18.18% calc(100% - 1.2px),15.91% calc(100% - 1.9px),13.64% calc(100% - 4.5px),11.36% calc(100% - 0.6px),9.09% calc(100% - 2.4px),6.82% calc(100% - 0.0px),4.55% calc(100% - 4.6px),2.27% calc(100% - 3.2px),0.00% calc(100% - 4.6px),0.1px 87.5%,2.7px 75.0%,0.6px 62.5%,2.9px 50.0%,1.7px 37.5%,2.0px 25.0%,0.8px 12.5%)}
+#sheet.gob #shBody .gsec:nth-of-type(even)::before{clip-path:polygon(0.00% 1.1px,2.27% 1.0px,4.55% 2.8px,6.82% 0.3px,9.09% 3.8px,11.36% 3.5px,13.64% 3.6px,15.91% 2.5px,18.18% 0.2px,20.45% 0.6px,22.73% 4.6px,25.00% 0.7px,27.27% 3.4px,29.55% 4.5px,31.82% 0.2px,34.09% 4.4px,36.36% 4.3px,38.64% 5.0px,40.91% 4.8px,43.18% 3.8px,45.45% 2.1px,47.73% 1.2px,50.00% 3.6px,52.27% 4.4px,54.55% 2.0px,56.82% 1.2px,59.09% 2.0px,61.36% 4.4px,63.64% 2.8px,65.91% 1.8px,68.18% 3.1px,70.45% 3.7px,72.73% 1.7px,75.00% 3.6px,77.27% 2.1px,79.55% 1.0px,81.82% 1.6px,84.09% 4.9px,86.36% 5.0px,88.64% 3.2px,90.91% 4.4px,93.18% 4.6px,95.45% 1.0px,97.73% 3.2px,100.00% 0.7px,calc(100% - 1.5px) 12.5%,calc(100% - 1.7px) 25.0%,calc(100% - 2.3px) 37.5%,calc(100% - 2.8px) 50.0%,calc(100% - 1.4px) 62.5%,calc(100% - 0.6px) 75.0%,calc(100% - 1.3px) 87.5%,100.00% calc(100% - 0.8px),97.73% calc(100% - 3.3px),95.45% calc(100% - 2.6px),93.18% calc(100% - 2.8px),90.91% calc(100% - 2.5px),88.64% calc(100% - 3.8px),86.36% calc(100% - 1.8px),84.09% calc(100% - 3.8px),81.82% calc(100% - 0.1px),79.55% calc(100% - 1.5px),77.27% calc(100% - 2.7px),75.00% calc(100% - 1.0px),72.73% calc(100% - 3.6px),70.45% calc(100% - 1.5px),68.18% calc(100% - 1.2px),65.91% calc(100% - 3.3px),63.64% calc(100% - 2.1px),61.36% calc(100% - 0.4px),59.09% calc(100% - 3.9px),56.82% calc(100% - 4.1px),54.55% calc(100% - 4.6px),52.27% calc(100% - 4.6px),50.00% calc(100% - 3.4px),47.73% calc(100% - 4.8px),45.45% calc(100% - 0.1px),43.18% calc(100% - 3.8px),40.91% calc(100% - 3.0px),38.64% calc(100% - 3.6px),36.36% calc(100% - 4.5px),34.09% calc(100% - 0.2px),31.82% calc(100% - 0.7px),29.55% calc(100% - 0.4px),27.27% calc(100% - 0.5px),25.00% calc(100% - 0.4px),22.73% calc(100% - 0.0px),20.45% calc(100% - 3.0px),18.18% calc(100% - 4.7px),15.91% calc(100% - 1.0px),13.64% calc(100% - 0.7px),11.36% calc(100% - 1.0px),9.09% calc(100% - 3.4px),6.82% calc(100% - 1.2px),4.55% calc(100% - 2.3px),2.27% calc(100% - 5.0px),0.00% calc(100% - 2.1px),2.0px 87.5%,2.3px 75.0%,1.2px 62.5%,1.2px 50.0%,0.2px 37.5%,0.7px 25.0%,2.4px 12.5%)}
+#sheet.gob #shBody .gsec:nth-of-type(3n)::before{clip-path:polygon(0.00% 4.9px,2.27% 0.8px,4.55% 4.6px,6.82% 2.5px,9.09% 0.6px,11.36% 1.1px,13.64% 3.0px,15.91% 0.9px,18.18% 0.4px,20.45% 1.4px,22.73% 3.2px,25.00% 2.8px,27.27% 2.4px,29.55% 5.0px,31.82% 0.4px,34.09% 2.1px,36.36% 1.6px,38.64% 0.0px,40.91% 0.0px,43.18% 2.1px,45.45% 0.5px,47.73% 1.2px,50.00% 4.6px,52.27% 3.9px,54.55% 3.8px,56.82% 2.2px,59.09% 4.3px,61.36% 4.8px,63.64% 4.0px,65.91% 3.3px,68.18% 2.9px,70.45% 1.7px,72.73% 2.0px,75.00% 2.5px,77.27% 2.5px,79.55% 2.8px,81.82% 3.6px,84.09% 3.3px,86.36% 3.2px,88.64% 3.6px,90.91% 4.4px,93.18% 4.2px,95.45% 4.9px,97.73% 2.2px,100.00% 2.4px,calc(100% - 2.9px) 12.5%,calc(100% - 2.9px) 25.0%,calc(100% - 1.1px) 37.5%,calc(100% - 0.2px) 50.0%,calc(100% - 1.0px) 62.5%,calc(100% - 2.6px) 75.0%,calc(100% - 2.1px) 87.5%,100.00% calc(100% - 3.7px),97.73% calc(100% - 4.8px),95.45% calc(100% - 3.9px),93.18% calc(100% - 1.0px),90.91% calc(100% - 1.2px),88.64% calc(100% - 4.0px),86.36% calc(100% - 0.5px),84.09% calc(100% - 4.6px),81.82% calc(100% - 4.0px),79.55% calc(100% - 3.2px),77.27% calc(100% - 3.6px),75.00% calc(100% - 2.7px),72.73% calc(100% - 2.2px),70.45% calc(100% - 4.4px),68.18% calc(100% - 2.8px),65.91% calc(100% - 4.4px),63.64% calc(100% - 1.4px),61.36% calc(100% - 3.4px),59.09% calc(100% - 2.2px),56.82% calc(100% - 2.0px),54.55% calc(100% - 0.9px),52.27% calc(100% - 2.9px),50.00% calc(100% - 1.2px),47.73% calc(100% - 4.5px),45.45% calc(100% - 4.1px),43.18% calc(100% - 1.7px),40.91% calc(100% - 3.4px),38.64% calc(100% - 4.4px),36.36% calc(100% - 0.6px),34.09% calc(100% - 1.5px),31.82% calc(100% - 4.6px),29.55% calc(100% - 0.0px),27.27% calc(100% - 0.7px),25.00% calc(100% - 2.0px),22.73% calc(100% - 0.1px),20.45% calc(100% - 3.5px),18.18% calc(100% - 4.5px),15.91% calc(100% - 0.9px),13.64% calc(100% - 1.1px),11.36% calc(100% - 4.7px),9.09% calc(100% - 3.5px),6.82% calc(100% - 0.9px),4.55% calc(100% - 0.6px),2.27% calc(100% - 3.1px),0.00% calc(100% - 0.1px),2.4px 87.5%,1.8px 75.0%,2.3px 62.5%,0.4px 50.0%,1.0px 37.5%,2.1px 25.0%,2.9px 12.5%)}
+#sheet.gob #shBody .gsec{display:grid;gap:9px;min-width:0;padding:18px 16px 16px}
+#sheet.gob #shBody .gsec:nth-of-type(odd){transform:rotate(-.35deg)}
+#sheet.gob #shBody .gsec:nth-of-type(even){transform:rotate(.3deg)}
+/* the title scroll */
+#sheet.gob #shBody .grh{margin:4px 6px 0;padding:20px 26px 16px;text-align:center}
+#sheet.gob #shBody .grh .roll{position:absolute;top:-6px;bottom:-6px;width:16px;border-radius:8px;z-index:1}
+#sheet.gob #shBody .grh .roll.l{left:-6px;background:linear-gradient(90deg,#6b4a22,#d9bb83 45%,#7b5628)}
+#sheet.gob #shBody .grh .roll.r{right:-6px;background:linear-gradient(90deg,#7b5628,#d9bb83 55%,#6b4a22)}
+#sheet.gob #shBody .grh .t{font:400 37px/1.05 var(--lg-frak);color:var(--lg-blood);text-shadow:0 1px 0 rgba(255,240,200,.5);text-wrap:balance}
+#sheet.gob #shBody .grh .s{font:italic 400 15px/1.35 var(--lg-fell);color:var(--lg-ink2);margin-top:6px}
+#sheet.gob #shBody .grh .s::after{content:'~ ❧ ~';display:block;margin-top:6px;color:var(--lg-rule);letter-spacing:.2em;font-style:normal}
+/* league banners: cloth in each league's colour (PFL violet, BELL teal) */
+#sheet.gob #shBody .glg{position:relative;margin:4px 0 0;padding:10px 40px 12px;text-align:center;color:#f6d98f;text-shadow:0 2px 0 rgba(0,0,0,.6);
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'8'%20height%3D'8'%3E%3Cpath%20d%3D'M0%200h8v8H0z'%20fill%3D'none'%2F%3E%3Cpath%20d%3D'M0%204h8M4%200v8'%20stroke%3D'rgba(0%2C0%2C0%2C.18)'%20stroke-width%3D'1'%2F%3E%3C%2Fsvg%3E"),linear-gradient(180deg,rgba(255,255,255,.12),transparent 40%,rgba(0,0,0,.3)),#4b2a7a;clip-path:polygon(0 0,100% 0,95% 50%,100% 100%,0 100%,5% 50%);box-shadow:inset 0 0 0 3px rgba(240,196,106,.55)}
+#sheet.gob #shBody .glg.bell{background:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'8'%20height%3D'8'%3E%3Cpath%20d%3D'M0%200h8v8H0z'%20fill%3D'none'%2F%3E%3Cpath%20d%3D'M0%204h8M4%200v8'%20stroke%3D'rgba(0%2C0%2C0%2C.18)'%20stroke-width%3D'1'%2F%3E%3C%2Fsvg%3E"),linear-gradient(180deg,rgba(255,255,255,.12),transparent 40%,rgba(0,0,0,.3)),#145f57}
+#sheet.gob #shBody .glg b{display:block;font:400 25px/1.15 var(--lg-pirate);letter-spacing:.04em}
+#sheet.gob #shBody .glg small{display:block;font:italic 400 14px var(--lg-fell);color:#ecdcb5;margin-top:2px;text-shadow:none}
+#sheet.gob #shBody .glg::before,#sheet.gob #shBody .glg::after{content:'⚔';position:absolute;top:50%;transform:translateY(-50%);font-size:16px;color:var(--lg-gold);left:30px;text-shadow:none}
+#sheet.gob #shBody .glg::after{left:auto;right:30px}
+/* section headings and running text */
+#sheet.gob #shBody .gsec>h2{margin:0;font:400 26px/1.05 var(--lg-pirate);letter-spacing:.02em;text-transform:none;color:var(--lg-blood);padding-bottom:5px;border-bottom:2px solid transparent;border-image:linear-gradient(90deg,transparent,var(--lg-rule) 12%,var(--lg-rule) 88%,transparent) 1;text-wrap:balance}
+#sheet.gob #shBody .gsub{font:italic 400 15px var(--lg-fell);color:var(--lg-ink2);margin-top:-4px}
+#sheet.gob #shBody .gpp{margin:0;font:400 16px/1.45 var(--lg-fell);color:var(--lg-ink)}
+#sheet.gob #shBody .gpp b{font:700 14px var(--lg-ui)}
+#sheet.gob #shBody .gsec>.gpp:first-of-type:not(:has(.seal))::first-letter{font:400 40px/0.8 var(--lg-frak);color:var(--lg-blood);float:left;margin:4px 6px 0 0}
+/* pinned notes: a dagger through yellowed paper, with a stain */
+#sheet.gob #shBody .gbx{margin:14px 4px 0;padding:26px 18px 16px;transform:rotate(-.8deg);font:400 16px/1.45 var(--lg-fell)}
+#sheet.gob #shBody .gbx::before{background:radial-gradient(circle at 86% 78%,transparent 0 30px,rgba(120,70,20,.28) 31px 34px,rgba(120,70,20,.08) 35px 40px,transparent 41px),url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'320'%20height%3D'320'%3E%0A%3Cfilter%20id%3D'g'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.85'%20numOctaves%3D'3'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.36%200%200%200%200%20.24%200%200%200%200%20.1%200%200%200%20.3%200'%2F%3E%3C%2Ffilter%3E%0A%3Cfilter%20id%3D'mo'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.012'%20numOctaves%3D'3'%20stitchTiles%3D'stitch'%20seed%3D'9'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.45%200%200%200%200%20.3%200%200%200%200%20.1%200%200%200%20.9%20-.32'%2F%3E%3C%2Ffilter%3E%0A%3Cfilter%20id%3D'f'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.02%20.6'%20numOctaves%3D'2'%20stitchTiles%3D'stitch'%20seed%3D'2'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.3%200%200%200%200%20.2%200%200%200%200%20.1%200%200%200%20.5%20-.25'%2F%3E%3C%2Ffilter%3E%0A%3Crect%20width%3D'320'%20height%3D'320'%20filter%3D'url(%23mo)'%2F%3E%3Crect%20width%3D'320'%20height%3D'320'%20filter%3D'url(%23f)'%2F%3E%3Crect%20width%3D'320'%20height%3D'320'%20filter%3D'url(%23g)'%2F%3E%3C%2Fsvg%3E"),var(--lg-note-paper);clip-path:polygon(0.00% 3.8px,3.33% 4.1px,6.67% 5.4px,10.00% 4.9px,13.33% 5.1px,16.67% 4.2px,20.00% 0.7px,23.33% 0.3px,26.67% 4.3px,30.00% 1.6px,33.33% 4.1px,36.67% 1.8px,40.00% 1.6px,43.33% 4.3px,46.67% 4.4px,50.00% 5.7px,53.33% 1.7px,56.67% 6.3px,60.00% 0.4px,63.33% 4.8px,66.67% 2.8px,70.00% 5.5px,73.33% 4.6px,76.67% 5.6px,80.00% 0.7px,83.33% 6.4px,86.67% 3.5px,90.00% 5.8px,93.33% 3.0px,96.67% 6.1px,100.00% 5.5px,calc(100% - 2.2px) 12.5%,calc(100% - 2.7px) 25.0%,calc(100% - 2.6px) 37.5%,calc(100% - 0.6px) 50.0%,calc(100% - 2.2px) 62.5%,calc(100% - 0.5px) 75.0%,calc(100% - 0.4px) 87.5%,100.00% calc(100% - 6.6px),96.67% calc(100% - 6.7px),93.33% calc(100% - 0.4px),90.00% calc(100% - 0.5px),86.67% calc(100% - 1.8px),83.33% calc(100% - 6.6px),80.00% calc(100% - 6.1px),76.67% calc(100% - 6.7px),73.33% calc(100% - 1.9px),70.00% calc(100% - 1.4px),66.67% calc(100% - 0.2px),63.33% calc(100% - 3.3px),60.00% calc(100% - 3.9px),56.67% calc(100% - 1.0px),53.33% calc(100% - 2.3px),50.00% calc(100% - 3.4px),46.67% calc(100% - 1.6px),43.33% calc(100% - 0.4px),40.00% calc(100% - 0.3px),36.67% calc(100% - 0.7px),33.33% calc(100% - 4.4px),30.00% calc(100% - 3.3px),26.67% calc(100% - 5.7px),23.33% calc(100% - 5.1px),20.00% calc(100% - 3.6px),16.67% calc(100% - 4.9px),13.33% calc(100% - 2.7px),10.00% calc(100% - 4.3px),6.67% calc(100% - 6.8px),3.33% calc(100% - 5.4px),0.00% calc(100% - 6.7px),2.1px 87.5%,1.8px 75.0%,2.4px 62.5%,0.5px 50.0%,0.2px 37.5%,2.2px 25.0%,1.9px 12.5%)}
+#sheet.gob #shBody .gbx .gbt{display:block;text-align:center;font:400 25px/1.1 var(--lg-pirate);color:var(--lg-blood);margin-bottom:6px;text-wrap:balance}
+#sheet.gob #shBody .gbx b:not(.gbt){font:700 14.5px var(--lg-ui)}
+#sheet.gob #shBody .gbx .dagger{position:absolute;top:-16px;left:50%;margin-left:-14px;font-size:28px;transform:rotate(135deg);filter:drop-shadow(1px 3px 2px rgba(0,0,0,.6));z-index:2}
+/* ledger entries (wide tables, one entry per row) */
+#sheet.gob #shBody .gst{display:grid;gap:7px}
+#sheet.gob #shBody .gr{display:grid;gap:3px;background:rgba(120,80,30,.1);border-left:3px solid rgba(110,80,40,.45);border-radius:2px;padding:7px 10px;box-shadow:inset 0 -1px 0 rgba(110,80,40,.25)}
+#sheet.gob #shBody .gr .gt{color:var(--lg-ink);font:700 14.5px/1.35 var(--lg-ui)}
+#sheet.gob #shBody .gr .gt .tag{display:inline-block;min-width:22px;margin-right:7px;padding:1px 6px;text-align:center;background:radial-gradient(circle at 35% 30%,#c8402c,#8b1d10 70%);color:#ffe2cf;border-radius:9px 7px 10px 6px;font:400 14px/1.45 var(--lg-pirate);letter-spacing:.04em;box-shadow:0 1px 2px rgba(0,0,0,.5),inset 0 0 0 1.5px rgba(0,0,0,.18);vertical-align:1px}
+#sheet.gob #shBody .gr .kv{display:flex;flex-wrap:wrap;align-items:center;gap:3px 12px;color:var(--lg-ink);font:600 14px/1.35 var(--lg-ui);font-variant-numeric:tabular-nums}
+#sheet.gob #shBody .gr .kv i,#sheet.gob #shBody .gr .ln i{font:400 13px var(--lg-fellsc);font-style:normal;letter-spacing:.02em;color:var(--lg-rule);margin-right:4px}
+#sheet.gob #shBody .gr .ln{color:var(--lg-ink);font:400 15px/1.4 var(--lg-fell)}
+/* tables */
+#sheet.gob #shBody .gscroll{overflow-x:auto;min-width:0}
+#sheet.gob #shBody .gtb{width:100%;border-collapse:collapse;color:var(--lg-ink);font:500 14px/1.35 var(--lg-ui);font-variant-numeric:tabular-nums}
+#sheet.gob #shBody .gtb th{font:400 13.5px/1.2 var(--lg-fellsc);letter-spacing:.02em;text-transform:none;color:var(--lg-rule);text-align:left;padding:0 6px 4px;vertical-align:bottom}
+#sheet.gob #shBody .gtb td{padding:6px;border-top:1px dashed rgba(110,80,40,.45);vertical-align:top}
+#sheet.gob #shBody .gtb th:first-child,#sheet.gob #shBody .gtb td:first-child{padding-left:2px}
+#sheet.gob #shBody .gtb .c{text-align:center}
+#sheet.gob #shBody .gtb td.b{font-weight:700}
+#sheet.gob #shBody .gtb.fx td:first-child{min-width:108px}
+#sheet.gob #shBody .gtb.fx td{padding-left:4px;padding-right:4px}
+#sheet.gob #shBody .gtb th small{display:block;color:var(--lg-rule);font:italic 400 12px/1.25 var(--lg-fell);margin-top:1px}
+#sheet.gob #shBody .gtb th.pk{color:var(--lg-good-ink)}
+#sheet.gob #shBody .gtb tr.gg td{background:rgba(110,70,20,.16);color:var(--lg-blood);font:400 16px var(--lg-pirate);letter-spacing:.04em;padding:3px 6px}
+#sheet.gob #shBody .gtb.gd td:first-child{color:var(--lg-ink2);font:italic 400 14px var(--lg-fell)}
+/* matchup chips */
+#sheet.gob #shBody .mu{display:inline-block;padding:1px 7px;border-radius:999px;font:700 12.5px/1.45 var(--lg-ui);white-space:nowrap;color:#fff6e6;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+#sheet.gob #shBody .mu.g{background:#4f7f2a} #sheet.gob #shBody .mu.y{background:#a87814} #sheet.gob #shBody .mu.r{background:#a8321c}
+/* the Goblin talks */
+#sheet.gob #shBody .quip{position:relative;margin:10px 0 2px 2px;padding:12px 12px 10px 54px;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'320'%20height%3D'320'%3E%0A%3Cfilter%20id%3D'g'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.85'%20numOctaves%3D'3'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.36%200%200%200%200%20.24%200%200%200%200%20.1%200%200%200%20.3%200'%2F%3E%3C%2Ffilter%3E%0A%3Cfilter%20id%3D'mo'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.012'%20numOctaves%3D'3'%20stitchTiles%3D'stitch'%20seed%3D'9'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.45%200%200%200%200%20.3%200%200%200%200%20.1%200%200%200%20.9%20-.32'%2F%3E%3C%2Ffilter%3E%0A%3Cfilter%20id%3D'f'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.02%20.6'%20numOctaves%3D'2'%20stitchTiles%3D'stitch'%20seed%3D'2'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.3%200%200%200%200%20.2%200%200%200%200%20.1%200%200%200%20.5%20-.25'%2F%3E%3C%2Ffilter%3E%0A%3Crect%20width%3D'320'%20height%3D'320'%20filter%3D'url(%23mo)'%2F%3E%3Crect%20width%3D'320'%20height%3D'320'%20filter%3D'url(%23f)'%2F%3E%3Crect%20width%3D'320'%20height%3D'320'%20filter%3D'url(%23g)'%2F%3E%3C%2Fsvg%3E"),#c9d99a;border-radius:18px 18px 18px 3px;box-shadow:0 2px 0 #3f5a1a,inset 0 0 0 1.5px rgba(50,80,20,.55);font:italic 400 15.5px/1.4 var(--lg-fell);color:#24360b}
+#sheet.gob #shBody .quip::before{content:'🧌';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;display:grid;place-items:center;font-size:24px;font-style:normal;border-radius:50%;background:radial-gradient(circle,#6a8f2f,#2c4310);box-shadow:0 0 0 2px #1f300a,0 0 10px rgba(130,200,60,.5)}
+#sheet.gob #shBody .quip .qby{position:absolute;top:-9px;left:52px;padding:0 6px;font:400 12px/1.5 var(--lg-fellsc);font-style:normal;color:#ecf2d8;background:#3f5a1a;border-radius:6px}
+#sheet.gob #shBody .quip b{font-family:var(--lg-ui);font-style:normal;font-size:14px}
+/* wax seal on every verdict */
+#sheet.gob #shBody .seal{display:inline-grid;place-items:center;width:28px;height:28px;margin:0 8px 0 0;float:left;border-radius:47% 53% 50% 50%;background:radial-gradient(circle at 38% 34%,#e0553f,#9a2414 55%,#6c140a);color:#ffd6c4;font:400 17px var(--lg-frak);box-shadow:0 2px 3px rgba(0,0,0,.5),inset 0 0 0 3px rgba(0,0,0,.15),inset 0 0 0 5px rgba(255,180,160,.18)}
+/* dividers and sign-off */
+#sheet.gob #shBody .gdiv{text-align:center;font-size:17px;margin:-4px 0;filter:drop-shadow(0 2px 2px #000)}
+#sheet.gob #shBody .gsrc{margin:6px 0 0;text-align:center;font:italic 400 14px/1.45 var(--lg-fell);color:#b9a27a;padding:0 10px}
+#sheet.gob #shBody .gsrc a{color:#e9c27a}
+#sheet.gob #shBody .gend{display:grid;gap:12px;justify-items:center;text-align:center;padding:4px 10px 26px}
+#sheet.gob #shBody .gend b{font:400 19px var(--lg-pirate);color:#d9b36a;text-shadow:0 2px 0 #000}
+#sheet.gob #shBody .gend span{font-size:22px;letter-spacing:.5em;margin-right:-.5em}
+#sheet.gob #shBody .gempty{padding:26px 20px;text-align:center;font:italic 400 16px/1.45 var(--lg-fell)}
+#sheet.gob #shBody .gempty b{display:block;font:400 26px var(--lg-pirate);font-style:normal;color:var(--lg-blood);margin-bottom:4px}
+@media (prefers-reduced-motion:reduce){#sheet.gob #shBody .gsec,#sheet.gob #shBody .gbx{transform:none}}
+
+#sheet.gob .nav{background:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'600'%20height%3D'120'%3E%0A%3Cfilter%20id%3D'w'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.004%20.18'%20numOctaves%3D'4'%20seed%3D'3'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.1%200%200%200%200%20.05%200%200%200%200%20.01%200%200%200%201.1%20-.35'%2F%3E%3C%2Ffilter%3E%0A%3Crect%20width%3D'600'%20height%3D'120'%20fill%3D'%235b3a1f'%2F%3E%3Crect%20width%3D'600'%20height%3D'120'%20filter%3D'url(%23w)'%2F%3E%3C%2Fsvg%3E"),#5b3a1f;border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12)}
+#sheet.gob .back{color:#f0c46a;text-shadow:0 1px 0 #000}
+#sheet.gob .sh-title{font:400 29px "Pirata One","Palatino Linotype",Georgia,serif;letter-spacing:.03em;text-transform:none;color:#f0c46a;text-shadow:0 2px 0 #2a1709,0 -1px 0 rgba(255,240,200,.35),0 0 14px rgba(255,170,40,.35)}
+#sheet.gob .sh-title::before{content:'🧌 ';font-size:21px;text-shadow:none}
+#sheet.gob #shBody>.err,#sheet.gob #shBody>.empty{color:#e9cf9b;background:rgba(0,0,0,.4)}
+/*/LEDGER-CSS*/
 /* (5) all my players */
 .lbl .lnk{margin-left:auto;font:600 12px var(--ui);letter-spacing:0;text-transform:none;color:var(--tint);padding:2px 0 2px 8px}
 .swsum{display:flex;gap:6px;flex-wrap:wrap}
@@ -1735,7 +1805,7 @@ async function loadNHL() {
    SHEETS: game detail, fantasy matchup, settings
    ===================================================================== */
 function openSheet(mode, title, back) {
-  S.sheetMode = mode; $('#shTitle').textContent = title || ''; $('#backLbl').textContent = back || 'Back';
+  S.sheetMode = mode; $('#sheet').classList.toggle('gob', mode === 'goblin'); $('#shTitle').textContent = title || ''; $('#backLbl').textContent = back || 'Back';
   $('#shRight').innerHTML = '<i class="dot" id="shdot"></i>';
   $('#sheet').classList.add('open'); $('#shBody').innerHTML = '<div class="empty">Loading…</div>'; $('#shScroll').scrollTop = 0;
 }
@@ -2357,8 +2427,6 @@ async function loadGoblin() {
     });
   } catch (e) { return null; }
 }
-const gobTxt = s => esc(s).replace(/&amp;(gt|lt|amp|quot|#39|nbsp|middot|rarr|larr|mdash|ndash);/g, '&$1;').replace(/&lt;(\/?)(b|i|span)&gt;/g, '<$1$2>').replace(/&lt;br\s*\/?&gt;/g, '<br>');
-const gobPlain = s => String(s || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 async function openGoblin(id) { S.gobId = id; setSport('nfl'); openSheet('goblin', 'Goblin GM', 'Scores'); await loadGoblinSheet(); }
 async function loadGoblinSheet() {
   const B = await loadGoblin(); if (S.sheetMode !== 'goblin') return false;
@@ -2372,54 +2440,80 @@ async function loadGoblinSheet() {
   $('#shBody').innerHTML = chips + gobReport(r); $('#shScroll').scrollTop = keep;
   return false;
 }
-const GOB_TINT = { '#e8f6ee': 'color-mix(in srgb,var(--green) 16%,transparent)', '#fdecec': 'color-mix(in srgb,var(--red) 16%,transparent)', '#fff4db': 'color-mix(in srgb,var(--amber) 16%,transparent)', '#eef1f6': 'var(--well)', '#fff8e6': 'color-mix(in srgb,var(--amber) 9%,transparent)' };
-function gobCellTint(c) { const s = String(c); return /^❌/.test(s) || /^🟥/.test(s) ? GOB_TINT['#fdecec'] : /^✅/.test(s) ? GOB_TINT['#e8f6ee'] : s.includes('🛌') && s.length < 8 ? GOB_TINT['#fff4db'] : null; }
+/*LEDGER-JS*/
+/* ===== Goblin GM report renderer: "The Goblin's Ledger" (shared by Forecheck and both report pages) ===== */
+const gobEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// report text may only carry <b> <i> <strong> <em> <span> <br> (no attributes) and a few entities
+const gobTxt = s => gobEsc(s).replace(/&amp;(gt|lt|amp|quot|#39|nbsp|middot|rarr|larr|mdash|ndash);/g, '&$1;').replace(/&lt;(\/?)(b|i|span|strong|em)&gt;/g, '<$1$2>').replace(/&lt;br\s*\/?&gt;/g, '<br>');
+const gobPlain = s => String(s || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+const GOB_TINT = { '#e8f6ee': 'var(--lg-good)', '#fdecec': 'var(--lg-bad)', '#fff4db': 'var(--lg-warn)', '#eef1f6': 'var(--lg-muted)', '#fff8e6': 'var(--lg-note)' };
+const GOB_EDGE = { '#e8f6ee': 'var(--lg-good-ink)', '#fdecec': 'var(--lg-bad-ink)', '#fff4db': 'var(--lg-warn-ink)', '#fff8e6': 'var(--lg-warn-ink)' };
+function gobCellTint(c) { const s = String(c); return /^❌/.test(s) ? GOB_TINT['#fdecec'] : /^✅/.test(s) ? GOB_TINT['#e8f6ee'] : s.includes('🛌') && s.length < 8 ? GOB_TINT['#fff4db'] : null; }
+// the Goblin's own lines (jokes, sign-off) become his speech bubble
+const GOB_VOICE = /\b(goblin|crawlspace|under the stairs|boiler|mushrooms?|damp sock|the crew)\b/i;
+const gobQuip = h => `<div class="quip"><span class="qby">the Goblin mutters</span>${h}</div>`;
+// matchup tiers ("🟩 4" = the 4th easiest defence for that position, of 32) become labelled chips
+const gobOrd = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' })[n % 10] || 'th');
+const GOB_TIER = /(🟩|🟨|🟥)\s*(\d{1,2})(?!\d)/gu;
+const gobMu = (h, long) => h.replace(GOB_TIER, (m, t, n) => { n = +n; if (n < 1 || n > 32) return m; const k = t === '🟩' ? 'g' : t === '🟥' ? 'r' : 'y'; const txt = k === 'g' ? gobOrd(n) + ' easiest' + (long ? ' matchup' : '') : k === 'r' ? gobOrd(33 - n) + ' toughest' + (long ? ' matchup' : '') : (long ? 'average matchup (' + gobOrd(n) + ' easiest)' : gobOrd(n) + ' easiest'); return `<span class="mu ${k}">${txt}</span>`; });
+const GOB_ICONS = ['🍄', '🕯️', '🦴', '🗝️', '🐀', '🪓', '🕸️', '🧪'];
+
 function gobReport(r) {
-  // header: the report's title and when it was written (the sheet title already says Goblin GM, so no kicker)
-  let h = `<div class="grh"><div class="t">${gobTxt(r.title || '')}</div><div class="s">${[r.sub, r.updated].filter(Boolean).map(gobTxt).join(' · ')}</div></div>`;
-  // each heading starts a card that holds the blocks after it; boxes are cards of their own
-  let open = false; const flush = () => { if (open) { h += '</section>'; open = false; } }; const card = () => { if (!open) { h += '<section class="sec gsec">'; open = true; } };
-  const tintOf = (c, rowTint) => gobCellTint(c) || GOB_TINT[rowTint] || null;
+  const parts = []; let cur = null;
+  const flush = () => { if (cur !== null) { parts.push({ sec: true, h: cur + '</section>' }); cur = null; } };
+  const put = s => { if (cur === null) cur = '<section class="gsec">'; cur += s; };
+  parts.push({ h: `<div class="grh"><i class="roll l"></i><i class="roll r"></i><div class="t">${gobTxt(r.title || r.label || 'Goblin GM report')}</div><div class="s">${[r.sub, r.updated].filter(Boolean).map(gobTxt).join(' · ')}</div></div>` });
   for (const b of r.blocks || []) {
     const k = b[0];
-    if (k === 'league') { flush(); h += `<div class="glg">${gobTxt(b[1])}${b[2] ? `<small>${gobTxt(b[2])}</small>` : ''}</div>`; }
-    else if (k === 'h2') { flush(); card(); h += `<h2><span>${gobTxt(b[1])}</span></h2>${b[2] ? `<div class="gsub">${gobTxt(b[2])}</div>` : ''}`; }
-    else if (k === 'box') { flush(); h += `<div class="gbx"><b>${gobTxt(b[1])}</b>${gobTxt(b[2])}</div>`; }
-    else if (k === 'p') { card(); h += `<div class="gpp">${b[1] ? `<b>${gobTxt(b[1])}</b> ` : ''}${gobTxt(b[2])}</div>`; }
-    else if (k === 't') { card(); h += gobTable(b[1] || [], b[2] || [], b[3] || {}); }
+    if (k === 'league') { flush(); parts.push({ h: `<div class="glg${/bell/i.test(b[1]) ? ' bell' : ''}"><b>${gobTxt(b[1])}</b>${b[2] ? `<small>${gobTxt(b[2])}</small>` : ''}</div>` }); }
+    else if (k === 'h2') { flush(); put(`<h2>${gobTxt(b[1])}</h2>${b[2] ? `<div class="gsub">${gobTxt(b[2])}</div>` : ''}`); }
+    else if (k === 'box') {
+      flush(); const seg = gobTxt(b[2]).split(/<br\s*\/?>/i); let q = '';
+      if (seg.length > 1 && GOB_VOICE.test(gobPlain(seg[seg.length - 1]))) q = seg.pop();
+      else if (seg.length > 1 && GOB_VOICE.test(gobPlain(seg[0]))) q = seg.shift();
+      parts.push({ h: `<div class="gbx"><span class="dagger" aria-hidden="true">🗡️</span><b class="gbt">${gobTxt(b[1])}</b><div>${gobMu(seg.join('<br>'), true)}</div>${q ? gobQuip(q) : ''}</div>` });
+    }
+    else if (k === 'p') {
+      const lab = String(b[1] || ''), body = gobTxt(b[2]);
+      if (lab === '🧌' || (!lab && GOB_VOICE.test(gobPlain(b[2])))) put(gobQuip(body));
+      else put(`<p class="gpp">${/^verdict/i.test(lab) ? '<span class="seal" aria-hidden="true">G</span>' : ''}${lab ? `<b>${gobTxt(lab)}</b> ` : ''}${gobMu(body, true)}</p>`);
+    }
+    else if (k === 't') put(gobTable(b[1] || [], b[2] || [], b[3] || {}));
     else if (k === 'd') {
-      card(); const P = b[1] || [], G = b[2] || [];
-      h += `<div class="scroll-x"><table class="gtb gd"><tr><th></th>${P.map(p => `<th class="c${p[2] ? ' pk' : ''}">${gobTxt(p[0])}<small>${gobTxt(p[1] || '')}</small></th>`).join('')}</tr>${G.map(([g, ms]) => `<tr class="gg"><td colspan="${P.length + 1}">${gobTxt(g)}</td></tr>` + (ms || []).map(([m, vals]) => `<tr><td>${gobTxt(m)}</td>${(vals || []).map((v, j) => { const bg = gobCellTint(v) || (P[j] && P[j][2] ? GOB_TINT['#e8f6ee'] : null); return `<td class="c"${bg ? ` style="background:${bg}"` : ''}>${gobTxt(v)}</td>`; }).join('')}</tr>`).join('')).join('')}</table></div>`;
+      const P = b[1] || [], G = b[2] || [];
+      put(`<div class="gscroll"><table class="gtb gd"><tr><th></th>${P.map(p => `<th class="c${p[2] ? ' pk' : ''}">${gobTxt(p[0])}<small>${gobTxt(p[1] || '')}</small></th>`).join('')}</tr>${G.map(([g, ms]) => `<tr class="gg"><td colspan="${P.length + 1}">${gobTxt(g)}</td></tr>` + (ms || []).map(([m, vals]) => `<tr><td>${gobTxt(m)}</td>${(vals || []).map((v, j) => { const bg = gobCellTint(v) || (P[j] && P[j][2] ? 'var(--lg-pick)' : null); return `<td class="c${/^adj/i.test(m) ? ' b' : ''}"${bg ? ` style="background:${bg}"` : ''}>${gobMu(gobTxt(v))}</td>`; }).join('')}</tr>`).join('')).join('')}</table></div>`);
     }
   }
   flush();
-  if ((r.sources || []).length) h += `<p class="gsrc">\u{1F4DA} ${r.sources.map(s => /^https:\/\//.test(s[1] || '') ? `<a href="${esc(s[1])}" target="_blank" rel="noopener">${esc(s[0])}</a>` : esc(s[0])).join(' · ')}</p>`;
-  return h;
+  let h = '', n = 0;
+  parts.forEach((p, i) => { if (p.sec && parts[i - 1] && parts[i - 1].sec) h += `<div class="gdiv" aria-hidden="true">${GOB_ICONS[n++ % GOB_ICONS.length]}</div>`; h += p.h; });
+  if ((r.sources || []).length) h += `<p class="gsrc">📚 ${r.sources.map(s => /^https:\/\//.test(s[1] || '') ? `<a href="${gobEsc(s[1])}" target="_blank" rel="noopener">${gobEsc(s[0])}</a>` : gobEsc(s[0])).join(' · ')}</p>`;
+  return h + '<div class="gend"><b>Sealed in grime by the Goblin, under the stairs</b><span aria-hidden="true">🦴 🐀 🍄</span></div>';
 }
-/* Tables: short ones stay tables. Wide ones (5+ columns with long text, e.g. lineup, trades, waivers) become one compact
-   block per row (title, short values as labelled chips, long values as labelled lines), so nothing wraps into a sliver
-   or runs off the screen. Grids of short cells (the bye grid) stay tables. */
+/* Short tables stay tables. Wide ones (5+ columns with long text, or 4+ with very long text) become one ledger entry per row:
+   title, short values as labelled chips, long values as labelled lines. In the lineup, 🟢 ("start") is dropped: being listed already says it. */
 function gobTable(head, rows, o) {
   const al = o.c || [], tint = o.tint || [];
   const plain = v => gobPlain(String(v ?? ''));
+  const lineup = /^slot$/i.test(plain(head[0]));
+  rows = rows.map(row => row.map((c, ci) => lineup && /^note/i.test(plain(head[ci])) ? String(c ?? '').replace(/🟢\s*/gu, '').trim() : c));
   const avgLen = c => rows.reduce((a, r) => a + plain(r[c]).length, 0) / Math.max(1, rows.length);
   const wide = (head.length >= 5 && head.slice(1).some((_, i) => avgLen(i + 1) > 12)) || (head.length >= 4 && head.slice(1).some((_, i) => avgLen(i + 1) > 22));
-  // grids (bye weeks): keep the name column from collapsing to one word per line
-  if (!wide) return `<div class="scroll-x"><table class="gtb${head.length >= 5 ? ' fx' : ''}"><tr>${head.map((x, i) => `<th class="${al[i] ? 'c' : ''}">${gobTxt(x)}</th>`).join('')}</tr>${rows.map((row, ri) => `<tr>${row.map((c, ci) => { const bg = gobCellTint(c) || GOB_TINT[tint[ri]] || null; return `<td class="${al[ci] ? 'c' : ''}"${bg ? ` style="background:${bg}"` : ''}>${gobTxt(c)}</td>`; }).join('')}</tr>`).join('')}</table></div>`;
-  const EDGE = { '#e8f6ee': 'var(--green)', '#fdecec': 'var(--red)', '#fff4db': 'var(--amber)', '#fff8e6': 'var(--amber)' };
+  if (!wide) return `<div class="gscroll"><table class="gtb${head.length >= 5 ? ' fx' : ''}"><tr>${head.map((x, i) => `<th class="${al[i] ? 'c' : ''}">${gobTxt(x)}</th>`).join('')}</tr>${rows.map((row, ri) => `<tr>${row.map((c, ci) => { const bg = gobCellTint(c) || GOB_TINT[tint[ri]] || null; return `<td class="${al[ci] ? 'c' : ''}"${bg ? ` style="background:${bg}"` : ''}>${gobMu(gobTxt(c))}</td>`; }).join('')}</tr>`).join('')}</table></div>`;
+  const tierOnly = v => /^(🟩|🟨|🟥)\s*\d{1,2}$/u.test(v);
   return `<div class="gst">${rows.map((row, ri) => {
-    const short0 = plain(row[0]).length <= 4;  // a slot, a number or a dash leads the title as a small tag
+    const short0 = plain(row[0]).length <= 4;  // a slot, a number or a dash leads the title as a small wax tag
     const title = short0 ? `${plain(row[0]) ? `<span class="tag">${gobTxt(row[0])}</span>` : ''}${gobTxt(row[1])}` : gobTxt(row[0]);
     let rest = row.map((c, ci) => [ci, c]).filter(([ci, c]) => ci > (short0 ? 1 : 0) && plain(c) && !/^[-–—]$/.test(plain(c)));
-    // a value that is only an emoji (a 🟢 note) reads better at the end of the title than behind a label
     const marks = rest.filter(([, c]) => !/[\p{L}\p{N}]/u.test(plain(c))); rest = rest.filter(x => !marks.includes(x));
-    const chips = rest.filter(([, c]) => plain(c).length <= 14).map(([ci, c]) => `<span><i>${gobTxt(head[ci])}</i>${gobTxt(c)}</span>`).join('');
-    const lines = rest.filter(([, c]) => plain(c).length > 14).map(([ci, c]) => `<div class="ln"><i>${gobTxt(head[ci])}</i> ${gobTxt(c)}</div>`).join('');
-    const edge = EDGE[tint[ri]] || (/^✅/.test(plain(row[0])) ? 'var(--green)' : /^❌/.test(plain(row[0])) ? 'var(--red)' : '');
+    const chips = rest.filter(([, c]) => plain(c).length <= 14).map(([ci, c]) => tierOnly(plain(c)) ? gobMu(gobTxt(c), true) : `<span><i>${gobTxt(head[ci])}</i>${gobMu(gobTxt(c), true)}</span>`).join('');
+    const lines = rest.filter(([, c]) => plain(c).length > 14).map(([ci, c]) => `<div class="ln"><i>${gobTxt(head[ci])}</i> ${gobMu(gobTxt(c), true)}</div>`).join('');
+    const edge = GOB_EDGE[tint[ri]] || (/^✅/.test(plain(row[0])) ? 'var(--lg-good-ink)' : /^❌/.test(plain(row[0])) ? 'var(--lg-bad-ink)' : '');
     return `<div class="gr"${edge ? ` style="border-left-color:${edge}"` : ''}><div class="gt">${title}${marks.map(([, c]) => ' ' + gobTxt(c)).join('')}</div>${chips ? `<div class="kv">${chips}</div>` : ''}${lines}</div>`;
   }).join('')}</div>`;
 }
-
+/* ===== end of shared renderer ===== */
+/*/LEDGER-JS*/
 async function warmMine() { try { const nfl = await nflNow(); FX.week = nfl.week; await loadFantasy(nfl); } catch (e) {} }
 
 /* =====================================================================
