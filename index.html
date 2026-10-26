@@ -1340,10 +1340,10 @@ function fxCards(gob) {
 // Goblin GM as one line in the matchups block: action count, report name, unread dot
 function gobLine(B) {
   if (!B) return '';
-  if (B.err) return `<button class="cg" data-settings>\u{1F9CC} <b>Goblin</b> <span style="color:var(--amber)">Wrong report key · check Settings</span><em>›</em></button>`;
+  if (B.err) return `<button class="cg" data-settings>\u{1F9CC} <b>Goblin GM</b> <span style="color:var(--amber)">Wrong report key · check Settings</span><em>›</em></button>`;
   const r = B.reports && B.reports[B.latest]; if (!r) return '';
   const n = (r.actions || []).filter(Boolean).length;
-  return `<button class="cg" data-goblin="${esc(r.id)}">\u{1F9CC} <b>Goblin</b> <span>${n ? `${n} action${n === 1 ? '' : 's'} · ` : ''}${esc(r.label || '')}</span>${LS.get('gobSeen', '') !== B.latest ? '<i></i>' : ''}<em>›</em></button>`;
+  return `<button class="cg" data-goblin="${esc(r.id)}">\u{1F9CC} <b>Goblin GM</b> <span>${n ? `${n} action${n === 1 ? '' : 's'} · ` : ''}${esc(r.label || '')}</span>${LS.get('gobSeen', '') !== B.latest ? '<i></i>' : ''}<em>›</em></button>`;
 }
 async function loadNFL() {
   const q = S.nfl.q; const j = q ? await espn('nfl', `scoreboard?week=${q.week}&seasontype=${q.st}&dates=${q.yr}`) : await nflScoreboardNow();
