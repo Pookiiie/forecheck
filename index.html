@@ -1003,7 +1003,7 @@ function tile3(g, grouped) {
   let st = '';
   if (g.state === 'in') { const d = g.detail || ''; st = `<b class="lv">${esc(/half|end|intermission|delay|suspend/i.test(d) ? d.replace(/^End of /i, 'End ').replace(/ - /, ' ') : qLab(g.period) + ' ' + (g.clock || ''))}</b>${si && si.dd ? `<b class="dd${si.rz ? ' rz' : ''}">${esc(si.dd.replace(/(\d)(st|nd|rd|th) & /, '$1&'))}${si.rz ? ' RZ' : ''}</b>` : ''}`; }
   else if (g.state === 'pre') st = `${grouped ? '' : `<b>${esc(shortDay(g.date))} ${esc(fmtTime(g.date))}</b>`}${g.odds ? `<span>${esc(g.odds)}</span>` : ''}`;
-  else { const ot = /(OT|SO)/.exec(g.detail || ''); st = ot ? `<b>${ot[1]}</b>` : ''; }
+  // finished games need no status line
   const pl = plines(g);
   return `<button class="tile t3${hasFav(g) ? ' fav' : ''}" data-open="${g.sp}:${g.id}">${row(g.away)}${row(g.home)}${st ? `<div class="zs">${st}</div>` : ''}${si && si.off ? `<div class="zg">${gauge(si, g)}</div>` : ''}${pl ? `<div class="pls3">${pl}</div>` : ''}</button>`;
 }
