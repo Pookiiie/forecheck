@@ -15,11 +15,23 @@ const GOB_TIER = /(🟩|🟨|🟥)\s*(\d{1,2})(?!\d)/gu;
 const gobMu = (h, long) => h.replace(GOB_TIER, (m, t, n) => { n = +n; if (n < 1 || n > 32) return m; const k = t === '🟩' ? 'g' : t === '🟥' ? 'r' : 'y'; const txt = k === 'g' ? gobOrd(n) + ' easiest' + (long ? ' matchup' : '') : k === 'r' ? gobOrd(33 - n) + ' toughest' + (long ? ' matchup' : '') : (long ? 'average matchup (' + gobOrd(n) + ' easiest)' : gobOrd(n) + ' easiest'); return `<span class="mu ${k}">${txt}</span>`; });
 const GOB_ICONS = ['🍄', '🕯️', '🦴', '🗝️', '🐀', '🪓', '🕸️', '🧪'];
 
+// standard report names: the wooden tag shows the day, the scroll shows the title
+const GOB_KINDS = { tue: ['Tuesday', 'Game plan'], thu: ['Thursday', 'Early check'], sat: ['Saturday', 'Refresh'], sunam: ['Sun AM', 'Morning check'], sun: ['Sunday', 'Inactives'] };
+function gobName(r) { const k = (String((r && r.id) || '').match(/-(tue|thu|sat|sunam|sun)$/) || [])[1]; const n = GOB_KINDS[k];
+  return n ? { day: n[0], title: n[1] } : { day: (r && (r.label || r.id)) || 'Report', title: (r && (r.title || r.label)) || 'Goblin GM report' }; }
+const gobSub = s => String(s || '').replace(/(^|\s*·\s*)recommendations only(\s*·\s*|$)/i, (m, a, b) => a && b ? ' · ' : '').trim();
+function gobTitle(r) {
+  const n = gobName(r), t = n.title, sub = gobSub(r.sub);
+  const rest = gobEsc(t.slice(1)).replace(/[ky]/g, '<span class="ky">$&</span>');  // k and y from the heading font: the blackletter ones read as t and n
+  return `<div class="grh"><i class="roll l"></i><i class="roll r"></i><i class="gbar"></i><i class="ivy top"></i><i class="ivy bot"></i><i class="drol" aria-hidden="true"></i>`
+    + `<div class="rub">${r.week ? `Week ${gobEsc(r.week)}` : ''}${r.week && r.updated ? ' · ' : ''}${gobTxt(r.updated || '')}</div>`
+    + `<div class="t"><span class="ini">${gobEsc(t[0])}</span>${rest}</div>${sub ? `<div class="s">${gobTxt(sub)}</div>` : ''}</div>`;
+}
 function gobReport(r) {
   const parts = []; let cur = null;
   const flush = () => { if (cur !== null) { parts.push({ sec: true, h: cur + '</section>' }); cur = null; } };
   const put = s => { if (cur === null) cur = '<section class="gsec">'; cur += s; };
-  parts.push({ h: `<div class="grh"><i class="roll l"></i><i class="roll r"></i><div class="t">${gobTxt(r.title || r.label || 'Goblin GM report')}</div><div class="s">${[r.sub, r.updated].filter(Boolean).map(gobTxt).join(' · ')}</div></div>` });
+  parts.push({ h: gobTitle(r) });
   for (const b of r.blocks || []) {
     const k = b[0];
     if (k === 'league') { flush(); parts.push({ h: `<div class="glg${/bell/i.test(b[1]) ? ' bell' : ''}"><b>${gobTxt(b[1])}</b>${b[2] ? `<small>${gobTxt(b[2])}</small>` : ''}</div>` }); }

@@ -1,9 +1,10 @@
 // Builds "The Goblin's Ledger" into Forecheck (index.html) and both Goblin GM report pages from one source.
 // usage: node build.js <forecheck index.html> <eric page out> <max page out>
 const fs = require('fs'); const path = require('path');
-const { STONE, WOOD, WOOD_TAG, PLANK_BITS, PAPER, CLOTH, WEB, deckle } = require('./textures.js');
+const { STONE, WOOD, WOOD_TAG, PLANK_BITS, PAPER, CLOTH, WEB, deckle, FILIGREE, BAR, IVY } = require('./textures.js');
+const { gobURL: GOB } = require('./goblin.js');
 const RENDER = fs.readFileSync(path.join(__dirname, 'render.js'), 'utf8');
-const FONTS = 'https://fonts.googleapis.com/css2?family=Pirata+One&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=UnifrakturMaguntia&display=swap';
+const FONTS = 'https://fonts.googleapis.com/css2?family=Pirata+One&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=UnifrakturMaguntia&family=Uncial+Antiqua&display=swap';
 
 // LW = the wall (the scrolling area), LR = the element that holds the report
 const ledgerCSS = (LW, LR) => `
@@ -12,7 +13,7 @@ ${LW}{background-color:#141210;background-image:radial-gradient(60% 50% at 0% 0%
 ${LR}{--lg-ink:#3a2512;--lg-ink2:#6e5130;--lg-rule:#8a6a3c;--lg-blood:#8b1d10;--lg-gold:#f0c46a;--lg-paper:#e6d2a6;--lg-note-paper:#ead594;
   --lg-good:rgba(70,130,40,.22);--lg-bad:rgba(170,40,20,.17);--lg-warn:rgba(205,145,30,.26);--lg-muted:rgba(110,70,20,.1);--lg-note:rgba(205,145,30,.14);--lg-pick:rgba(70,130,40,.14);
   --lg-good-ink:#3f8f22;--lg-bad-ink:#b3301a;--lg-warn-ink:#c98a12;
-  --lg-ui:var(--ui,-apple-system,BlinkMacSystemFont,"Helvetica Neue",system-ui,sans-serif);--lg-fell:"IM Fell English",Georgia,"Times New Roman",serif;--lg-fellsc:"IM Fell English SC",Georgia,serif;--lg-pirate:"Pirata One","Palatino Linotype",Georgia,serif;--lg-frak:"UnifrakturMaguntia","Old English Text MT",Georgia,serif;
+  --lg-ui:var(--ui,-apple-system,BlinkMacSystemFont,"Helvetica Neue",system-ui,sans-serif);--lg-fell:"IM Fell English",Georgia,"Times New Roman",serif;--lg-fellsc:"IM Fell English SC",Georgia,serif;--lg-pirate:"Pirata One","Palatino Linotype",Georgia,serif;--lg-frak:"UnifrakturMaguntia","Old English Text MT",Georgia,serif;--lg-uncial:"Uncial Antiqua",Georgia,serif;
   position:relative;display:flex;flex-direction:column;gap:14px;padding-top:14px;padding-bottom:10px}
 ${LR}::before{content:'';position:absolute;top:0;right:-6px;width:150px;height:150px;background:${WEB};pointer-events:none;z-index:3}
 ${LR}::after{content:'🕷️';position:absolute;top:0;right:41px;padding-top:34px;font-size:17px;line-height:1;z-index:3;pointer-events:none;background:linear-gradient(rgba(230,225,210,.55),rgba(230,225,210,.55)) 50% 0/1px 38px no-repeat;filter:drop-shadow(0 2px 2px #000)}
@@ -30,14 +31,20 @@ ${LR} .gsec:nth-of-type(3n)::before{clip-path:${deckle()}}
 ${LR} .gsec{display:grid;gap:9px;min-width:0;padding:18px 16px 16px}
 ${LR} .gsec:nth-of-type(odd){transform:rotate(-.35deg)}
 ${LR} .gsec:nth-of-type(even){transform:rotate(.3deg)}
-/* the title scroll */
-${LR} .grh{margin:4px 6px 0;padding:20px 26px 16px;text-align:center}
+/* the title scroll, illuminated: border bar, ivy, painted initial, red rubric, the Goblin in the margin */
+${LR} .grh{margin:4px 6px 0;padding:30px 24px 30px 42px;text-align:left}
 ${LR} .grh .roll{position:absolute;top:-6px;bottom:-6px;width:16px;border-radius:8px;z-index:1}
 ${LR} .grh .roll.l{left:-6px;background:linear-gradient(90deg,#6b4a22,#d9bb83 45%,#7b5628)}
 ${LR} .grh .roll.r{right:-6px;background:linear-gradient(90deg,#7b5628,#d9bb83 55%,#6b4a22)}
-${LR} .grh .t{font:400 37px/1.05 var(--lg-frak);color:var(--lg-blood);text-shadow:0 1px 0 rgba(255,240,200,.5);text-wrap:balance}
-${LR} .grh .s{font:italic 400 15px/1.35 var(--lg-fell);color:var(--lg-ink2);margin-top:6px}
-${LR} .grh .s::after{content:'~ ❧ ~';display:block;margin-top:6px;color:var(--lg-rule);letter-spacing:.2em;font-style:normal}
+${LR} .grh .gbar{position:absolute;left:16px;top:18px;bottom:18px;width:10px;background:${BAR} 0 0/10px 60px repeat-y;box-shadow:0 0 0 1px #6b4a12}
+${LR} .grh .ivy{position:absolute;left:30px;right:20px;height:24px;background:${IVY} 0 0/180px 24px repeat-x}
+${LR} .grh .ivy.top{top:4px} ${LR} .grh .ivy.bot{bottom:4px;background-position:90px 0;transform:scaleY(-1)}
+${LR} .grh .drol{position:absolute;right:20px;bottom:7px;width:36px;height:54px;background:${GOB} 0 0/100% 100% no-repeat;transform:scaleX(-1)}
+${LR} .grh .rub{font:400 13.5px/1.25 var(--lg-fellsc);letter-spacing:.06em;color:#a8321c;margin:0 0 6px}
+${LR} .grh .t{font:400 40px/1.02 var(--lg-frak);color:var(--lg-blood);display:flow-root}
+${LR} .grh .t .ky{font-family:var(--lg-pirate);font-size:.86em}
+${LR} .grh .ini{float:left;width:70px;height:70px;margin:-2px 7px 2px 0;display:grid;place-items:center;background:${FILIGREE} 0 0/36px 36px;border:4px solid #d8ad4a;box-shadow:0 0 0 1px #6b4a12,inset 0 0 0 1px #6b4a12;font:400 58px/1 var(--lg-uncial);color:#e8bd52;-webkit-text-stroke:1.2px #3a2208;paint-order:stroke fill}
+${LR} .grh .s{font:italic 400 15px/1.35 var(--lg-fell);color:var(--lg-ink2);margin-top:8px;padding-right:50px}
 /* league banners: cloth in each league's colour (PFL violet, BELL teal) */
 ${LR} .glg{position:relative;margin:4px 0 0;padding:10px 40px 12px;text-align:center;color:#f6d98f;text-shadow:0 2px 0 rgba(0,0,0,.6);
   background:${CLOTH},linear-gradient(180deg,rgba(255,255,255,.12),transparent 40%,rgba(0,0,0,.3)),#4b2a7a;clip-path:polygon(0 0,100% 0,95% 50%,100% 100%,0 100%,5% 50%);box-shadow:inset 0 0 0 3px rgba(240,196,106,.55)}
@@ -85,7 +92,7 @@ ${LR} .mu{display:inline-block;padding:1px 7px;border-radius:999px;font:700 12.5
 ${LR} .mu.g{background:#4f7f2a} ${LR} .mu.y{background:#a87814} ${LR} .mu.r{background:#a8321c}
 /* the Goblin talks */
 ${LR} .quip{position:relative;margin:10px 0 2px 2px;padding:12px 12px 10px 54px;background:${PAPER},#c9d99a;border-radius:18px 18px 18px 3px;box-shadow:0 2px 0 #3f5a1a,inset 0 0 0 1.5px rgba(50,80,20,.55);font:italic 400 15.5px/1.4 var(--lg-fell);color:#24360b}
-${LR} .quip::before{content:'🧌';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;display:grid;place-items:center;font-size:24px;font-style:normal;border-radius:50%;background:radial-gradient(circle,#6a8f2f,#2c4310);box-shadow:0 0 0 2px #1f300a,0 0 10px rgba(130,200,60,.5)}
+${LR} .quip::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:${GOB} -6.6px -.6px/47.4px 70.8px no-repeat,#efe1b8;box-shadow:0 0 0 1.5px #3f5a1a,inset 0 0 0 1px rgba(63,90,26,.4)}
 ${LR} .quip .qby{position:absolute;top:-9px;left:52px;padding:0 6px;font:400 12px/1.5 var(--lg-fellsc);font-style:normal;color:#ecf2d8;background:#3f5a1a;border-radius:6px}
 ${LR} .quip b{font-family:var(--lg-ui);font-style:normal;font-size:14px}
 /* wax seal on every verdict */
@@ -107,7 +114,7 @@ const appCSS = ledgerCSS('#sheet.gob #shScroll', '#sheet.gob #shBody') + `
 #sheet.gob .nav{background:${PLANK_BITS},${WOOD_TAG} 0 50%/auto 220%,#5e3b1e;border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12),inset 0 2px 0 rgba(255,220,160,.12)}
 #sheet.gob .back{color:#f0c46a;text-shadow:0 1px 0 #000}
 #sheet.gob .sh-title{font:400 29px "Pirata One","Palatino Linotype",Georgia,serif;letter-spacing:.03em;text-transform:none;color:#f0c46a;text-shadow:0 2px 0 #2a1709,0 -1px 0 rgba(255,240,200,.35),0 0 14px rgba(255,170,40,.35)}
-#sheet.gob .sh-title::before{content:'🧌 ';font-size:21px;text-shadow:none}
+#sheet.gob .sh-title::before{content:'';display:inline-block;width:34px;height:29px;margin-right:6px;vertical-align:-5px;background:${GOB} 0 0/37.5px 56px no-repeat}
 #sheet.gob #shBody>.err,#sheet.gob #shBody>.empty{color:#e9cf9b;background:rgba(0,0,0,.4)}
 `;
 function buildApp(file) {
@@ -123,7 +130,7 @@ const page = cfg => `<title>${cfg.title}</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Pirata+One&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=UnifrakturMaguntia&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Pirata+One&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=UnifrakturMaguntia&family=Uncial+Antiqua&display=swap">
 <style>
 /* Layout: a carved wooden plank on a dungeon wall, then one column of burnt parchment scraps (the Goblin's ledger).
    One deliberate look in every theme: the wall is always dark and the paper always light. */
@@ -135,6 +142,7 @@ body{background:var(--wall);color:var(--tag);font-family:var(--ui);font-size:15p
 .plank{background:${PLANK_BITS},${WOOD_TAG} 0 0/auto 100%,var(--plank);border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12);position:relative;z-index:4}
 .plank .wrap{padding-block:12px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
 .brand{font:400 31px/1.1 var(--pirate);letter-spacing:.03em;color:var(--gold);text-shadow:0 2px 0 #2a1709,0 -1px 0 rgba(255,240,200,.35),0 0 14px rgba(255,170,40,.35)}
+.brand .gob{display:inline-block;width:40px;height:34px;margin-right:6px;vertical-align:-5px;background:${GOB} 0 0/44px 65.8px no-repeat}
 .brand small{display:block;font:italic 400 14px "IM Fell English",Georgia,serif;letter-spacing:0;color:var(--tag);text-shadow:0 1px 0 #000}
 .pick{display:flex;align-items:center;gap:8px;min-width:0}
 .pick label{font:400 15px var(--pirate);letter-spacing:.04em;color:var(--tag);text-shadow:0 1px 0 #000}
@@ -147,7 +155,7 @@ ${ledgerCSS('body', '#report')}
 </style>
 
 <header class="plank"><div class="wrap">
-  <div class="brand">🧌 Goblin GM<small>${cfg.brandSub}</small></div>
+  <div class="brand"><i class="gob" aria-hidden="true"></i>Goblin GM<small>${cfg.brandSub}</small></div>
   <div class="pick" id="pickBox" hidden><label for="week">${cfg.pickLabel}</label><select id="week"></select></div>
 </div></header>
 
@@ -177,14 +185,14 @@ const ERIC_LOADER = `
     if(!list.length){empty("No reports yet","The first one lands here Tuesday at 9:53am.");return}
     const weeks={};for(const e of list)(weeks[e.week]||=[]).push(e);
     const order=Object.keys(weeks).map(Number).sort((a,b)=>b-a);
-    $("week").innerHTML=order.map(w=>'<optgroup label="Week '+w+'">'+weeks[w].slice().reverse().map(e=>'<option value="'+e.id+'">'+gobEsc(e.label||e.id)+(e.id==idx.latest?" (latest)":"")+"</option>").join("")+"</optgroup>").join("");
+    $("week").innerHTML=order.map(w=>'<optgroup label="Week '+w+'">'+weeks[w].slice().reverse().map(e=>'<option value="'+e.id+'">'+gobEsc(gobName(e).day+' · '+gobName(e).title)+(e.id==idx.latest?" (latest)":"")+"</option>").join("")+"</optgroup>").join("");
     $("pickBox").hidden=list.length<2;
     const first=safe(idx.latest||"")?idx.latest:list[list.length-1].id;
     $("week").value=first;$("week").onchange=()=>show($("week").value);
     show(first);
   }).catch(()=>empty("No reports yet","The first one lands here Tuesday at 9:53am."));`;
 const MAX_LOADER = `
-  async function show(w){try{render(await get("reports/wk"+w+".json"))}
+  async function show(w){try{render(Object.assign({id:"wk"+w+"-tue"},await get("reports/wk"+w+".json")))}
     catch(e){empty("Week "+w+" isn't available","Pick another week, or check back after Tuesday morning's update.")}}
   get("reports/latest.json").then(idx=>{
     const weeks=(idx.weeks||[]).slice().sort((a,b)=>b-a);
