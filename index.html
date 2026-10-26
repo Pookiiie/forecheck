@@ -457,7 +457,7 @@ button.hero:active{opacity:.85}
 .fxc.solo{grid-column:1/-1}
 /* Your matchups: compact block */
 .cfb{background:var(--card);border-radius:10px;overflow:hidden;border-top:3px solid var(--mine)}
-.cf{display:grid;grid-template-columns:34px auto auto auto 1fr auto;align-items:center;column-gap:6px;width:100%;padding:6px 10px 6px 9px;text-align:left;border-left:3px solid transparent}
+.cf{display:grid;grid-template-columns:34px 56px 8px 44px 1fr 58px;align-items:center;column-gap:5px;width:100%;padding:6px 10px 6px 9px;text-align:left;border-left:3px solid transparent}
 .cf + .cf{border-top:1px solid var(--sep)}
 .cf:active,.cg:active{background:var(--fill)}
 .cf.warn{border-left-color:var(--red)} .cf.warnq{border-left-color:var(--amber)}
@@ -466,8 +466,10 @@ button.hero:active{opacity:.85}
 .cf .vs{color:var(--fg3)} .cf .op{font:700 16px/1 var(--bc);color:var(--fg2);font-variant-numeric:tabular-nums}
 .cf .wb{height:5px;border-radius:3px;background:var(--fill);overflow:hidden;margin:0 4px;min-width:20px}
 .cf .wb u{display:block;height:100%;background:var(--mine)}
-.cf .pc{font:700 12.5px var(--bc);letter-spacing:.04em;white-space:nowrap} .cf .pc.up{color:var(--green)} .cf .pc.dn{color:var(--red)}
-.cf > small{grid-column:2/-1;font:400 11.5px var(--ui);color:var(--fg2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf .pc{font:700 12.5px var(--bc);letter-spacing:.04em;white-space:nowrap;text-align:right} .cf .pc.up{color:var(--green)} .cf .pc.dn{color:var(--red)}
+.cf .pj{font:500 12px var(--bc);letter-spacing:.02em;color:var(--fg2);font-variant-numeric:tabular-nums;margin-top:1px}
+.cf .sl{grid-column:5/-1;font:400 11.5px var(--ui);color:var(--fg2);margin:1px 0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf .sl.fin{grid-column:2/-1;margin-left:0}
 .cf .fxw{grid-column:2/-1;margin-top:2px}
 .cf.msg{display:flex;align-items:flex-start;gap:8px}
 .cf.msg .tg{width:34px;flex:none;padding-top:2px}
@@ -1305,8 +1307,8 @@ function fxCards(gob) {
     const m = d[k]; const tag = (m && m.short) || def;
     if (m && m.me) {
       const o = oddsOf(m); const iss = lineupIssues(m); const wc = iss.length ? (iss.some(i => i.lvl === 2) ? ' warn' : ' warnq') : '';
-      const sub = isDone(m) ? 'Final · everyone has played' : `proj ${fmtP(m.me.est)}${m.opp ? '–' + fmtP(m.opp.est) : ''} · ${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} left`;
-      rows.push(`<button class="cf${wc}" data-fxopen="${k}"><span class="tg">${esc(tag)}</span><b>${fmtP(m.me.pts)}</b>${m.opp ? `<span class="vs">–</span><span class="op">${fmtP(m.opp.pts)}</span>` : '<span></span><span></span>'}<span class="wb">${o != null ? `<u style="width:${o}%"></u>` : ''}</span><span class="pc ${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</span><small>${sub}</small>${lineupCard(iss)}</button>`);
+      const sub = isDone(m) ? '<small class="sl fin">Final · everyone has played</small>' : `<small class="pj">${fmtP(m.me.est)}</small><span></span><small class="pj">${m.opp ? fmtP(m.opp.est) : ''}</small><small class="sl">projected · ${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} left</small>`;
+      rows.push(`<button class="cf${wc}" data-fxopen="${k}"><span class="tg">${esc(tag)}</span><b>${fmtP(m.me.pts)}</b>${m.opp ? `<span class="vs">–</span><span class="op">${fmtP(m.opp.pts)}</span>` : '<span></span><span></span>'}<span class="wb">${o != null ? `<u style="width:${o}%"></u>` : ''}</span><span class="pc ${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</span><span></span>${sub}${lineupCard(iss)}</button>`);
     } else if (k === 'cv' && d.cvErr === CBS_DOWN) msg(k, def, 'data-cbspaste', 'CBS isn’t answering (error 500)', 'Often CBS’s side — it retries on its own. If your league works in Safari, run your CBS shortcut and tap here for a new token', 'amber');
     else if (k === 'cv' && d.cvErr === CBS_EXPIRED) msg(k, def, 'data-cbspaste', 'Token expired', 'Run your CBS shortcut in Safari, then tap here to paste the new one', 'red');
     else if (d[k + 'Err']) msg(k, def, 'data-settings', esc(d[k + 'Err']), 'Tap to fix in Settings', 'red');
