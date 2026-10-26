@@ -351,6 +351,34 @@ button.hero:active{opacity:.85}
 .lc b{font:700 12px var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
 .lc.q{background:color-mix(in srgb,var(--amber) 14%,transparent)}.lc.q b{color:var(--amber)}
 .lc span em{font-style:normal;color:var(--fg2)}
+/* Goblin GM: strip under Your matchups + report sheet */
+.gob{display:block;width:100%;margin-top:6px;background:var(--card);border:1px solid var(--sep);border-radius:10px;padding:8px 10px 7px;text-align:left}
+.gob:active{opacity:.85}
+.gob .gh{display:flex;align-items:baseline;gap:6px;font:700 11.5px var(--bc);letter-spacing:.12em;text-transform:uppercase;color:#9be37a}
+.gob .gh span{margin-left:auto;font:500 11.5px var(--ui);letter-spacing:0;text-transform:none;color:var(--fg2)}
+.gob .gh i{width:7px;height:7px;border-radius:50%;background:#9be37a;align-self:center;font-style:normal}
+.gob ul{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:2px;font:500 13px/1.35 var(--ui)}
+.gob .gx{margin-top:4px;font:400 12.5px/1.35 var(--ui);color:var(--fg2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gob.err .gx{color:var(--amber)}
+.grh{display:grid;gap:3px;padding:2px 2px 4px}
+.grh .k{font:700 11px var(--bc);letter-spacing:.12em;text-transform:uppercase;color:#9be37a}
+.grh .t{font:800 24px/1.1 var(--bc);letter-spacing:.02em}
+.grh .s{font:400 12.5px var(--ui);color:var(--fg2)}
+.glg{margin:14px 2px 0;padding:8px 10px;border-radius:8px;background:var(--card2);font:800 17px/1.2 var(--bc);letter-spacing:.04em;text-transform:uppercase}
+.glg small{display:block;font:400 12px var(--ui);letter-spacing:0;text-transform:none;color:var(--fg2);margin-top:1px}
+.gbx{border-left:3px solid var(--amber);background:color-mix(in srgb,var(--amber) 9%,transparent);border-radius:0 6px 6px 0;padding:8px 10px;font:400 13.5px/1.45 var(--ui)}
+.gbx b:first-child{display:block;margin-bottom:2px}
+.gh2{margin:14px 2px 0;padding-bottom:3px;border-bottom:2px solid color-mix(in srgb,var(--amber) 70%,transparent);font:800 16px/1.2 var(--bc);letter-spacing:.03em}
+.gh2 small{display:block;font:400 12px/1.35 var(--ui);color:var(--fg2);margin-top:3px;letter-spacing:0}
+.gpp{font:400 13.5px/1.5 var(--ui);color:color-mix(in srgb,var(--fg) 88%,transparent)}
+.gtb{width:100%;border-collapse:collapse;font:500 12.5px/1.35 var(--ui);font-variant-numeric:tabular-nums}
+.gtb th{font:700 10px/1.2 var(--ui);letter-spacing:.04em;text-transform:uppercase;color:var(--fg2);text-align:left;padding:4px 6px;border-bottom:1px solid var(--sep);vertical-align:bottom}
+.gtb td{padding:5px 6px;border-top:1px solid var(--sep);vertical-align:top;min-width:44px}
+.gtb .c{text-align:center}
+.gtb th.pk{color:var(--green)}
+.gtb tr.gg td{font:700 10.5px var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);background:var(--well)}
+.gsrc{font:400 11.5px/1.5 var(--ui);color:var(--fg2);padding:0 2px}
+.gsrc a{color:var(--blue)}
 /* (5) all my players */
 .lbl .lnk{margin-left:auto;font:600 12px var(--ui);letter-spacing:0;text-transform:none;color:var(--tint);padding:2px 0 2px 8px}
 .swsum{display:flex;gap:6px;flex-wrap:wrap}
@@ -697,7 +725,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem('fc_' + k, JSON.stringify(v)); } catch (e) {} },
   del(k) { try { localStorage.removeItem('fc_' + k); } catch (e) {} }
 };
-const DEFAULTS = { look: 'glass', watch: ['rds', 'sn'], favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '' };
+const DEFAULTS = { look: 'glass', watch: ['rds', 'sn'], favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '', goblinKey: '' };
 let CFG = Object.assign({}, DEFAULTS, LS.get('cfg', {}));
 const saveCfg = () => LS.set('cfg', CFG);
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2400); }
@@ -1281,7 +1309,8 @@ async function loadNFL() {
   const L = games.filter(g => g.state === 'in').sort((a, b) => score(b) - score(a));
   const P = games.filter(g => g.state === 'pre').sort((a, b) => a.date - b.date || score(b) - score(a));
   const F = games.filter(g => g.state === 'post').sort((a, b) => score(b) - score(a) || b.date - a.date);
-  let h = hero.html + (isCur ? fxCards() : '');
+  const gob = isCur ? await loadGoblin() : null;
+  let h = hero.html + (isCur ? fxCards() + gobStrip(gob) : '');
   const notHero = g => g.id !== hero.id;
   h += tiles(`Live · ${L.filter(notHero).length}`, L.filter(notHero), 'live');
   const slots = {}; P.forEach(g => { const k = dayWord(g.date) + ' · ' + fmtTime(g.date); (slots[k] = slots[k] || []).push(g); });
@@ -2240,6 +2269,70 @@ function sweatHTML(nfl) {
   out += block('Playing now', grp.in, 'live', false) + block('Still to play', grp.pre, '', true) + block('Done', grp.post, '', false) + block('Not playing', grp.none, '', false);
   return out;
 }
+/* ---------- Goblin GM reports ----------
+   Each Goblin GM run adds its report to goblin/bundle.enc (AES-256-GCM; the week's reports only).
+   The key never leaves this device. Report text may only use <b> <i> <br> <span>, so everything else is escaped. */
+const b64u = s => { s = String(s || '').replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return Uint8Array.from(atob(s), c => c.charCodeAt(0)); };
+async function loadGoblin() {
+  if (!CFG.goblinKey) return null;
+  try {
+    return await cached('goblin', 5 * 60e3, async () => {
+      const r = await fetch('goblin/bundle.enc', { cache: 'no-store' });
+      if (r.status === 404) return null; if (!r.ok) throw new Error('HTTP ' + r.status);
+      const env = await r.json(); const ct = b64u(env.ct), tag = b64u(env.tag), buf = new Uint8Array(ct.length + tag.length); buf.set(ct); buf.set(tag, ct.length);
+      let key; try { key = await crypto.subtle.importKey('raw', b64u(CFG.goblinKey), 'AES-GCM', false, ['decrypt']); } catch (e) { return { err: 'key' }; }
+      try { return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64u(env.iv) }, key, buf))); } catch (e) { return { err: 'key' }; }
+    });
+  } catch (e) { return null; }
+}
+const gobTxt = s => esc(s).replace(/&amp;(gt|lt|amp|quot|#39|nbsp|middot|rarr|larr|mdash|ndash);/g, '&$1;').replace(/&lt;(\/?)(b|i|span)&gt;/g, '<$1$2>').replace(/&lt;br\s*\/?&gt;/g, '<br>');
+const gobPlain = s => String(s || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+function gobStrip(B) {
+  if (!B) return '';
+  if (B.err) return `<button class="gob err" data-settings><div class="gh">\u{1F9CC} Goblin GM</div><div class="gx">The report key doesn\u2019t open the reports. Check it in Settings.</div></button>`;
+  const r = B.reports && B.reports[B.latest]; if (!r) return '';
+  const unread = LS.get('gobSeen', '') !== B.latest;
+  const acts = (r.actions || []).filter(Boolean).slice(0, 5);
+  const box = (r.blocks || []).find(b => b[0] === 'box');
+  const body = acts.length ? `<ul>${acts.map(a => `<li>${gobTxt(a)}</li>`).join('')}</ul>` : `<div class="gx">${esc(gobPlain(box ? box[2] : r.sub))}</div>`;
+  return `<button class="gob" data-goblin="${esc(r.id)}"><div class="gh">\u{1F9CC} Goblin GM${unread ? '<i></i>' : ''}<span>${esc(r.label || '')} \u00b7 ${esc(r.updated || '')} \u203a</span></div>${body}</button>`;
+}
+async function openGoblin(id) { S.gobId = id; setSport('nfl'); openSheet('goblin', 'Goblin GM', 'Scores'); await loadGoblinSheet(); }
+async function loadGoblinSheet() {
+  const B = await loadGoblin(); if (S.sheetMode !== 'goblin') return false;
+  if (!B || B.err || !B.reports) { $('#shBody').innerHTML = `<div class="err">${B && B.err ? 'The report key doesn\u2019t open the reports. Check it in Settings.' : 'No Goblin GM report yet.'}</div>`; return false; }
+  const ids = Object.values(B.reports).sort((a, b) => String(a.at || a.updated || '').localeCompare(String(b.at || b.updated || ''))).map(r => r.id);
+  const id = B.reports[S.gobId] ? S.gobId : B.latest; const r = B.reports[id];
+  if (id === B.latest) LS.set('gobSeen', B.latest);
+  const keep = S.gobShown === id ? $('#shScroll').scrollTop : 0; S.gobShown = id;
+  const chips = ids.length > 1 ? `<div class="pls" style="flex-wrap:wrap">${ids.map(x => `<button data-goblin="${esc(x)}" class="${x === id ? 'on' : ''}">${esc((B.reports[x].label || x).replace(/ (analysis|refresh|check|inactives)$/i, ''))}</button>`).join('')}</div>` : '';
+  $('#shTitle').textContent = 'Week ' + (r.week || '');
+  $('#shBody').innerHTML = chips + gobReport(r); $('#shScroll').scrollTop = keep;
+  return false;
+}
+const GOB_TINT = { '#e8f6ee': 'color-mix(in srgb,var(--green) 16%,transparent)', '#fdecec': 'color-mix(in srgb,var(--red) 16%,transparent)', '#fff4db': 'color-mix(in srgb,var(--amber) 16%,transparent)', '#eef1f6': 'var(--well)', '#fff8e6': 'color-mix(in srgb,var(--amber) 9%,transparent)' };
+function gobCellTint(c) { const s = String(c); return /^❌/.test(s) || /^🟥/.test(s) ? GOB_TINT['#fdecec'] : /^✅/.test(s) ? GOB_TINT['#e8f6ee'] : s.includes('🛌') && s.length < 8 ? GOB_TINT['#fff4db'] : null; }
+function gobReport(r) {
+  let h = `<div class="grh"><div class="k">${gobTxt(r.kicker || '')}</div><div class="t">${gobTxt(r.title || '')}</div><div class="s">${gobTxt(r.sub || '')}${r.updated ? ' \u00b7 ' + esc(r.updated) : ''}</div></div>`;
+  let open = false; const flush = () => { if (open) { h += '</section>'; open = false; } }; const sect = () => { if (!open) { h += '<section class="sec" style="gap:8px">'; open = true; } };
+  for (const b of r.blocks || []) {
+    const k = b[0];
+    if (k === 'league') { flush(); h += `<div class="glg">${gobTxt(b[1])}${b[2] ? `<small>${gobTxt(b[2])}</small>` : ''}</div>`; }
+    else if (k === 'h2') { flush(); h += `<div class="gh2">${gobTxt(b[1])}${b[2] ? `<small>${gobTxt(b[2])}</small>` : ''}</div>`; }
+    else if (k === 'box') { sect(); h += `<div class="gbx"><b>${gobTxt(b[1])}</b>${gobTxt(b[2])}</div>`; }
+    else if (k === 'p') { sect(); h += `<div class="gpp">${b[1] ? `<b>${gobTxt(b[1])}</b> ` : ''}${gobTxt(b[2])}</div>`; }
+    else if (k === 't') {
+      sect(); const o = b[3] || {}, al = o.c || [], tint = o.tint || [];
+      h += `<div class="scroll-x"><table class="gtb"><tr>${(b[1] || []).map((x, i) => `<th class="${al[i] ? 'c' : ''}">${gobTxt(x)}</th>`).join('')}</tr>${(b[2] || []).map((row, ri) => `<tr>${row.map((c, ci) => { const bg = gobCellTint(c) || GOB_TINT[tint[ri]] || null; return `<td class="${al[ci] ? 'c' : ''}"${bg ? ` style="background:${bg}"` : ''}>${gobTxt(c)}</td>`; }).join('')}</tr>`).join('')}</table></div>`;
+    } else if (k === 'd') {
+      sect(); const P = b[1] || [], G = b[2] || [];
+      h += `<div class="scroll-x"><table class="gtb"><tr><th></th>${P.map(p => `<th class="c${p[2] ? ' pk' : ''}">${gobTxt(p[0])}<br><span style="text-transform:none;font-weight:400">${gobTxt(p[1] || '')}</span></th>`).join('')}</tr>${G.map(([g, ms]) => `<tr class="gg"><td colspan="${P.length + 1}">${gobTxt(g)}</td></tr>` + (ms || []).map(([m, vals]) => `<tr><td>${gobTxt(m)}</td>${(vals || []).map((v, j) => { const bg = gobCellTint(v) || (P[j] && P[j][2] ? GOB_TINT['#e8f6ee'] : null); return `<td class="c"${bg ? ` style="background:${bg}"` : ''}>${gobTxt(v)}</td>`; }).join('')}</tr>`).join('')).join('')}</table></div>`;
+    }
+  }
+  flush();
+  if ((r.sources || []).length) h += `<p class="gsrc">\u{1F4DA} ${r.sources.map(s => /^https:\/\//.test(s[1] || '') ? `<a href="${esc(s[1])}" target="_blank" rel="noopener">${esc(s[0])}</a>` : esc(s[0])).join(' \u00b7 ')}</p>`;
+  return h;
+}
 async function warmMine() { try { const nfl = await nflNow(); FX.week = nfl.week; await loadFantasy(nfl); } catch (e) {} }
 
 /* =====================================================================
@@ -2301,6 +2394,9 @@ function openSettings(banner) {
   <p class="foot"><b>On iPhone</b> (one-time setup): in the Shortcuts app, create a shortcut, open its \u24D8 details and turn on <i>Show in Share Sheet</i>. Under <i>Share Sheet Types</i> keep <i>Safari web pages</i>. Add the action <i>Run JavaScript on Web Page</i> and make sure it says <i>on Shortcut Input</i> (tap the blue word to change it), replace its text with the script copied by the button below, then add <i>Copy to Clipboard</i> and <i>Show Result</i> (so you can see what it found). In iPhone Settings \u203A Apps \u203A Shortcuts \u203A Advanced, turn on <i>Allow Running Scripts</i>.<br>Each time: in Safari, open your league\u2019s rules page signed in, tap the <i>aA</i> button \u203A <i>Request Desktop Website</i>, then Share \u203A your shortcut. Come back here and tap <i>Paste token from clipboard</i>.</p>
   <section class="sec flush"><button class="row btn" id="sfCopyJs">Copy iPhone Shortcut script</button></section>
   <textarea class="code" id="sfJs" readonly rows="4" style="width:100%;font:12px/1.4 ui-monospace,Menlo,monospace;resize:none">${esc(SHORTCUT_JS)}</textarea>
+  <section class="sec flush"><h2><span>Goblin GM</span></h2><div>
+    <label class="row"><span class="k">Report key</span><input id="sfGob" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(CFG.goblinKey)}" placeholder="Paste key"></label></div></section>
+  <p class="foot">Goblin GM saves an encrypted copy of each report next to this app. Only this key, kept on this device, can open it.</p>
   <section class="sec flush"><button class="row btn red" id="sfReset">Clear saved data</button></section>
   <p class="foot" id="sfMsg">Settings are stored only on this device.</p>`;
   renderStatus(banner);
@@ -2308,7 +2404,7 @@ function openSettings(banner) {
     const msg = $('#sfCodeMsg'); const raw = $('#sfCode').value;
     if (!raw.trim()) { msg.style.color = 'var(--red)'; msg.textContent = 'Paste the code first.'; return; }
     let j; try { j = decodeSetup(raw); } catch (e) { msg.style.color = 'var(--red)'; msg.textContent = 'That code didn’t work. Make sure it was copied in full, starting with FC1.'; return; }
-    let n = 0; ['favNFL', 'favNHL', 'sleeperLeague', 'sleeperRoster', 'cbsToken', 'cbsTeam'].forEach(k => { if (j[k] != null && j[k] !== '') { CFG[k] = String(j[k]); n++; } });
+    let n = 0; ['favNFL', 'favNHL', 'sleeperLeague', 'sleeperRoster', 'cbsToken', 'cbsTeam', 'goblinKey'].forEach(k => { if (j[k] != null && j[k] !== '') { CFG[k] = String(j[k]); n++; } });
     if (!n) { msg.style.color = 'var(--red)'; msg.textContent = 'That code had nothing in it to apply.'; return; }
     saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); warmMine();
     openSettings('✓ Setup code applied and saved');
@@ -2326,7 +2422,7 @@ function openSettings(banner) {
   const drawWatch = () => { $('#sfWatch').innerHTML = Object.entries(PROV).map(([k, P]) => { const i = watchSel.indexOf(k); return `<button class="row svc${i >= 0 ? ' on' : ''}" data-svc="${k}" aria-pressed="${i >= 0}"><span class="n">${i >= 0 ? i + 1 : ''}</span><span class="k">${esc(P.app)}<small>${esc([P.tv && P.tv !== P.app ? P.tv + ' on TV' : '', P.lang].filter(Boolean).join(' · '))}</small></span></button>`; }).join(''); };
   drawWatch();
   $('#sfWatch').onclick = e => { const b = e.target.closest('[data-svc]'); if (!b) return; const k = b.dataset.svc; watchSel = watchSel.includes(k) ? watchSel.filter(x => x !== k) : watchSel.concat(k); drawWatch(); };
-  $('#sfSave').onclick = () => { CFG.watch = watchSel.slice(); CFG.look = $('#sfIce').value; applyIce(); CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
+  $('#sfSave').onclick = () => { CFG.watch = watchSel.slice(); CFG.look = $('#sfIce').value; applyIce(); CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; CFG.goblinKey = $('#sfGob').value.trim(); saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
   $('#sfReset').onclick = () => { const b = $('#sfReset'); if (b.dataset.armed) { LS.del('cfg'); LS.del('sp_players'); CFG = Object.assign({}, DEFAULTS); MY_NAMES.clear(); FX.data = {}; FX.byTeam = {}; toast('Cleared'); closeSheet(); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to clear everything'; } };
 }
 
@@ -2343,6 +2439,7 @@ async function refresh(force) {
     else if (S.sheetMode === 'fx') live = await loadFxSheet();
     else if (S.sheetMode === 'stand') live = await loadStandSheet();
     else if (S.sheetMode === 'sweat') live = await loadSweat();
+    else if (S.sheetMode === 'goblin') live = await loadGoblinSheet();
     else if (S.sheetMode === 'plog') live = await loadPlog();
     else if (S.sheetMode === 'settings') live = S.live;
     else if (S.tab === 'nhl') live = await loadNHL();
@@ -2371,6 +2468,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-settings]')) { openSettings(); return; }
   if (e.target.closest('[data-cbspaste]')) { pasteCbsToken(); return; }
   if (e.target.closest('[data-sweat]')) { openSweat(); return; }
+  const gb = e.target.closest('[data-goblin]'); if (gb) { if (S.sheetMode === 'goblin') { S.gobId = gb.dataset.goblin; loadGoblinSheet(); } else openGoblin(gb.dataset.goblin); return; }
   const pg = e.target.closest('[data-plog]'); if (pg) { openPlog(pg.dataset.plog); return; }
 });
 $('#prevBtn').onclick = () => shiftWeek(-1);
