@@ -237,11 +237,12 @@ body[data-ice="light"] .lbl{text-shadow:none}
 .tgauge{padding:4px 8px 0}
 
 /* chain gauge: a sliver of field */
-.gauge{position:relative;height:7px;border-radius:2px;background:repeating-linear-gradient(90deg,#2f7d43 0 10%,#2a733d 10% 20%);overflow:hidden}
-.gauge .ez{position:absolute;top:0;bottom:0;width:7%}
+.gauge{position:relative;height:7px;border-radius:2px;background:repeating-linear-gradient(90deg,#2f7d43 0 10%,#2a733d 10% 20%)}
+.gauge .ez{position:absolute;top:0;bottom:0;width:7%;border-radius:2px 0 0 2px}
+.gauge .ez + .ez{border-radius:0 2px 2px 0}
 .gauge .los{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--blue)}
 .gauge .fd{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--yellow)}
-.gauge .ball{position:absolute;top:50%;width:9px;height:6px;margin:-3px 0 0 -4.5px;border-radius:50%;background:#8b4a20;border:1px solid #fff}
+.gauge .ball{position:absolute;top:50%;width:10px;height:7px;margin:-3.5px 0 0 -5px;border-radius:50%;background:#8b4a20;border:1px solid #fff;z-index:1}
 
 /* ---------- big score bug ---------- */
 .hero{display:grid;gap:7px;width:100%;background:var(--card);border-radius:10px;padding:8px}
@@ -306,7 +307,29 @@ button.hero:active{opacity:.85}
 @keyframes redlamp{50%{box-shadow:0 0 0 2px var(--fc),0 0 30px 6px color-mix(in srgb,var(--fc) 70%,transparent)}}
 .ping{animation:ping .8s ease-in-out 3}
 @keyframes ping{50%{filter:brightness(1.7) saturate(1.2)}}
-.tl.ping{animation:tping .8s ease-in-out 3}
+.tl.ping,.mr.ping{animation:tping .8s ease-in-out 3}
+/* three-across Football tiles */
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;align-items:start}
+.t3{border-radius:8px}
+.mr{display:flex;align-items:center;gap:4px;height:25px;padding:0 6px 0 4px;border-left:3px solid var(--c);min-width:0}
+.mr + .mr{border-top:1px solid var(--sep)}
+.mr img{width:15px;height:15px;object-fit:contain;flex:none}
+.mr .ab{font:700 15px/1 var(--bc);letter-spacing:.02em}
+.mr .sc{margin-left:auto;font:800 17px/1 var(--bc);font-variant-numeric:tabular-nums}
+.mr .rc{margin-left:auto;font:500 10.5px var(--ui);color:var(--fg3);white-space:nowrap}
+.mr .foot-ic{width:14px;height:9px;margin-left:2px}
+.mr.lose .ab,.mr.lose .sc{color:var(--fg3)} .mr.lose img{opacity:.5}
+.zs{display:flex;align-items:baseline;gap:6px;padding:3px 6px;border-top:1px solid var(--sep);font:700 11.5px/1.2 var(--bc);letter-spacing:.05em;text-transform:uppercase;color:var(--fg2);white-space:nowrap;overflow:hidden}
+.zs b{font-weight:700} .zs .lv{color:var(--red)} .zs .dd{margin-left:auto;color:var(--yellow)} .zs .dd.rz{color:#ff6b61}
+.zs span{margin-left:auto;font:500 10.5px var(--ui);letter-spacing:0;text-transform:none}
+.zg{padding:3px 6px 5px}
+.zg .gauge{height:5px}
+.pls3{display:flex;flex-direction:column;gap:1px;padding:3px 5px 4px 6px;border-top:1px solid var(--sep);background:var(--well);font:500 11px/1.3 var(--ui);letter-spacing:-.01em;color:var(--fg)}
+.pls3.wide{flex-direction:row;flex-wrap:wrap;gap:2px 14px;padding:6px 2px 0;background:none;border:0;font-size:13px;letter-spacing:0}
+.pln{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 4px}
+.pv{white-space:nowrap;font-weight:700;font-variant-numeric:tabular-nums} .pv.P{color:#b9b4ff} .pv.B{color:#5fd4c4}
+.pdot{width:7px;height:7px;border-radius:50%;align-self:center} .pdot.P{background:#a8a2ff} .pdot.B{background:#5fd4c4}
+.cf .tg.B{color:#5fd4c4}
 @keyframes tping{50%{background:color-mix(in srgb,var(--c) 45%,transparent)}}
 /* post-game recap */
 .lastg{display:grid;gap:6px;border-top:1px solid var(--sep);padding:7px 2px 1px;cursor:pointer}
@@ -978,10 +1001,13 @@ function tLine(g, t, si) {
   return `<div class="tl${lose ? ' lose' : ''}" style="--c:${teamInk(t)}">${logo(t)}<span class="ab">${esc(t.abbr)}</span>${si && si.off === t ? FOOT : ''}${g.state === 'pre' ? `<span class="rec">${esc(t.rec)}</span>` : ''}<span class="sc">${g.state === 'pre' ? '' : esc(t.score)}</span></div>`;
 }
 // my fantasy starters in this game, with live points once it has started (tiles and the big score card)
-function mineRow(g) {
-  const mine = g && g.sp === 'nfl' ? minesIn(g) : [];
-  return mine.length ? `<div class="tmine">${mine.map(p => `<span><b>${p.tag}</b>${esc(p.name)}${g.state !== 'pre' ? ` <i>${fmtP(p.pts)}</i>` : ''}</span>`).join('')}</div>` : '';
-}
+// one entry per player, with a points value per league (violet = PFL, teal = BELL; a dot before kickoff)
+function minePlayers(g) { const by = {}; (g && g.sp === 'nfl' ? minesIn(g) : []).forEach(m => { (by[m.name] = by[m.name] || { name: m.name, lg: [] }).lg.push(m); }); return Object.values(by).map(p => (p.lg.sort((a, b) => (a.tag === 'PFL' ? 0 : 1) - (b.tag === 'PFL' ? 0 : 1)), p)); }
+const lgCls = tag => tag === 'PFL' ? 'P' : 'B';
+const pval = (g, m) => g.state === 'pre' ? `<span class="pdot ${lgCls(m.tag)}" title="${esc(m.tag)}"></span>` : `<span class="pv ${lgCls(m.tag)}">${fmtP(m.pts)}</span>`;
+const plines = g => minePlayers(g).map(p => `<span class="pln">${esc(p.name)} ${p.lg.map(m => pval(g, m)).join(' ')}</span>`).join('');
+// my fantasy starters in this game: one wrapping line on the big score card, one line each in a tile
+function mineRow(g) { const pl = plines(g); return pl ? `<div class="pls3 wide">${pl}</div>` : ''; }
 function tile(g, grouped) {
   const si = g.sp === 'nfl' ? nflSit(g) : null;
   const mineH = mineRow(g);
@@ -993,6 +1019,19 @@ function tile(g, grouped) {
   const st = g.state === 'pre' && g.sp === 'nfl' && grouped ? '' : statusText(g);
   return `<button class="tile${hasFav(g) && g.sp === 'nfl' ? ' fav' : ''}" data-open="${g.sp}:${g.id}">${tLine(g, g.away, si)}${tLine(g, g.home, si)}${si && si.off ? `<div class="tgauge">${gauge(si, g)}</div>` : ''}${mineH}${st || x ? `<div class="tf">${st}${x}</div>` : ''}</button>`;
 }
+/* Football games, three across: two team rows, a status line (live clock + down & distance, odds before kickoff,
+   only OT after), the field strip while a drive is on, and your players. Each tile is only as tall as it needs. */
+function tile3(g, grouped) {
+  const si = g.state === 'in' ? nflSit(g) : null;
+  const row = t => { const lose = g.state === 'post' && !t.winner && (g.home.winner || g.away.winner); return `<div class="mr${lose ? ' lose' : ''}" style="--c:${teamInk(t)}">${logo(t)}<span class="ab">${esc(t.abbr)}</span>${si && si.off === t ? FOOT : ''}${g.state === 'pre' ? `<span class="rc">${esc(t.rec || '')}</span>` : `<span class="sc">${esc(t.score)}</span>`}</div>`; };
+  let st = '';
+  if (g.state === 'in') { const d = g.detail || ''; st = `<b class="lv">${esc(/half|end|intermission|delay|suspend/i.test(d) ? d.replace(/^End of /i, 'End ').replace(/ - /, ' ') : qLab(g.period) + ' ' + (g.clock || ''))}</b>${si && si.dd ? `<b class="dd${si.rz ? ' rz' : ''}">${esc(si.dd.replace(/(\d)(st|nd|rd|th) & /, '$1&'))}${si.rz ? ' RZ' : ''}</b>` : ''}`; }
+  else if (g.state === 'pre') st = `${grouped ? '' : `<b>${esc(shortDay(g.date))} ${esc(fmtTime(g.date))}</b>`}${g.odds ? `<span>${esc(g.odds)}</span>` : ''}`;
+  else { const ot = /(OT|SO)/.exec(g.detail || ''); st = ot ? `<b>${ot[1]}</b>` : ''; }
+  const pl = plines(g);
+  return `<button class="tile t3${hasFav(g) ? ' fav' : ''}" data-open="${g.sp}:${g.id}">${row(g.away)}${row(g.home)}${st ? `<div class="zs">${st}</div>` : ''}${si && si.off ? `<div class="zg">${gauge(si, g)}</div>` : ''}${pl ? `<div class="pls3">${pl}</div>` : ''}</button>`;
+}
+const tiles3 = (label, games, cls = '', grouped = false) => games.length ? `<div class="lbl ${cls}">${label}</div><div class="g3">${games.map(g => tile3(g, grouped)).join('')}</div>` : '';
 const tiles = (label, games, cls = '', grouped = false) => games.length ? `<div class="lbl ${cls}">${label}</div><div class="g2 tiles">${games.map(g => tile(g, grouped)).join('')}</div>` : '';
 function sec(title, right, body, cls = '') { return `<section class="sec ${cls}"><h2><span>${title}</span>${right ? `<span class="r">${right}</span>` : ''}</h2>${body}</section>`; }
 
@@ -1046,7 +1085,7 @@ function applyFlash(root, f) {
   const card = bugEl.closest('.hero'); if (card) { card.style.setProperty('--fc', f.sp === 'nhl' ? '#ff2a1f' : f.color); card.classList.add('lit'); setTimeout(() => card.classList.remove('lit'), 4000); }
 }
 function pingTiles(games) {
-  games.forEach(g => { if (g.state !== 'in') return; const f = scoreFlash(g); if (!f) return; const tl = document.querySelectorAll(`.tile[data-open="${g.sp}:${g.id}"] .tl`)[f.side]; if (tl) tl.classList.add('ping'); });
+  games.forEach(g => { if (g.state !== 'in') return; const f = scoreFlash(g); if (!f) return; const tl = document.querySelectorAll(`.tile[data-open="${g.sp}:${g.id}"] :is(.tl,.mr)`)[f.side]; if (tl) tl.classList.add('ping'); });
   saveSeen();
 }
 
@@ -1308,7 +1347,7 @@ function fxCards(gob) {
     if (m && m.me) {
       const o = oddsOf(m); const iss = lineupIssues(m); const wc = iss.length ? (iss.some(i => i.lvl === 2) ? ' warn' : ' warnq') : '';
       const sub = isDone(m) ? '<small class="sl fin">Final · everyone has played</small>' : `<small class="pj">${fmtP(m.me.est)}</small><span></span><small class="pj">${m.opp ? fmtP(m.opp.est) : ''}</small><small class="sl">projected · ${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} left</small>`;
-      rows.push(`<button class="cf${wc}" data-fxopen="${k}"><span class="tg">${esc(tag)}</span><b>${fmtP(m.me.pts)}</b>${m.opp ? `<span class="vs">–</span><span class="op">${fmtP(m.opp.pts)}</span>` : '<span></span><span></span>'}<span class="wb">${o != null ? `<u style="width:${o}%"></u>` : ''}</span><span class="pc ${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</span><span></span>${sub}${lineupCard(iss)}</button>`);
+      rows.push(`<button class="cf${wc}" data-fxopen="${k}"><span class="tg${k === 'cv' ? ' B' : ''}">${esc(tag)}</span><b>${fmtP(m.me.pts)}</b>${m.opp ? `<span class="vs">–</span><span class="op">${fmtP(m.opp.pts)}</span>` : '<span></span><span></span>'}<span class="wb">${o != null ? `<u style="width:${o}%"></u>` : ''}</span><span class="pc ${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</span><span></span>${sub}${lineupCard(iss)}</button>`);
     } else if (k === 'cv' && d.cvErr === CBS_DOWN) msg(k, def, 'data-cbspaste', 'CBS isn’t answering (error 500)', 'Often CBS’s side — it retries on its own. If your league works in Safari, run your CBS shortcut and tap here for a new token', 'amber');
     else if (k === 'cv' && d.cvErr === CBS_EXPIRED) msg(k, def, 'data-cbspaste', 'Token expired', 'Run your CBS shortcut in Safari, then tap here to paste the new one', 'red');
     else if (d[k + 'Err']) msg(k, def, 'data-settings', esc(d[k + 'Err']), 'Tap to fix in Settings', 'red');
@@ -1353,10 +1392,10 @@ async function loadNFL() {
   const gob = isCur ? await loadGoblin() : null;
   let h = hero.html + (isCur ? fxCards(gob) : '');
   const notHero = g => g.id !== hero.id;
-  h += tiles(`Live · ${L.filter(notHero).length}`, L.filter(notHero), 'live');
+  h += tiles3(`Live · ${L.filter(notHero).length}`, L.filter(notHero), 'live');
   const slots = {}; P.forEach(g => { const k = dayWord(g.date) + ' · ' + fmtTime(g.date); (slots[k] = slots[k] || []).push(g); });
-  for (const [k, arr] of Object.entries(slots)) h += tiles(esc(k), arr.filter(notHero).sort((a, b) => score(b) - score(a)), '', true);
-  h += tiles('Final', F.filter(notHero));
+  for (const [k, arr] of Object.entries(slots)) h += tiles3(esc(k), arr.filter(notHero).sort((a, b) => score(b) - score(a)), '', true);
+  h += tiles3(`Final · ${F.filter(notHero).length}`, F.filter(notHero));
   if (byes.length) h += `<p class="foot">On bye: ${byes.map(esc).join(', ')}</p>`;
   if (!games.length) h += '<div class="empty">No games this week.</div>';
   $('#view').innerHTML = h;
