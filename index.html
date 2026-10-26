@@ -455,6 +455,28 @@ button.hero:active{opacity:.85}
 .bar{height:3px;border-radius:2px;background:var(--fill);overflow:hidden}
 .bar u{display:block;height:3px;background:var(--mine)}
 .fxc.solo{grid-column:1/-1}
+/* Your matchups: compact block */
+.cfb{background:var(--card);border-radius:10px;overflow:hidden;border-top:3px solid var(--mine)}
+.cf{display:grid;grid-template-columns:34px auto auto auto 1fr auto;align-items:center;column-gap:6px;width:100%;padding:6px 10px 6px 9px;text-align:left;border-left:3px solid transparent}
+.cf + .cf{border-top:1px solid var(--sep)}
+.cf:active,.cg:active{background:var(--fill)}
+.cf.warn{border-left-color:var(--red)} .cf.warnq{border-left-color:var(--amber)}
+.cf .tg{font:700 11px var(--bc);letter-spacing:.1em;color:var(--mine)}
+.cf > b{font:800 20px/1 var(--bc);font-variant-numeric:tabular-nums}
+.cf .vs{color:var(--fg3)} .cf .op{font:700 16px/1 var(--bc);color:var(--fg2);font-variant-numeric:tabular-nums}
+.cf .wb{height:5px;border-radius:3px;background:var(--fill);overflow:hidden;margin:0 4px;min-width:20px}
+.cf .wb u{display:block;height:100%;background:var(--mine)}
+.cf .pc{font:700 12.5px var(--bc);letter-spacing:.04em;white-space:nowrap} .cf .pc.up{color:var(--green)} .cf .pc.dn{color:var(--red)}
+.cf > small{grid-column:2/-1;font:400 11.5px var(--ui);color:var(--fg2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf .fxw{grid-column:2/-1;margin-top:2px}
+.cf.msg{display:flex;align-items:flex-start;gap:8px}
+.cf.msg .tg{width:34px;flex:none;padding-top:2px}
+.cf.msg b{display:block;font:600 13px/1.3 var(--ui)} .cf.msg small{display:block;font:400 12px/1.35 var(--ui);color:var(--fg2);margin-top:1px}
+.cg{display:flex;align-items:center;gap:6px;width:100%;padding:7px 10px;font:500 13px var(--ui);text-align:left;min-width:0}
+.cf + .cg{border-top:1px solid var(--sep)}
+.cg b{font:700 11.5px var(--bc);letter-spacing:.12em;text-transform:uppercase;color:#9be37a}
+.cg span{color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cg i{width:7px;height:7px;border-radius:50%;background:#9be37a;flex:none} .cg em{margin-left:auto;font-style:normal;color:var(--fg3)}
 
 /* ---------- sheet ---------- */
 .sheet{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s .3s;visibility:hidden;box-shadow:-12px 0 30px rgba(0,0,0,.35)}
@@ -1274,23 +1296,34 @@ function wpScrub(e) {
 }
 function wpScrubEnd(e) { const box = e.target.closest && e.target.closest('.wpg'); if (!box) return; setTimeout(() => { const xh = box.querySelector('.xh'); if (xh) xh.setAttribute('visibility', 'hidden'); const rd = box.querySelector('.rd'); if (rd) rd.hidden = true; }, 900); }
 
-function fxCards() {
-  const d = FX.data; const cards = [];
+/* Your matchups: one compact block, a row per league (score, win bar, projection, lineup alerts),
+   then a one-line Goblin GM entry. Every row opens the same screens as before. */
+function fxCards(gob) {
+  const d = FX.data; const rows = [];
+  const msg = (k, tag, attr, main, sub, col) => rows.push(`<button class="cf msg" ${attr}><span class="tg">${esc(tag)}</span><span><b style="color:var(--${col})">${main}</b>${sub ? `<small>${sub}</small>` : ''}</span></button>`);
   [['sv', 'PFL'], ['cv', 'BELL']].forEach(([k, def]) => {
-    const m = d[k];
+    const m = d[k]; const tag = (m && m.short) || def;
     if (m && m.me) {
-      const o = oddsOf(m); const lead = m.opp && m.me.pts >= m.opp.pts; const iss = lineupIssues(m); const wc = iss.length ? (iss.some(i => i.lvl === 2) ? ' warn' : ' warnq') : '';
-      const side = (t, me) => `<div class="fxt${me ? ' me' : ''}"><b>${fmtP(t.pts)}</b><small>proj ${fmtP(t.est)}</small></div>`;
-      cards.push(`<button class="fxc${wc}" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span>${o != null ? `<span class="pc">${oddsLabel(m, o)}</span>` : ''}</div><div class="fxv">${side(m.me, true)}${m.opp ? `<span class="vs">vs</span>${side(m.opp, false)}` : ''}</div>${o != null ? `<div class="bar"><u style="width:${o}%"></u></div>` : ''}<div class="fxm">${isDone(m) ? 'Final \u00b7 everyone has played' : `${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} players left`}</div>${lineupCard(iss)}</button>`);
-    } else if (k === 'cv' && d.cvErr === CBS_DOWN) cards.push(`<button class="fxc" data-cbspaste><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--amber)">CBS isn\u2019t answering (error 500)</div><div class="fxm" style="white-space:normal">Often CBS\u2019s side \u2014 it retries on its own. If your league works in Safari, run your CBS shortcut and tap here for a new token</div></button>`);
-    else if (k === 'cv' && d.cvErr === CBS_EXPIRED) cards.push(`<button class="fxc" data-cbspaste><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">Token expired</div><div class="fxm" style="white-space:normal">Run your CBS shortcut in Safari, then tap here to paste the new one</div></button>`);
-    else if (d[k + 'Err']) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">${esc(d[k + 'Err'])}</div><div class="fxm">Tap to fix in Settings</div></button>`);
-    else if (m) cards.push(`<button class="fxc" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span></div><div class="fxm">Pick your team in Settings</div></button>`);
+      const o = oddsOf(m); const iss = lineupIssues(m); const wc = iss.length ? (iss.some(i => i.lvl === 2) ? ' warn' : ' warnq') : '';
+      const sub = isDone(m) ? 'Final · everyone has played' : `proj ${fmtP(m.me.est)}${m.opp ? '–' + fmtP(m.opp.est) : ''} · ${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} left`;
+      rows.push(`<button class="cf${wc}" data-fxopen="${k}"><span class="tg">${esc(tag)}</span><b>${fmtP(m.me.pts)}</b>${m.opp ? `<span class="vs">–</span><span class="op">${fmtP(m.opp.pts)}</span>` : '<span></span><span></span>'}<span class="wb">${o != null ? `<u style="width:${o}%"></u>` : ''}</span><span class="pc ${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</span><small>${sub}</small>${lineupCard(iss)}</button>`);
+    } else if (k === 'cv' && d.cvErr === CBS_DOWN) msg(k, def, 'data-cbspaste', 'CBS isn’t answering (error 500)', 'Often CBS’s side — it retries on its own. If your league works in Safari, run your CBS shortcut and tap here for a new token', 'amber');
+    else if (k === 'cv' && d.cvErr === CBS_EXPIRED) msg(k, def, 'data-cbspaste', 'Token expired', 'Run your CBS shortcut in Safari, then tap here to paste the new one', 'red');
+    else if (d[k + 'Err']) msg(k, def, 'data-settings', esc(d[k + 'Err']), 'Tap to fix in Settings', 'red');
+    else if (m) msg(k, tag, `data-fxopen="${k}"`, 'Pick your team in Settings', '', 'fg');
   });
-  if (!CFG.cbsToken && CFG.cbsTeam) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>BELL</span></div><div class="fxm" style="white-space:normal">Add your CBS token in Settings to see this matchup</div></button>`);
-  if (!CFG.sleeperLeague && !CFG.cbsToken && !CFG.cbsTeam) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>Fantasy</span></div><div class="fxm" style="white-space:normal">Paste your setup code in Settings to see your matchups here</div></button>`);
-  if (cards.length === 1) cards[0] = cards[0].replace('class="fxc', 'class="fxc solo');
-  return cards.length ? `<div class="lbl">Your matchups${[d.sv, d.cv].some(m => m && m.me) ? '<button class="lnk" data-sweat>All my players \u203a</button>' : ''}</div><div class="g2">${cards.join('')}</div>` : '';
+  if (!CFG.cbsToken && CFG.cbsTeam) msg('cv', 'BELL', 'data-settings', 'Add your CBS token in Settings to see this matchup', '', 'fg');
+  const g = gobLine(gob);
+  if (!rows.length && !g) return CFG.sleeperLeague || CFG.cbsToken || CFG.cbsTeam ? '' : `<div class="lbl">Your matchups</div><button class="fxc solo" data-settings><div class="fxh"><span>Fantasy</span></div><div class="fxm" style="white-space:normal">Paste your setup code in Settings to see your matchups here</div></button>`;
+  return `<div class="lbl">Your matchups${[d.sv, d.cv].some(m => m && m.me) ? '<button class="lnk" data-sweat>All my players ›</button>' : ''}</div><div class="cfb">${rows.join('')}${g}</div>`;
+}
+// Goblin GM as one line in the matchups block: action count, report name, unread dot
+function gobLine(B) {
+  if (!B) return '';
+  if (B.err) return `<button class="cg" data-settings>\u{1F9CC} <b>Goblin</b> <span style="color:var(--amber)">Report key doesn’t match · check Settings</span><em>›</em></button>`;
+  const r = B.reports && B.reports[B.latest]; if (!r) return '';
+  const n = (r.actions || []).filter(Boolean).length;
+  return `<button class="cg" data-goblin="${esc(r.id)}">\u{1F9CC} <b>Goblin</b> <span>${n ? `${n} action${n === 1 ? '' : 's'} · ` : ''}${esc(r.label || '')}</span>${LS.get('gobSeen', '') !== B.latest ? '<i></i>' : ''}<em>›</em></button>`;
 }
 async function loadNFL() {
   const q = S.nfl.q; const j = q ? await espn('nfl', `scoreboard?week=${q.week}&seasontype=${q.st}&dates=${q.yr}`) : await nflScoreboardNow();
@@ -1316,7 +1349,7 @@ async function loadNFL() {
   const P = games.filter(g => g.state === 'pre').sort((a, b) => a.date - b.date || score(b) - score(a));
   const F = games.filter(g => g.state === 'post').sort((a, b) => score(b) - score(a) || b.date - a.date);
   const gob = isCur ? await loadGoblin() : null;
-  let h = hero.html + (isCur ? fxCards() + gobStrip(gob) : '');
+  let h = hero.html + (isCur ? fxCards(gob) : '');
   const notHero = g => g.id !== hero.id;
   h += tiles(`Live · ${L.filter(notHero).length}`, L.filter(notHero), 'live');
   const slots = {}; P.forEach(g => { const k = dayWord(g.date) + ' · ' + fmtTime(g.date); (slots[k] = slots[k] || []).push(g); });
