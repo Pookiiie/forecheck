@@ -11,9 +11,16 @@ const STONE = svg(`<svg xmlns='http://www.w3.org/2000/svg' width='252' height='2
 <rect width='252' height='220' fill='#141210'/>${bricks}
 <rect width='252' height='220' filter='url(#b)'/><rect width='252' height='220' filter='url(#n)' opacity='.6'/>
 <g filter='url(#m)' opacity='.55'><ellipse cx='42' cy='44' rx='26' ry='8' fill='#4d6b26'/><ellipse cx='210' cy='132' rx='20' ry='7' fill='#3f5c1f'/><ellipse cx='126' cy='176' rx='14' ry='5' fill='#5a7a2c'/></g></svg>`);
-const WOOD = svg(`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='120'>
-<filter id='w'><feTurbulence type='fractalNoise' baseFrequency='.004 .18' numOctaves='4' seed='3'/><feColorMatrix values='0 0 0 0 .1 0 0 0 0 .05 0 0 0 0 .01 0 0 0 1.1 -.35'/></filter>
-<rect width='600' height='120' fill='#5b3a1f'/><rect width='600' height='120' filter='url(#w)'/></svg>`);
+// wood: long grain streaks, fine fibres and pale highlights; the header plank also gets board joints, knots and nails
+const woodDefs = `<defs><filter id='g' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.0025 .11' numOctaves='5' seed='11' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .12 0 0 0 0 .06 0 0 0 0 .02 2.6 0 0 0 -.9'/></filter>
+<filter id='f' x='0' y='0' width='100%' height='100%'><feTurbulence type='turbulence' baseFrequency='.012 .55' numOctaves='3' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .08 0 0 0 0 .04 0 0 0 0 .01 1.6 0 0 0 -.45'/></filter>
+<filter id='h' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.004 .2' numOctaves='3' seed='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 .85 0 0 0 0 .6 1.8 0 0 0 -1.15'/></filter></defs>
+<rect width='520' height='120' fill='#5e3b1e'/><rect width='520' height='120' filter='url(#h)'/><rect width='520' height='120' filter='url(#g)'/><rect width='520' height='120' filter='url(#f)'/>`;
+const WOOD_TAG = svg(`<svg xmlns='http://www.w3.org/2000/svg' width='520' height='120'>${woodDefs}</svg>`);
+const WOOD = svg(`<svg xmlns='http://www.w3.org/2000/svg' width='520' height='120'>${woodDefs}
+<g fill='none'><path d='M173 0v120M347 0v120' stroke='#1f1208' stroke-width='3'/><path d='M175.5 0v120M349.5 0v120' stroke='rgba(255,215,160,.16)' stroke-width='1'/></g>
+<g><ellipse cx='96' cy='70' rx='13' ry='5' fill='none' stroke='rgba(35,18,6,.55)' stroke-width='2'/><ellipse cx='96' cy='70' rx='6' ry='2.4' fill='rgba(35,18,6,.7)'/><ellipse cx='430' cy='34' rx='9' ry='3.5' fill='none' stroke='rgba(35,18,6,.5)' stroke-width='1.6'/><ellipse cx='430' cy='34' rx='4' ry='1.6' fill='rgba(35,18,6,.7)'/></g>
+<g fill='#2a1a0c'><circle cx='164' cy='14' r='3.2'/><circle cx='164' cy='106' r='3.2'/><circle cx='358' cy='14' r='3.2'/><circle cx='358' cy='106' r='3.2'/></g><g fill='rgba(255,225,180,.35)'><circle cx='163' cy='13' r='1.2'/><circle cx='163' cy='105' r='1.2'/><circle cx='357' cy='13' r='1.2'/><circle cx='357' cy='105' r='1.2'/></g></svg>`);
 const PAPER = svg(`<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'>
 <filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .36 0 0 0 0 .24 0 0 0 0 .1 0 0 0 .3 0'/></filter>
 <filter id='mo'><feTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='3' stitchTiles='stitch' seed='9'/><feColorMatrix values='0 0 0 0 .45 0 0 0 0 .3 0 0 0 0 .1 0 0 0 .9 -.32'/></filter>
@@ -32,4 +39,4 @@ const deckle = (n = 44, a = 5) => { const P = []; for (let i = 0; i <= n; i++) P
   for (let i = 7; i > 0; i--) P.push(`${(rnd() * 3).toFixed(1)}px ${(i / 8 * 100).toFixed(1)}%`); return `polygon(${P.join(',')})`; };
 
 
-module.exports = { STONE, WOOD, PAPER, CLOTH, WEB, deckle };
+module.exports = { STONE, WOOD, WOOD_TAG, PAPER, CLOTH, WEB, deckle };

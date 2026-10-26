@@ -1,7 +1,7 @@
 // Builds "The Goblin's Ledger" into Forecheck (index.html) and both Goblin GM report pages from one source.
 // usage: node build.js <forecheck index.html> <eric page out> <max page out>
 const fs = require('fs'); const path = require('path');
-const { STONE, WOOD, PAPER, CLOTH, WEB, deckle } = require('./textures.js');
+const { STONE, WOOD, WOOD_TAG, PAPER, CLOTH, WEB, deckle } = require('./textures.js');
 const RENDER = fs.readFileSync(path.join(__dirname, 'render.js'), 'utf8');
 const FONTS = 'https://fonts.googleapis.com/css2?family=Pirata+One&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=UnifrakturMaguntia&display=swap';
 
@@ -18,7 +18,7 @@ ${LR}::before{content:'';position:absolute;top:0;right:-6px;width:150px;height:1
 ${LR}::after{content:'🕷️';position:absolute;top:0;right:41px;padding-top:34px;font-size:17px;line-height:1;z-index:3;pointer-events:none;background:linear-gradient(rgba(230,225,210,.55),rgba(230,225,210,.55)) 50% 0/1px 38px no-repeat;filter:drop-shadow(0 2px 2px #000)}
 /* report tabs: wooden tags on nails */
 ${LR} .pls{display:flex;flex-wrap:wrap;gap:8px;padding:0 4px}
-${LR} .pls button{position:relative;font:400 16px var(--lg-pirate);letter-spacing:.03em;text-transform:none;background:${WOOD},#5b3a1f;color:#e9cf9b;border:0;border-radius:3px 3px 10px 10px;padding:9px 14px 6px;box-shadow:0 3px 6px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,160,.2);text-shadow:0 1px 0 #000;cursor:pointer}
+${LR} .pls button{position:relative;font:400 16px var(--lg-pirate);letter-spacing:.03em;text-transform:none;background:${WOOD_TAG} 0 0/auto 260%,#5e3b1e;color:#e9cf9b;border:0;border-radius:3px 3px 10px 10px;padding:9px 14px 6px;box-shadow:0 3px 6px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,160,.2);text-shadow:0 1px 0 #000;cursor:pointer}
 ${LR} .pls button::before{content:'';position:absolute;top:3px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#1a1006;box-shadow:0 1px 0 rgba(255,220,160,.3)}
 ${LR} .pls button.on{color:#fff1cf;box-shadow:0 0 0 2px #c0391f,0 3px 8px rgba(0,0,0,.6),0 0 16px rgba(255,90,40,.35)}
 /* parchment is drawn on a clipped layer so the torn edge keeps its drop shadow */
@@ -104,7 +104,7 @@ ${LR} .gempty b{display:block;font:400 26px var(--lg-pirate);font-style:normal;c
 
 // ---------------- Forecheck ----------------
 const appCSS = ledgerCSS('#sheet.gob #shScroll', '#sheet.gob #shBody') + `
-#sheet.gob .nav{background:${WOOD},#5b3a1f;border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12)}
+#sheet.gob .nav{background:${WOOD} 0 50%/auto 220%,#5e3b1e;border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12),inset 0 2px 0 rgba(255,220,160,.12)}
 #sheet.gob .back{color:#f0c46a;text-shadow:0 1px 0 #000}
 #sheet.gob .sh-title{font:400 29px "Pirata One","Palatino Linotype",Georgia,serif;letter-spacing:.03em;text-transform:none;color:#f0c46a;text-shadow:0 2px 0 #2a1709,0 -1px 0 rgba(255,240,200,.35),0 0 14px rgba(255,170,40,.35)}
 #sheet.gob .sh-title::before{content:'🧌 ';font-size:21px;text-shadow:none}
@@ -132,7 +132,7 @@ const page = cfg => `<title>${cfg.title}</title>
 html{background:var(--wall)}
 body{background:var(--wall);color:var(--tag);font-family:var(--ui);font-size:15px;line-height:1.45}
 .wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.plank{background:${WOOD},var(--plank);border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12);position:relative;z-index:4}
+.plank{background:${WOOD} 0 0/auto 100%,var(--plank);border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12);position:relative;z-index:4}
 .plank .wrap{padding-block:12px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
 .brand{font:400 31px/1.1 var(--pirate);letter-spacing:.03em;color:var(--gold);text-shadow:0 2px 0 #2a1709,0 -1px 0 rgba(255,240,200,.35),0 0 14px rgba(255,170,40,.35)}
 .brand small{display:block;font:italic 400 14px "IM Fell English",Georgia,serif;letter-spacing:0;color:var(--tag);text-shadow:0 1px 0 #000}
