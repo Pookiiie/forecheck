@@ -486,13 +486,14 @@ button.hero:active{opacity:.85}
 .cf.warn{border-left-color:var(--red)} .cf.warnq{border-left-color:var(--amber)}
 .cf .tg{font:700 11px var(--bc);letter-spacing:.1em;color:var(--mine)}
 .cf > b{font:800 20px/1 var(--bc);font-variant-numeric:tabular-nums}
-.cf .vs{color:var(--fg3)} .cf .op{font:700 16px/1 var(--bc);color:var(--fg2);font-variant-numeric:tabular-nums}
+.cf .vs{color:var(--fg3);text-align:center} .cf .op{font:700 16px/1 var(--bc);color:var(--fg2);font-variant-numeric:tabular-nums}
 .cf .wb{height:5px;border-radius:3px;background:var(--fill);overflow:hidden;margin:0 4px;min-width:20px}
 .cf .wb u{display:block;height:100%;background:var(--mine)}
 .cf .pc{font:700 12.5px var(--bc);letter-spacing:.04em;white-space:nowrap;text-align:right} .cf .pc.up{color:var(--green)} .cf .pc.dn{color:var(--red)}
-.cf .pj{font:500 12px var(--bc);letter-spacing:.02em;color:var(--fg2);font-variant-numeric:tabular-nums;margin-top:1px}
-.cf .sl{grid-column:5/-1;font:400 11.5px var(--ui);color:var(--fg2);margin:1px 0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cf .sl.fin{grid-column:2/-1;margin-left:0}
+.cf .pj{font:500 12px var(--bc);letter-spacing:.02em;color:var(--fg3);font-variant-numeric:tabular-nums;margin-top:1px}
+.cf .pj.d{text-align:center}
+.cf .pl0{font:600 9.5px var(--ui);letter-spacing:.08em;text-transform:uppercase;color:var(--fg3);margin-top:1px}
+.cf .sl{grid-column:5/-1;font:400 11.5px var(--ui);color:var(--fg3);margin:1px 0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cf .fxw{grid-column:2/-1;margin-top:2px}
 .cf.msg{display:flex;align-items:flex-start;gap:8px}
 .cf.msg .tg{width:34px;flex:none;padding-top:2px}
@@ -1346,8 +1347,9 @@ function fxCards(gob) {
     const m = d[k]; const tag = (m && m.short) || def;
     if (m && m.me) {
       const o = oddsOf(m); const iss = lineupIssues(m); const wc = iss.length ? (iss.some(i => i.lvl === 2) ? ' warn' : ' warnq') : '';
-      const sub = isDone(m) ? '<small class="sl fin">Final · everyone has played</small>' : `<small class="pj">${fmtP(m.me.est)}</small><span></span><small class="pj">${m.opp ? fmtP(m.opp.est) : ''}</small><small class="sl">projected · ${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} left</small>`;
-      rows.push(`<button class="cf${wc}" data-fxopen="${k}"><span class="tg${k === 'cv' ? ' B' : ''}">${esc(tag)}</span><b>${fmtP(m.me.pts)}</b>${m.opp ? `<span class="vs">–</span><span class="op">${fmtP(m.opp.pts)}</span>` : '<span></span><span></span>'}<span class="wb">${o != null ? `<u style="width:${o}%"></u>` : ''}</span><span class="pc ${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</span><span></span>${sub}${lineupCard(iss)}</button>`);
+      // second line: "proj" label under the league tag, each projection under its score, players left under the bar
+      const sub = isDone(m) ? '<span></span><small class="sl">Final · everyone has played</small>' : `<small class="pl0">proj</small><small class="pj">${fmtP(m.me.est)}</small><small class="pj d">${m.opp ? '\u2013' : ''}</small><small class="pj">${m.opp ? fmtP(m.opp.est) : ''}</small><small class="sl">${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} players left</small>`;
+      rows.push(`<button class="cf${wc}" data-fxopen="${k}"><span class="tg${k === 'cv' ? ' B' : ''}">${esc(tag)}</span><b>${fmtP(m.me.pts)}</b>${m.opp ? `<span class="vs">–</span><span class="op">${fmtP(m.opp.pts)}</span>` : '<span></span><span></span>'}<span class="wb">${o != null ? `<u style="width:${o}%"></u>` : ''}</span><span class="pc ${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</span>${sub}${lineupCard(iss)}</button>`);
     } else if (k === 'cv' && d.cvErr === CBS_DOWN) msg(k, def, 'data-cbspaste', 'CBS isn’t answering (error 500)', 'Often CBS’s side — it retries on its own. If your league works in Safari, run your CBS shortcut and tap here for a new token', 'amber');
     else if (k === 'cv' && d.cvErr === CBS_EXPIRED) msg(k, def, 'data-cbspaste', 'Token expired', 'Run your CBS shortcut in Safari, then tap here to paste the new one', 'red');
     else if (d[k + 'Err']) msg(k, def, 'data-settings', esc(d[k + 'Err']), 'Tap to fix in Settings', 'red');
