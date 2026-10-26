@@ -104,7 +104,7 @@ ${LR} .gempty b{display:block;font:400 26px var(--lg-pirate);font-style:normal;c
 
 // ---------------- Forecheck ----------------
 const appCSS = ledgerCSS('#sheet.gob #shScroll', '#sheet.gob #shBody') + `
-#sheet.gob .nav{background:${WOOD} 0 50%/auto 220%,#5e3b1e;border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12),inset 0 2px 0 rgba(255,220,160,.12)}
+#sheet.gob .nav{background:${WOOD_TAG} 0 50%/auto 220%,#5e3b1e;border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12),inset 0 2px 0 rgba(255,220,160,.12)}
 #sheet.gob .back{color:#f0c46a;text-shadow:0 1px 0 #000}
 #sheet.gob .sh-title{font:400 29px "Pirata One","Palatino Linotype",Georgia,serif;letter-spacing:.03em;text-transform:none;color:#f0c46a;text-shadow:0 2px 0 #2a1709,0 -1px 0 rgba(255,240,200,.35),0 0 14px rgba(255,170,40,.35)}
 #sheet.gob .sh-title::before{content:'🧌 ';font-size:21px;text-shadow:none}
@@ -132,7 +132,7 @@ const page = cfg => `<title>${cfg.title}</title>
 html{background:var(--wall)}
 body{background:var(--wall);color:var(--tag);font-family:var(--ui);font-size:15px;line-height:1.45}
 .wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.plank{background:${WOOD} 0 0/auto 100%,var(--plank);border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12);position:relative;z-index:4}
+.plank{background:${WOOD_TAG} 0 0/auto 100%,var(--plank);border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12);position:relative;z-index:4}
 .plank .wrap{padding-block:12px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
 .brand{font:400 31px/1.1 var(--pirate);letter-spacing:.03em;color:var(--gold);text-shadow:0 2px 0 #2a1709,0 -1px 0 rgba(255,240,200,.35),0 0 14px rgba(255,170,40,.35)}
 .brand small{display:block;font:italic 400 14px "IM Fell English",Georgia,serif;letter-spacing:0;color:var(--tag);text-shadow:0 1px 0 #000}
