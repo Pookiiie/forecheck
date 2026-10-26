@@ -1320,7 +1320,7 @@ function fxCards(gob) {
 // Goblin GM as one line in the matchups block: action count, report name, unread dot
 function gobLine(B) {
   if (!B) return '';
-  if (B.err) return `<button class="cg" data-settings>\u{1F9CC} <b>Goblin</b> <span style="color:var(--amber)">Report key doesn’t match · check Settings</span><em>›</em></button>`;
+  if (B.err) return `<button class="cg" data-settings>\u{1F9CC} <b>Goblin</b> <span style="color:var(--amber)">Wrong report key · check Settings</span><em>›</em></button>`;
   const r = B.reports && B.reports[B.latest]; if (!r) return '';
   const n = (r.actions || []).filter(Boolean).length;
   return `<button class="cg" data-goblin="${esc(r.id)}">\u{1F9CC} <b>Goblin</b> <span>${n ? `${n} action${n === 1 ? '' : 's'} · ` : ''}${esc(r.label || '')}</span>${LS.get('gobSeen', '') !== B.latest ? '<i></i>' : ''}<em>›</em></button>`;
