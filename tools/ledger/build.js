@@ -2,7 +2,13 @@
 // usage: node build.js <forecheck index.html> <eric page out> <max page out>
 const fs = require('fs'); const path = require('path');
 const { STONE, WOOD, WOOD_TAG, PLANK_BITS, PAPER, CLOTH, WEB, deckle, FILIGREE, BAR, IVY } = require('./textures.js');
-const { gobURL: GOB } = require('./goblin.js');
+const { gobURL } = require('./goblin.js');
+// the Goblin as a high-resolution image (iPhone Safari renders filtered SVG backgrounds blurry); falls back to the SVG
+const WEBP = path.join(__dirname, 'goblin.webp');
+const GOB = fs.existsSync(WEBP) ? `url("data:image/webp;base64,${fs.readFileSync(WEBP).toString('base64')}")` : gobURL;
+// report fonts embedded in the pages (Latin subset), so they never depend on a font download
+const FONT_FILES = [['Pirata One', 'PirataOne', 'normal'], ['IM Fell English', 'FellEnglish', 'normal'], ['IM Fell English', 'FellEnglishItalic', 'italic'], ['IM Fell English SC', 'FellEnglishSC', 'normal'], ['UnifrakturMaguntia', 'UnifrakturMaguntia', 'normal'], ['Uncial Antiqua', 'UncialAntiqua', 'normal']];
+const EMBED_FONTS = FONT_FILES.map(([fam, file, style]) => `@font-face{font-family:"${fam}";font-style:${style};font-weight:400;font-display:block;src:url(data:font/woff2;base64,${fs.readFileSync(path.join(__dirname, 'fonts', file + '.woff2')).toString('base64')}) format("woff2")}`).join('\n');
 const RENDER = fs.readFileSync(path.join(__dirname, 'render.js'), 'utf8');
 const FONTS = 'https://fonts.googleapis.com/css2?family=Pirata+One&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=UnifrakturMaguntia&family=Uncial+Antiqua&display=swap';
 
@@ -39,7 +45,7 @@ ${LR} .grh .roll.r{right:-6px;background:linear-gradient(90deg,#7b5628,#d9bb83 5
 ${LR} .grh .gbar{position:absolute;left:16px;top:18px;bottom:18px;width:10px;background:${BAR} 0 0/10px 60px repeat-y;box-shadow:0 0 0 1px #6b4a12}
 ${LR} .grh .ivy{position:absolute;left:30px;right:20px;height:24px;background:${IVY} 0 0/180px 24px repeat-x}
 ${LR} .grh .ivy.top{top:4px} ${LR} .grh .ivy.bot{bottom:4px;background-position:90px 0;transform:scaleY(-1)}
-${LR} .grh .drol{position:absolute;right:20px;bottom:7px;width:36px;height:54px;background:${GOB} 0 0/100% 100% no-repeat;transform:scaleX(-1)}
+${LR} .grh .drol{position:absolute;right:20px;bottom:7px;width:36px;height:54px;background:var(--lg-gob) 0 0/100% 100% no-repeat;transform:scaleX(-1)}
 ${LR} .grh .rub{font:400 13.5px/1.25 var(--lg-fellsc);letter-spacing:.06em;color:#a8321c;margin:0 0 6px}
 ${LR} .grh .t{font:400 40px/1.02 var(--lg-frak);color:var(--lg-blood);display:flow-root}
 ${LR} .grh .t .ky{font-family:var(--lg-pirate);font-size:.86em}
@@ -61,7 +67,7 @@ ${LR} .gpp b{font:700 14px var(--lg-ui)}
 ${LR} .gsec>.gpp:first-of-type:not(:has(.seal))::first-letter{font:400 40px/0.8 var(--lg-frak);color:var(--lg-blood);float:left;margin:4px 6px 0 0}
 /* pinned notes: a dagger through yellowed paper, with a stain */
 ${LR} .gbx{margin:14px 4px 0;padding:26px 18px 16px;transform:rotate(-.8deg);font:400 16px/1.45 var(--lg-fell)}
-${LR} .gbx::before{background:radial-gradient(circle at 86% 78%,transparent 0 30px,rgba(120,70,20,.28) 31px 34px,rgba(120,70,20,.08) 35px 40px,transparent 41px),${PAPER},var(--lg-note-paper);clip-path:${deckle(30, 7)}}
+${LR} .gbx::before{background:${PAPER},var(--lg-note-paper);clip-path:${deckle(30, 7)}}
 ${LR} .gbx .gbt{display:block;text-align:center;font:400 25px/1.1 var(--lg-pirate);color:var(--lg-blood);margin-bottom:6px;text-wrap:balance}
 ${LR} .gbx b:not(.gbt){font:700 14.5px var(--lg-ui)}
 ${LR} .gbx .dagger{position:absolute;top:-16px;left:50%;margin-left:-14px;font-size:28px;transform:rotate(135deg);filter:drop-shadow(1px 3px 2px rgba(0,0,0,.6));z-index:2}
@@ -92,7 +98,7 @@ ${LR} .mu{display:inline-block;padding:1px 7px;border-radius:999px;font:700 12.5
 ${LR} .mu.g{background:#4f7f2a} ${LR} .mu.y{background:#a87814} ${LR} .mu.r{background:#a8321c}
 /* the Goblin talks */
 ${LR} .quip{position:relative;margin:10px 0 2px 2px;padding:12px 12px 10px 54px;background:${PAPER},#c9d99a;border-radius:18px 18px 18px 3px;box-shadow:0 2px 0 #3f5a1a,inset 0 0 0 1.5px rgba(50,80,20,.55);font:italic 400 15.5px/1.4 var(--lg-fell);color:#24360b}
-${LR} .quip::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:${GOB} -6.6px -.6px/47.4px 70.8px no-repeat,#efe1b8;box-shadow:0 0 0 1.5px #3f5a1a,inset 0 0 0 1px rgba(63,90,26,.4)}
+${LR} .quip::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:var(--lg-gob) -6.6px -.6px/47.4px 70.8px no-repeat,#efe1b8;box-shadow:0 0 0 1.5px #3f5a1a,inset 0 0 0 1px rgba(63,90,26,.4)}
 ${LR} .quip .qby{position:absolute;top:-9px;left:52px;padding:0 6px;font:400 12px/1.5 var(--lg-fellsc);font-style:normal;color:#ecf2d8;background:#3f5a1a;border-radius:6px}
 ${LR} .quip b{font-family:var(--lg-ui);font-style:normal;font-size:14px}
 /* wax seal on every verdict */
@@ -111,10 +117,11 @@ ${LR} .gempty b{display:block;font:400 26px var(--lg-pirate);font-style:normal;c
 
 // ---------------- Forecheck ----------------
 const appCSS = ledgerCSS('#sheet.gob #shScroll', '#sheet.gob #shBody') + `
+#sheet.gob{--lg-gob:${GOB}}
 #sheet.gob .nav{background:${PLANK_BITS},${WOOD_TAG} 0 50%/auto 220%,#5e3b1e;border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12),inset 0 2px 0 rgba(255,220,160,.12)}
 #sheet.gob .back{color:#f0c46a;text-shadow:0 1px 0 #000}
 #sheet.gob .sh-title{font:400 29px "Pirata One","Palatino Linotype",Georgia,serif;letter-spacing:.03em;text-transform:none;color:#f0c46a;text-shadow:0 2px 0 #2a1709,0 -1px 0 rgba(255,240,200,.35),0 0 14px rgba(255,170,40,.35)}
-#sheet.gob .sh-title::before{content:'';display:inline-block;width:34px;height:29px;margin-right:6px;vertical-align:-5px;background:${GOB} 0 0/37.5px 56px no-repeat}
+#sheet.gob .sh-title::before{content:'';display:inline-block;width:34px;height:29px;margin-right:6px;vertical-align:-5px;background:var(--lg-gob) 0 0/37.5px 56px no-repeat}
 #sheet.gob #shBody>.err,#sheet.gob #shBody>.empty{color:#e9cf9b;background:rgba(0,0,0,.4)}
 `;
 function buildApp(file) {
@@ -130,11 +137,12 @@ const page = cfg => `<title>${cfg.title}</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Pirata+One&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=UnifrakturMaguntia&family=Uncial+Antiqua&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
 <style>
+${EMBED_FONTS}
 /* Layout: a carved wooden plank on a dungeon wall, then one column of burnt parchment scraps (the Goblin's ledger).
    One deliberate look in every theme: the wall is always dark and the paper always light. */
-:root{color-scheme:dark;--wall:#141210;--plank:#5b3a1f;--gold:#f0c46a;--tag:#e9cf9b;--ink-soft:#b9a27a;
+:root{--lg-gob:${GOB};color-scheme:dark;--wall:#141210;--plank:#5b3a1f;--gold:#f0c46a;--tag:#e9cf9b;--ink-soft:#b9a27a;
   --ui:"Barlow",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--pirate:"Pirata One","Palatino Linotype",Georgia,serif}
 html{background:var(--wall)}
 body{background:var(--wall);color:var(--tag);font-family:var(--ui);font-size:15px;line-height:1.45}
@@ -142,7 +150,7 @@ body{background:var(--wall);color:var(--tag);font-family:var(--ui);font-size:15p
 .plank{background:${PLANK_BITS},${WOOD_TAG} 0 0/auto 100%,var(--plank);border-bottom:3px solid #2a1709;box-shadow:0 6px 16px rgba(0,0,0,.7),inset 0 -2px 0 rgba(255,220,160,.12);position:relative;z-index:4}
 .plank .wrap{padding-block:12px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
 .brand{font:400 31px/1.1 var(--pirate);letter-spacing:.03em;color:var(--gold);text-shadow:0 2px 0 #2a1709,0 -1px 0 rgba(255,240,200,.35),0 0 14px rgba(255,170,40,.35)}
-.brand .gob{display:inline-block;width:40px;height:34px;margin-right:6px;vertical-align:-5px;background:${GOB} 0 0/44px 65.8px no-repeat}
+.brand .gob{display:inline-block;width:40px;height:34px;margin-right:6px;vertical-align:-5px;background:var(--lg-gob) 0 0/44px 65.8px no-repeat}
 .brand small{display:block;font:italic 400 14px "IM Fell English",Georgia,serif;letter-spacing:0;color:var(--tag);text-shadow:0 1px 0 #000}
 .pick{display:flex;align-items:center;gap:8px;min-width:0}
 .pick label{font:400 15px var(--pirate);letter-spacing:.04em;color:var(--tag);text-shadow:0 1px 0 #000}
