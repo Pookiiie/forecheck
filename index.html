@@ -1160,7 +1160,13 @@ async function loadFantasy(nfl) {
 }
 /* Rough win chance: projected margin over its uncertainty. ~12 pts of spread per player still to
    play (projection error + game variance), which lines up with Sleeper's own numbers in testing. */
-function oddsOf(m) { if (!m || !m.me || !m.opp) return null; const sd = Math.max(5, Math.sqrt(m.me.left + m.opp.left) * 12); return Math.round(clamp(ncdf((m.me.est - m.opp.est) / sd), .01, .99) * 100); }
+const isDone = m => !!(m && m.me && m.opp && !m.me.left && !m.opp.left);
+const oddsLabel = (m, o) => isDone(m) ? (o === 100 ? 'Won' : o === 0 ? 'Lost' : 'Tied') : `Win ${o}%`;
+function oddsOf(m) {
+  if (!m || !m.me || !m.opp) return null;
+  // nobody left to play on either side: the matchup is decided, so no uncertainty band
+  if (!m.me.left && !m.opp.left) return m.me.pts > m.opp.pts ? 100 : m.me.pts < m.opp.pts ? 0 : 50;
+  const sd = Math.max(5, Math.sqrt(m.me.left + m.opp.left) * 12); return Math.round(clamp(ncdf((m.me.est - m.opp.est) / sd), .01, .99) * 100); }
 /* ---------- lineup check: starters who can't score, before their game starts ---------- */
 const INJ_OUT = /^(out|o|doubtful|d|ir|injured reserve|pup|sus|suspended|na|cov|dnr)$/i;
 const injWord = v => ({ O: 'Out', OUT: 'Out', D: 'Doubtful', IR: 'IR', PUP: 'PUP', SUS: 'Suspended', NA: 'Inactive', COV: 'Out', DNR: 'Out' })[String(v).toUpperCase()] || String(v).replace(/^\w/, c => c.toUpperCase());
@@ -1275,7 +1281,7 @@ function fxCards() {
     if (m && m.me) {
       const o = oddsOf(m); const lead = m.opp && m.me.pts >= m.opp.pts; const iss = lineupIssues(m); const wc = iss.length ? (iss.some(i => i.lvl === 2) ? ' warn' : ' warnq') : '';
       const side = (t, me) => `<div class="fxt${me ? ' me' : ''}"><b>${fmtP(t.pts)}</b><small>proj ${fmtP(t.est)}</small></div>`;
-      cards.push(`<button class="fxc${wc}" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span>${o != null ? `<span class="pc">Win ${o}%</span>` : ''}</div><div class="fxv">${side(m.me, true)}${m.opp ? `<span class="vs">vs</span>${side(m.opp, false)}` : ''}</div>${o != null ? `<div class="bar"><u style="width:${o}%"></u></div>` : ''}<div class="fxm">${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} players left</div>${lineupCard(iss)}</button>`);
+      cards.push(`<button class="fxc${wc}" data-fxopen="${k}"><div class="fxh"><span>${esc(m.short || def)}</span>${o != null ? `<span class="pc">${oddsLabel(m, o)}</span>` : ''}</div><div class="fxv">${side(m.me, true)}${m.opp ? `<span class="vs">vs</span>${side(m.opp, false)}` : ''}</div>${o != null ? `<div class="bar"><u style="width:${o}%"></u></div>` : ''}<div class="fxm">${isDone(m) ? 'Final \u00b7 everyone has played' : `${m.me.left}${m.opp ? ' vs ' + m.opp.left : ''} players left`}</div>${lineupCard(iss)}</button>`);
     } else if (k === 'cv' && d.cvErr === CBS_DOWN) cards.push(`<button class="fxc" data-cbspaste><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--amber)">CBS isn\u2019t answering (error 500)</div><div class="fxm" style="white-space:normal">Often CBS\u2019s side \u2014 it retries on its own. If your league works in Safari, run your CBS shortcut and tap here for a new token</div></button>`);
     else if (k === 'cv' && d.cvErr === CBS_EXPIRED) cards.push(`<button class="fxc" data-cbspaste><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">Token expired</div><div class="fxm" style="white-space:normal">Run your CBS shortcut in Safari, then tap here to paste the new one</div></button>`);
     else if (d[k + 'Err']) cards.push(`<button class="fxc" data-settings><div class="fxh"><span>${def}</span></div><div class="fxm" style="color:var(--red);white-space:normal">${esc(d[k + 'Err'])}</div><div class="fxm">Tap to fix in Settings</div></button>`);
@@ -2113,7 +2119,7 @@ async function sleeperData(nfl) {
     const rows = starters.map((id, i) => ({ id, slot: (slots[i] || '').replace('SUPER_FLEX', 'SF').replace('REC_FLEX', 'RF').replace('WRRB_FLEX', 'W/R'), st: true }));
     (m.players || []).filter(id => !starters.includes(id)).forEach(id => rows.push({ id, slot: 'BN', st: false }));
     let live = 0, act = 0;
-    rows.forEach(r => { const p = P[r.id] || [r.id, '', '', '']; r.name = p[0]; r.pos = p[1]; r.team = p[2]; r.inj = p[3]; r.pts = +(pts[r.id] || 0); r.proj = proj[r.id] != null ? +proj[r.id] : null; const g = nfl.map[nflAbbr(r.team)]; const rem = nfl.byes.includes(nflAbbr(r.team)) ? 0 : remainFrac(g); r.est = r.pts + (r.proj || 0) * rem; r.left = rem > 0 && g && g.state !== 'post'; if (r.st && r.id !== '0') { live += r.pts; act += r.est; } });
+    rows.forEach(r => { const p = P[r.id] || [r.id, '', '', '']; r.name = p[0]; r.pos = p[1]; r.team = p[2]; r.inj = p[3]; r.pts = +(pts[r.id] || 0); r.proj = proj[r.id] != null ? +proj[r.id] : null; const g = nfl.map[nflAbbr(r.team)]; const rem = !g || nfl.byes.includes(nflAbbr(r.team)) ? 0 : remainFrac(g); r.est = r.pts + (r.proj || 0) * rem; r.left = rem > 0 && g && g.state !== 'post'; if (r.st && r.id !== '0') { live += r.pts; act += r.est; } });
     return { rid: m.roster_id, name: uname(m.roster_id), pts: m.points != null ? +m.points : live, est: act, rows, left: rows.filter(r => r.st && r.left).length };
   };
   const meM = mus.find(m => String(m.roster_id) === String(CFG.sleeperRoster));
@@ -2197,7 +2203,7 @@ async function cbsData(nfl) {
       const nm = p.fullname || p.full_name || p.name || ''; const isD = /^(DST|DEF|D\/ST)$/i.test(p.position || '');
       let pj = num(p.proj_fpts ?? p.proj_pts ?? p.projected_points ?? p.fpts_proj);
       if (pj == null) pj = isD ? (pm.k['DEF|' + nflAbbr(team)] ?? null) : (pm.k[normName(nm) + '|' + nflAbbr(team)] ?? pm.n[normName(nm)] ?? null);
-      const g = nfl.map[nflAbbr(team)]; const rem = nfl.byes.includes(nflAbbr(team)) ? 0 : remainFrac(g);
+      const g = nfl.map[nflAbbr(team)]; const rem = !g || nfl.byes.includes(nflAbbr(team)) ? 0 : remainFrac(g);
       return { name: p.fullname || p.full_name || p.name || '?', pos: p.position || '', team, slot: st ? (p.position || '') : 'BN', st, pts, proj: pj, est: pj != null ? pts + pj * rem : pts, left: rem > 0 && g && g.state !== 'post', inj: (typeof (p.injury_status ?? p.injury) === 'string' && (p.injury_status ?? p.injury)) || (isD ? '' : (pm.ik[normName(nm) + '|' + nflAbbr(team)] ?? pm.iname[normName(nm)] ?? '')) };
     }); rows.sort((a, b) => b.st - a.st);
     const sp = rows.filter(r => r.st);
@@ -2220,7 +2226,7 @@ function renderFx(M) {
   if (me) {
     const side = (t, r) => `<div class="t${r ? ' r' : ''}"><div class="nm">${esc(t.name)}</div><div class="p">${fmtP(t.pts)}</div><div class="pj">proj ${fmtP(t.est)} · ${t.left} left</div></div>`;
     top += `<div class="mx">${side(me)}${opp ? `<div class="vs">VS</div>${side(opp, true)}` : ''}</div>`;
-    const o = oddsOf(M); if (o != null) top += `<div class="bar"><u style="width:${o}%"></u></div><div class="wbl"><span>WIN CHANCE ${o}%</span><span>${100 - o}%</span></div>` + wpGraph(key, M);
+    const o = oddsOf(M); if (o != null) top += `<div class="bar"><u style="width:${o}%"></u></div><div class="wbl">${isDone(M) ? `<span>FINAL \u00b7 ${oddsLabel(M, o).toUpperCase()}</span><span></span>` : `<span>WIN CHANCE ${o}%</span><span>${100 - o}%</span>`}</div>` + wpGraph(key, M);
     top += lineupSheet(lineupIssues(M));
     top += `<div class="seg" role="group"><button data-fx="${key}:me" aria-pressed="${view === 'me'}">My lineup</button>${opp ? `<button data-fx="${key}:opp" aria-pressed="${view === 'opp'}">Opponent</button>` : ''}<button data-fx="${key}:lg" aria-pressed="${view === 'lg'}">League</button></div>`;
   } else top += `<div class="foot" style="margin:0">Pick your team in Settings to see your lineup.</div>`;
@@ -2263,7 +2269,7 @@ function sweatHTML(nfl) {
   grp.pre.sort((a, b) => gOf(a).date - gOf(b).date || (b.lg[0].proj || 0) - (a.lg[0].proj || 0));
   const injTag = v => v ? ` <span style="color:${/^(questionable|q)$/i.test(v) ? 'var(--amber)' : 'var(--red)'};font-size:11px;font-weight:700">${esc(String(v).slice(0, 3).toUpperCase())}</span>` : '';
   const row = (e, showProj) => `<div class="swr"><div class="pn"><div class="n">${esc(e.name)}${injTag(e.inj)}</div><div class="m">${esc(e.pos)}${e.team ? ' ' + esc(e.team) : ''}${gameTag(e.team, nfl) || ' · no game'}</div></div><div class="swl">${e.lg.map(x => `<span><i>${esc(x.tag)}</i><b>${showProj ? (x.proj != null ? fmtP(x.proj) : '–') : fmtP(x.pts)}</b><small>${showProj ? 'proj' : x.proj != null ? 'proj ' + fmtP(x.proj) : ''}</small></span>`).join('')}</div></div>`;
-  const sum = `<div class="swsum">${L.map(({ tag, m }) => { const o = oddsOf(m); return `<span><i>${esc(tag)}</i>${fmtP(m.me.pts)}${m.opp ? ` <em style="font-style:normal;color:var(--fg3)">–</em> ${fmtP(m.opp.pts)}` : ''}<small class="${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? 'Win ' + o + '%' : ''}</small></span>`; }).join('')}</div>`;
+  const sum = `<div class="swsum">${L.map(({ tag, m }) => { const o = oddsOf(m); return `<span><i>${esc(tag)}</i>${fmtP(m.me.pts)}${m.opp ? ` <em style="font-style:normal;color:var(--fg3)">–</em> ${fmtP(m.opp.pts)}` : ''}<small class="${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</small></span>`; }).join('')}</div>`;
   let out = sec('This week', `Week ${esc(nfl.week || '')}`, sum);
   const block = (title, list, cls, showProj) => list.length ? `<div class="lbl ${cls}">${title}<span class="r">${list.length}</span></div><section class="sec flush">${list.map(e => row(e, showProj)).join('')}</section>` : '';
   out += block('Playing now', grp.in, 'live', false) + block('Still to play', grp.pre, '', true) + block('Done', grp.post, '', false) + block('Not playing', grp.none, '', false);
