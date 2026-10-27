@@ -2457,7 +2457,7 @@ const GOB_TINT = { '#e8f6ee': 'var(--lg-good)', '#fdecec': 'var(--lg-bad)', '#ff
 const GOB_EDGE = { '#e8f6ee': 'var(--lg-good-ink)', '#fdecec': 'var(--lg-bad-ink)', '#fff4db': 'var(--lg-warn-ink)', '#fff8e6': 'var(--lg-warn-ink)' };
 function gobCellTint(c) { const s = String(c); return /^❌/.test(s) ? GOB_TINT['#fdecec'] : /^✅/.test(s) ? GOB_TINT['#e8f6ee'] : s.includes('🛌') && s.length < 8 ? GOB_TINT['#fff4db'] : null; }
 // the Goblin's own lines (jokes, sign-off) become his speech bubble
-const GOB_VOICE = /\b(goblin|crawlspace|under the stairs|boiler|mushrooms?|damp sock|the crew)\b/i;
+const GOB_VOICE = /\b(goblin|undercroft|the council|brazier|toadstools?|candle stub|sealing wax|quill|crawlspace|under the stairs|boiler|mushrooms?|damp sock|the crew)\b/i;
 const gobQuip = h => `<div class="quip"><span class="qby">the Goblin mutters</span>${h}</div>`;
 // matchup tiers ("🟩 4" = the 4th easiest defence for that position, of 32) become labelled chips
 const gobOrd = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' })[n % 10] || 'th');
@@ -2507,7 +2507,7 @@ function gobReport(r) {
   let h = '', n = 0;
   parts.forEach((p, i) => { if (p.sec && parts[i - 1] && parts[i - 1].sec) h += `<div class="gdiv" aria-hidden="true">${GOB_ICONS[n++ % GOB_ICONS.length]}</div>`; h += p.h; });
   if ((r.sources || []).length) h += `<p class="gsrc">📚 ${r.sources.map(s => /^https:\/\//.test(s[1] || '') ? `<a href="${gobEsc(s[1])}" target="_blank" rel="noopener">${gobEsc(s[0])}</a>` : gobEsc(s[0])).join(' · ')}</p>`;
-  return h + '<div class="gend"><b>Sealed in grime by the Goblin, under the stairs</b><span aria-hidden="true">🦴 🐀 🍄</span></div>';
+  return h + '<div class="gend"><b>Sealed in wax by the Goblin, Ledger-Keeper of the Undercroft</b><span aria-hidden="true">🦴 🐀 🍄</span></div>';
 }
 /* Short tables stay tables. Wide ones (5+ columns with long text, or 4+ with very long text) become one ledger entry per row:
    title, short values as labelled chips, long values as labelled lines. In the lineup, 🟢 ("start") is dropped: being listed already says it. */
