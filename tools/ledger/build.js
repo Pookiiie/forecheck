@@ -15,14 +15,14 @@ const FONTS = 'https://fonts.googleapis.com/css2?family=Pirata+One&family=IM+Fel
 // LW = the wall (the scrolling area), LR = the element that holds the report
 const ledgerCSS = (LW, LR) => `
 /* ---- The Goblin's Ledger: stone wall, burnt parchment, wax and cobwebs ---- */
-${LW}{background-color:#141210;background-image:radial-gradient(60% 50% at 0% 0%,rgba(255,140,30,.28),transparent 70%),radial-gradient(60% 50% at 100% 60%,rgba(255,140,30,.18),transparent 70%),${STONE};background-size:100% 900px,100% 900px,auto;background-repeat:no-repeat,no-repeat,repeat;background-attachment:local}
+${LW}{overflow-x:hidden;background-color:#141210;background-image:radial-gradient(60% 50% at 0% 0%,rgba(255,140,30,.28),transparent 70%),radial-gradient(60% 50% at 100% 60%,rgba(255,140,30,.18),transparent 70%),${STONE};background-size:100% 900px,100% 900px,auto;background-repeat:no-repeat,no-repeat,repeat;background-attachment:local}
 ${LR}{--lg-ink:#3a2512;--lg-ink2:#6e5130;--lg-rule:#8a6a3c;--lg-blood:#8b1d10;--lg-gold:#f0c46a;--lg-paper:#e6d2a6;--lg-note-paper:#ead594;
   --lg-good:rgba(70,130,40,.22);--lg-bad:rgba(170,40,20,.17);--lg-warn:rgba(205,145,30,.26);--lg-muted:rgba(110,70,20,.1);--lg-note:rgba(205,145,30,.14);--lg-pick:rgba(70,130,40,.14);
   --lg-good-ink:#3f8f22;--lg-bad-ink:#b3301a;--lg-warn-ink:#c98a12;
   --lg-ui:var(--ui,-apple-system,BlinkMacSystemFont,"Helvetica Neue",system-ui,sans-serif);--lg-fell:"IM Fell English",Georgia,"Times New Roman",serif;--lg-fellsc:"IM Fell English SC",Georgia,serif;--lg-pirate:"Pirata One","Palatino Linotype",Georgia,serif;--lg-frak:"UnifrakturMaguntia","Old English Text MT",Georgia,serif;--lg-uncial:"Uncial Antiqua",Georgia,serif;
   position:relative;display:flex;flex-direction:column;gap:14px;padding-top:14px;padding-bottom:10px}
-${LR}::before{content:'';position:absolute;top:0;right:-6px;width:150px;height:150px;background:${WEB};pointer-events:none;z-index:3}
-${LR}::after{content:'🕷️';position:absolute;top:0;right:41px;padding-top:34px;font-size:17px;line-height:1;z-index:3;pointer-events:none;background:linear-gradient(rgba(230,225,210,.55),rgba(230,225,210,.55)) 50% 0/1px 38px no-repeat;filter:drop-shadow(0 2px 2px #000)}
+${LR}::before{content:'';position:absolute;top:0;right:0;width:150px;height:150px;background:${WEB};pointer-events:none;z-index:3}
+${LR}::after{content:'🕷️';position:absolute;top:0;right:47px;padding-top:34px;font-size:17px;line-height:1;z-index:3;pointer-events:none;background:linear-gradient(rgba(230,225,210,.55),rgba(230,225,210,.55)) 50% 0/1px 38px no-repeat;filter:drop-shadow(0 2px 2px #000)}
 /* report tabs: wooden tags on nails */
 ${LR} .pls{display:flex;flex-wrap:wrap;gap:8px;padding:0 4px}
 ${LR} .pls button{position:relative;font:400 16px var(--lg-pirate);letter-spacing:.03em;text-transform:none;background:${WOOD_TAG} 0 0/auto 260%,#5e3b1e;color:#e9cf9b;border:0;border-radius:3px 3px 10px 10px;padding:9px 14px 6px;box-shadow:0 3px 6px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,160,.2);text-shadow:0 1px 0 #000;cursor:pointer}
@@ -144,6 +144,8 @@ ${EMBED_FONTS}
    One deliberate look in every theme: the wall is always dark and the paper always light. */
 :root{--lg-gob:${GOB};color-scheme:dark;--wall:#141210;--plank:#5b3a1f;--gold:#f0c46a;--tag:#e9cf9b;--ink-soft:#b9a27a;
   --ui:"Barlow",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--pirate:"Pirata One","Palatino Linotype",Georgia,serif}
+html,body{overflow-x:hidden}
+@supports (overflow:clip){html,body{overflow-x:clip}}
 html{background:var(--wall)}
 body{background:var(--wall);color:var(--tag);font-family:var(--ui);font-size:15px;line-height:1.45}
 .wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
