@@ -337,9 +337,10 @@ button.hero:active{opacity:.85}
 .recap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.15fr)}
 .recap .s{padding:0 7px;min-width:0}
 .recap .s + .s{border-left:1px solid var(--sep)}
-.recap .s b{display:block;font:700 13.5px/1.2 var(--bc);letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recap .s b{display:block;font:700 13.5px/1.2 var(--bc);letter-spacing:.03em;overflow-wrap:break-word}
 .recap .s.opp b{color:var(--fg2)}
-.recap .s small{display:block;font:500 11px/1.25 var(--ui);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recap .s .nw{white-space:nowrap}
+.recap .s small{display:block;font:500 11px/1.25 var(--ui);color:var(--fg2);overflow-wrap:break-word}
 .recap .s small i{font-style:normal;color:var(--amber);font-size:9.5px;letter-spacing:.5px;margin-right:3px}
 .recap .s small i.sv{font-size:11px;font-weight:700;letter-spacing:0}
 /* pull to refresh */
@@ -747,11 +748,11 @@ svg text{font-family:var(--bc)}
 .gtr .pp{position:absolute;top:2px;height:9px;border-radius:2px;background:#ffd23f}
 .gtr .gd{position:absolute;top:1px;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);box-sizing:border-box}
 .gtr .nw{position:absolute;top:-1px;width:2px;height:15px;margin-left:-1px;border-radius:1px;background:#fff}
-.gtr .h{font:700 10px var(--bc);letter-spacing:.12em;color:var(--fg3);margin-bottom:2px;white-space:nowrap}
-.gtr .h em{font-style:normal;color:#111;background:#ffd23f;border-radius:3px;padding:0 4px;letter-spacing:.04em;margin-left:3px}
-.gtr .g{display:flex;align-items:center;gap:5px;font:500 12.5px/1.35 var(--ui);white-space:nowrap;min-width:0}
-.gtr .g span{overflow:hidden;text-overflow:ellipsis}
-.gtr .g u{flex:none;width:7px;height:7px;border-radius:50%;text-decoration:none}
+.gtr .h{font:700 10px/1.5 var(--bc);letter-spacing:.12em;color:var(--fg3);margin-bottom:2px}
+.gtr .h em{display:inline-block;white-space:nowrap;line-height:1.3;font-style:normal;color:#111;background:#ffd23f;border-radius:3px;padding:0 4px;letter-spacing:.04em;margin-left:3px}
+.gtr .g{display:flex;align-items:baseline;gap:5px;font:500 12.5px/1.3 var(--ui);min-width:0;margin-bottom:1px}
+.gtr .g span{min-width:0;overflow-wrap:break-word}
+.gtr .g u{flex:none;width:7px;height:7px;border-radius:50%;text-decoration:none;align-self:center}
 .gtr .g small{flex:none;font:700 10.5px var(--bc);color:var(--fg2);letter-spacing:.04em}
 .gtr .net{padding-right:0}
 .gtr .st{font-style:normal;color:var(--amber);font-size:9.5px;letter-spacing:.5px;flex:none}
@@ -2206,8 +2207,8 @@ function starsOf(s, ab) {
   return { stars, gk, goalies };
 }
 function starsRow(st) {
-  const cards = st.stars.map(x => `<div class="s${x.opp ? ' opp' : ''}"><b>${esc(x.name)}</b><small><i>${'★'.repeat(x.n)}</i>${esc([x.st, x.opp ? x.team : ''].filter(Boolean).join(' · '))}</small></div>`);
-  if (st.gk) cards.push(`<div class="s"><b>${esc(st.gk.name.replace(/^\w\. /, ''))}</b><small><i class="sv">${esc(st.gk.svp)}</i>${esc(st.gk.sv)}/${esc(st.gk.sa)} SV</small></div>`);
+  const cards = st.stars.map(x => `<div class="s${x.opp ? ' opp' : ''}"><b>${esc(x.name)}</b><small><i>${'★'.repeat(x.n)}</i> ${[x.st, x.opp ? x.team : ''].filter(Boolean).map(t => `<span class="nw">${esc(t)}</span>`).join(' · ')}</small></div>`);
+  if (st.gk) cards.push(`<div class="s"><b>${esc(st.gk.name.replace(/^\w\. /, ''))}</b><small><i class="sv">${esc(st.gk.svp)}</i> <span class="nw">${esc(st.gk.sv)}/${esc(st.gk.sa)} SV</span></small></div>`);
   return cards.length ? `<div class="recap">${cards.join('')}</div>` : '';
 }
 /* the game track: one column per period (goal dots in team colours, power play in yellow, white mark = now while live) with that
