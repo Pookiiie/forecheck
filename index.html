@@ -754,6 +754,9 @@ svg text{font-family:var(--bc)}
 .gtr .g u{flex:none;width:7px;height:7px;border-radius:50%;text-decoration:none}
 .gtr .g small{flex:none;font:700 10.5px var(--bc);color:var(--fg2);letter-spacing:.04em}
 .gtr .net{padding-right:0}
+.gtr .st{font-style:normal;color:var(--amber);font-size:9.5px;letter-spacing:.5px;flex:none}
+.gtr .g.opp span{color:var(--fg2)}
+.gtr.post{margin-top:4px}
 .gtr .net .sv{font:700 11px var(--bc);color:var(--fg2);letter-spacing:.03em;font-variant-numeric:tabular-nums}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font:400 11.5px var(--ui);color:var(--fg2)}
 .legend span{display:inline-flex;align-items:center;gap:4px}
@@ -1200,20 +1203,6 @@ function miniBar(g) {
 }
 
 /* ---------- Habs post-game recap: three stars and the goalie ---------- */
-async function habsRecap(g, ab) {
-  try {
-    const s = await cached('sum:' + g.id, 10 * 60e3, () => espn('nhl', 'summary?event=' + g.id));
-    const fa = ((s.header.competitions[0] || {}).status || {}).featuredAthletes || [];
-    const line = {};
-    ((s.boxscore && s.boxscore.players) || []).forEach(b => (b.statistics || []).forEach(c => { const lab = c.labels || []; (c.athletes || []).forEach(a => { const v = k => { const i = lab.indexOf(k); return i >= 0 ? a.stats[i] : null; }; line[String(a.athlete.id)] = { team: b.team.abbreviation, gk: c.name === 'goalies', name: a.athlete.shortName || a.athlete.displayName, g: v('G'), a: v('A'), sv: v('SV'), sa: v('SA'), svp: v('SV%'), toi: v('TOI') }; }); }));
-    const stars = ['firstStar', 'secondStar', 'thirdStar'].map(n => fa.find(f => f.name === n)).filter(Boolean);
-    const gk = Object.values(line).filter(x => x.gk && x.team === ab && secs(x.toi) > 0).sort((x, y) => (+y.sa || 0) - (+x.sa || 0))[0];
-    const cards = stars.map((f, i) => { const id = String(f.playerId || (f.athlete && f.athlete.id) || ''); const L = line[id] || {}; const nm = (f.athlete && (f.athlete.shortName || f.athlete.displayName)) || L.name || ''; const team = L.team || (f.team && f.team.abbreviation) || ''; const st = L.gk ? `${L.sv} SV` : [+L.g ? L.g + 'G' : '', +L.a ? L.a + 'A' : ''].filter(Boolean).join(' ') || ''; const opp = team && team !== ab; return `<div class="s${opp ? ' opp' : ''}"><b>${esc(nm.replace(/^\w\. /, ''))}</b><small><i>${'★'.repeat(i + 1)}</i>${esc([st, opp ? team : ''].filter(Boolean).join(' · '))}</small></div>`; });
-    if (gk) cards.push(`<div class="s"><b>${esc(gk.name.replace(/^\w\. /, ''))}</b><small><i class="sv">${esc(gk.svp)}</i>${esc(gk.sv)}/${esc(gk.sa)} SV</small></div>`);
-    const h = cards.length ? `<div class="recap">${cards.join('')}</div>` : '';
-    return h;
-  } catch (e) { return ''; }
-}
 
 /* ---------- last game: one quiet scoreboard line (result tint as on the calendar), then the stars ---------- */
 function lastLine(g, ab, rc) {
@@ -1246,7 +1235,7 @@ async function heroHTML(sp, games, extra = {}) {
   if (g) {
     const under = [flagUnder(g), mineRow(g)];
     if (g.state === 'post' && next) under.push(`<div class="meta">Next: ${nextLine(next, ab)}</div>`);
-    if (sp === 'nhl' && g.state === 'post') under.push(await habsRecap(g, ab));
+    if (sp === 'nhl' && g.state === 'post') under.push(await habsPost(g, ab));
     const lv = sp === 'nhl' && g.state === 'in' ? await habsLive(g, ab) : null; if (lv) under.push(lv.html);
     const wg = showWatch(g) ? pickWatch(g) : null; if (wg && !wg.main.length) under.push(watchChips(g));
     return { html: `<button class="hero" data-open="${sp}:${g.id}">${bug(g, { watch: wg, sog: lv && lv.sog })}${under.join('') ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: g.id, g };
@@ -1261,7 +1250,7 @@ async function heroHTML(sp, games, extra = {}) {
     const under = [mineRow(next)];
     const wn = showWatch(next) ? pickWatch(next) : null; if (wn && !wn.main.length) under.push(watchChips(next));
     if (last) {
-      const rc = sp === 'nhl' && Date.now() - last.date < 30 * 36e5 ? await habsRecap(last, ab) : '';
+      const rc = sp === 'nhl' && Date.now() - last.date < 30 * 36e5 ? await habsPost(last, ab) : '';
       under.push(lastLine(last, ab, rc));
     }
     return { html: `<button class="hero" data-open="${sp}:${next.id}">${bug(next, { watch: wn })}${under.join('') ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: next.id, g: next };
@@ -2198,6 +2187,32 @@ function powerPlay(g, plays, s) {
    with that period's scorers underneath, and who's in net for the Habs. Shots on goal ride in the score bug. */
 async function habsLive(g, ab) {
   let s; try { s = await cached('live:' + g.id, 12e3, () => espn('nhl', 'summary?event=' + g.id)); } catch (e) { return null; }
+  return gameTrack(g, s, ab, { live: true });
+}
+/* after the final: the same track (all periods played), merged with the three stars */
+const POST_STARS = 'row'; // 'row' = stars row under the track, 'col' = stars column at the end, 'names' = stars on the scorers + goalies column
+async function habsPost(g, ab) {
+  let s; try { s = await cached('sum:' + g.id, 10 * 60e3, () => espn('nhl', 'summary?event=' + g.id)); } catch (e) { return ''; }
+  const mode = window.POST_MODE || POST_STARS, st = starsOf(s, ab);
+  return gameTrack(g, s, ab, { live: false, mode, st }).html + (mode === 'row' ? starsRow(st) : '');
+}
+function starsOf(s, ab) {
+  const fa = ((s.header && s.header.competitions[0] || {}).status || {}).featuredAthletes || [];
+  const line = {};
+  ((s.boxscore && s.boxscore.players) || []).forEach(b => (b.statistics || []).forEach(c => { const lab = c.labels || []; (c.athletes || []).forEach(a => { const v = k => { const i = lab.indexOf(k); return i >= 0 ? a.stats[i] : null; }; line[String(a.athlete.id)] = { id: String(a.athlete.id), team: b.team.abbreviation, gk: c.name === 'goalies', name: a.athlete.shortName || a.athlete.displayName, full: a.athlete.displayName || a.athlete.shortName, g: v('G'), a: v('A'), sv: v('SV'), sa: v('SA'), svp: v('SV%'), toi: v('TOI') }; }); }));
+  const stars = ['firstStar', 'secondStar', 'thirdStar'].map(n => fa.find(f => f.name === n)).filter(Boolean).map((f, i) => { const id = String(f.playerId || (f.athlete && f.athlete.id) || ''); const L = line[id] || {}; const team = L.team || (f.team && f.team.abbreviation) || ''; return { n: i + 1, id, name: ((f.athlete && (f.athlete.shortName || f.athlete.displayName)) || L.name || '').replace(/^\w\. /, ''), full: L.full || '', team, opp: team && team !== ab, gk: !!L.gk, st: L.gk ? `${L.sv} SV` : [+L.g ? L.g + 'G' : '', +L.a ? L.a + 'A' : ''].filter(Boolean).join(' ') }; });
+  const goalies = Object.values(line).filter(x => x.gk && secs(x.toi) > 0);
+  const gk = goalies.filter(x => x.team === ab).sort((x, y) => (+y.sa || 0) - (+x.sa || 0))[0];
+  return { stars, gk, goalies };
+}
+function starsRow(st) {
+  const cards = st.stars.map(x => `<div class="s${x.opp ? ' opp' : ''}"><b>${esc(x.name)}</b><small><i>${'★'.repeat(x.n)}</i>${esc([x.st, x.opp ? x.team : ''].filter(Boolean).join(' · '))}</small></div>`);
+  if (st.gk) cards.push(`<div class="s"><b>${esc(st.gk.name.replace(/^\w\. /, ''))}</b><small><i class="sv">${esc(st.gk.svp)}</i>${esc(st.gk.sv)}/${esc(st.gk.sa)} SV</small></div>`);
+  return cards.length ? `<div class="recap">${cards.join('')}</div>` : '';
+}
+/* the game track: one column per period (goal dots in team colours, power play in yellow, white mark = now while live) with that
+   period's scorers underneath; the last column is the Habs goalie in net (live) or the three stars / goalies (after the final). */
+function gameTrack(g, s, ab, o) {
   const plays = s.plays || [], ink = pairInk(g); const T = (s.boxscore && s.boxscore.teams) || [];
   const shots = t => { const b = T.find(x => String(x.team.id) === t.id); const x = b && (b.statistics || []).find(z => z.name === 'shotsTotal'); return x && x.displayValue !== '' ? +x.displayValue || 0 : plays.filter(p => String(p.team && p.team.id) === t.id && p.type && /^(Shot|Goal)$/.test(p.type.text)).length; };
   const sog = { a: String(shots(g.away)), h: String(shots(g.home)) };
@@ -2205,10 +2220,12 @@ async function habsLive(g, ab) {
   let up = 0, dn = 0; for (let i = 1; i < plays.length; i++) { const a = plays[i - 1], b = plays[i]; if (!a.period || !b.period || a.period.number !== b.period.number) continue; const d = secs(b.clock && b.clock.displayValue) - secs(a.clock && a.clock.displayValue); if (d > 0) up++; else if (d < 0) dn++; }
   const el = p => { const c = secs(p.clock && p.clock.displayValue), L = plen(p.period.number); return up >= dn ? c : L - c; }; // seconds into the period
   const goals = plays.filter(p => p.type && p.type.text === 'Goal' && p.period && p.period.number <= 4);
-  const cur = Math.min(4, +g.period || 1), brk = /end|intermission/i.test(g.detail || ''), nowEl = brk ? plen(cur) : plen(cur) - secs(g.clock);
-  const nP = Math.max(3, cur, ...goals.map(p => p.period.number));
-  const pp = powerPlay(g, plays, s);
+  const maxP = Math.max(3, ...goals.map(p => p.period.number), o.live ? 0 : plays.reduce((m, p) => Math.max(m, p.period && p.period.number <= 4 ? p.period.number : 0), 0));
+  const cur = o.live ? Math.min(4, +g.period || 1) : maxP + 1, brk = !o.live || /end|intermission/i.test(g.detail || ''), nowEl = o.live ? (brk ? plen(cur) : plen(cur) - secs(g.clock)) : 0;
+  const nP = Math.max(3, o.live ? cur : 0, maxP);
+  const pp = o.live ? powerPlay(g, plays, s) : null;
   const pct = (v, n) => (Math.max(0, Math.min(1, v / plen(n))) * 100).toFixed(1) + '%';
+  const st = o.st || { stars: [] }, starOf = id => { const x = st.stars.find(y => y.id === id); return x ? ` <i class="st">${'★'.repeat(x.n)}</i>` : ''; };
   const cols = [];
   for (let n = 1; n <= nP; n++) {
     const gs = goals.filter(p => p.period.number === n);
@@ -2216,18 +2233,26 @@ async function habsLive(g, ab) {
     let tr = `<span class="ln"></span>${done ? `<span class="dn" style="width:${(done * 100).toFixed(1)}%"></span>` : ''}`;
     if (pp && n === cur) tr += `<span class="pp" style="left:${pct(nowEl, n)};width:${pct(Math.min(pp.left, plen(n) - nowEl), n)}"></span>`;
     tr += gs.map(p => { const c = String(p.team && p.team.id) === g.home.id ? ink.h : ink.a; return `<span class="gd" style="left:${pct(el(p), n)};background:${c}"></span>`; }).join('');
-    if (n === cur && !brk) tr += `<span class="nw" style="left:${pct(nowEl, n)}"></span>`;
+    if (o.live && n === cur && !brk) tr += `<span class="nw" style="left:${pct(nowEl, n)}"></span>`;
     const ppTag = pp && n === cur ? ` <em>PP ${esc(pp.team.abbr)} ${Math.floor(pp.left / 60)}:${String(Math.round(pp.left % 60)).padStart(2, '0')}</em>` : '';
-    const list = gs.map(p => { const c = String(p.team && p.team.id) === g.home.id ? ink.h : ink.a; const q = goalParts(p, s); const pp2 = p.strength && /power/i.test(p.strength.text || '') ? ' <small>PP</small>' : p.strength && /short/i.test(p.strength.text || '') ? ' <small>SH</small>' : ''; return `<div class="g"><u style="background:${c}"></u><span>${esc(q.who ? lastName(q.who) : (q.raw || '').split(' ').slice(0, 2).join(' '))}</span>${pp2}</div>`; }).join('');
+    const list = gs.map(p => { const c = String(p.team && p.team.id) === g.home.id ? ink.h : ink.a; const q = goalParts(p, s); const sid = p.participants && p.participants[0] && String((p.participants[0].athlete && p.participants[0].athlete.id) || p.participants[0].id);
+      const pid = sid || (st.stars.find(x => q.who && x.full && lastName(x.full) === lastName(q.who)) || {}).id; const tag = p.strength && /power/i.test(p.strength.text || '') ? ' <small>PP</small>' : p.strength && /short/i.test(p.strength.text || '') ? ' <small>SH</small>' : '';
+      return `<div class="g"><u style="background:${c}"></u><span>${esc(q.who ? lastName(q.who) : (q.raw || '').split(' ').slice(0, 2).join(' '))}</span>${tag}${o.mode === 'names' && pid ? starOf(pid) : ''}</div>`; }).join('');
     cols.push(`<div class="gp${n > cur ? ' fut' : ''}"><div class="tk">${tr}</div><div class="h">${pLab(n).toUpperCase()}${ppTag}</div>${list}</div>`);
   }
-  // the Habs goalie in net: the last one to see ice time
+  let last = '';
   const me = g.home.abbr === ab ? g.home : g.away, P = (s.boxscore && s.boxscore.players) || [];
-  const gb = P.find(b => String(b.team.id) === me.id), gc = gb && (gb.statistics || []).find(c => c.name === 'goalies');
-  let net = '';
-  if (gc) { const lab = gc.labels || gc.keys || []; const v = (a, k) => { const i = lab.indexOf(k); return i >= 0 ? a.stats[i] : ''; }; const used = (gc.athletes || []).filter(a => secs(v(a, 'TOI')) > 0 || +v(a, 'SA') > 0); const a = used[used.length - 1];
-    if (a) net = `<div class="gp net"><div class="tk"></div><div class="h">IN NET</div><div class="g"><span>${esc(lastName(a.athlete.displayName || a.athlete.shortName || ''))}</span></div><div class="sv">${esc(v(a, 'SV'))}/${esc(v(a, 'SA'))} SV</div></div>`; }
-  return { sog, html: `<div class="gtr" style="grid-template-columns:repeat(${nP},minmax(0,1fr))${net ? ' auto' : ''}">${cols.join('')}${net}</div>` };
+  if (o.live) { // the Habs goalie in net: the last one to see ice time
+    const gb = P.find(b => String(b.team.id) === me.id), gc = gb && (gb.statistics || []).find(c => c.name === 'goalies');
+    if (gc) { const lab = gc.labels || gc.keys || []; const v = (a, k) => { const i = lab.indexOf(k); return i >= 0 ? a.stats[i] : ''; }; const used = (gc.athletes || []).filter(a => secs(v(a, 'TOI')) > 0 || +v(a, 'SA') > 0); const a = used[used.length - 1];
+      if (a) last = `<div class="gp net"><div class="tk"></div><div class="h">IN NET</div><div class="g"><span>${esc(lastName(a.athlete.displayName || a.athlete.shortName || ''))}</span></div><div class="sv">${esc(v(a, 'SV'))}/${esc(v(a, 'SA'))} SV</div></div>`; }
+  } else if (o.mode === 'col' && st.stars.length) {
+    last = `<div class="gp net"><div class="tk"></div><div class="h">STARS</div>${st.stars.map(x => `<div class="g${x.opp ? ' opp' : ''}"><i class="st">${'★'.repeat(x.n)}</i><span>${esc(x.name)}</span></div>`).join('')}</div>`;
+  } else if (o.mode === 'names' && st.goalies.length) {
+    const gl = st.goalies.slice().sort((x, y) => (x.team === ab ? -1 : 1));
+    last = `<div class="gp net"><div class="tk"></div><div class="h">GOALIES</div>${gl.map(x => `<div class="g${x.team !== ab ? ' opp' : ''}"><span>${esc(x.name.replace(/^\w\. /, ''))}</span>${starOf(x.id)}</div><div class="sv">${esc(x.sv)}/${esc(x.sa)} SV</div>`).join('')}</div>`;
+  }
+  return { sog, html: `<div class="gtr${o.live ? '' : ' post'}" style="grid-template-columns:repeat(${nP},minmax(0,1fr))${last ? ' auto' : ''}">${cols.join('')}${last}</div>` };
 }
 /* goalie lines right under the score: saves/shots, SV%, goals against (and time on ice if a team used two) */
 function nhlGoalies(g, s, ink) {
