@@ -2458,12 +2458,17 @@ async function cbsDiagnostics() {
 }
 const CBS_EXPIRED = 'Your CBS token has expired.', CBS_DOWN = 'CBS error 500';
 /* one-tap token refresh from the BELL card: read the token the Shortcut copied, save it, reload */
-async function pasteCbsToken() {
-  let t = '';
-  try { t = (await navigator.clipboard.readText()).trim(); } catch (e) { toast('Couldn\u2019t read the clipboard \u2014 paste it in Settings'); openSettings(); return; }
-  if (!/^[A-Za-z0-9_\-.+\/=%]{20,}$/.test(t)) { toast(/^No token found/.test(t) ? t : 'Clipboard doesn\u2019t hold a CBS token yet \u2014 run your shortcut first'); return; }
-  if (t === CFG.cbsToken) { toast('That\u2019s the same token \u2014 run your shortcut again for a new one'); return; }
-  CFG.cbsToken = t; saveCfg(); for (const k in memo) delete memo[k]; toast('New CBS token saved'); refresh(true);
+/* clipboard → CBS token: tolerate quotes, "token=" prefixes or surrounding text; returns '' if nothing token-like */
+const tokenIn = t => { const m = String(t || '').match(/[A-Za-z0-9_\-.+\/=%]{20,}/g); return m ? m.sort((a, b) => b.length - a.length)[0].replace(/^token=/i, '') : ''; };
+async function pasteCbsToken(fromSettings) {
+  let raw = '';
+  try { raw = (await navigator.clipboard.readText()).trim(); } catch (e) { toast(fromSettings ? 'Couldn\u2019t read the clipboard \u2014 long-press the Token box and Paste' : 'Couldn\u2019t read the clipboard \u2014 paste it in Settings'); if (!fromSettings) openSettings(); return; }
+  const t = tokenIn(raw);
+  if (!t) { toast(/^No token found/.test(raw) ? raw : 'Clipboard doesn\u2019t hold a CBS token yet \u2014 run your shortcut first'); return; }
+  const f = document.getElementById('sfCbs'); if (f) f.value = t;
+  if (t === CFG.cbsToken) { toast('That\u2019s the token already saved \u2014 run your shortcut again for a new one'); return; }
+  CFG.cbsToken = t; saveCfg(); for (const k in memo) delete memo[k];
+  toast(CFG.cbsTeam ? 'New CBS token saved' : 'Token saved \u2014 tap Load teams to pick your team'); if (!fromSettings) refresh(true);
 }
 async function cbsData(nfl) {
   const wk = nfl.week;
@@ -2752,7 +2757,7 @@ function openSettings(banner) {
   $('#sfJs').onclick = selJs;
   $('#sfCopyJs').onclick = () => { const ok = () => toast('Script copied'); const legacy = () => { selJs(); let done = false; try { done = document.execCommand('copy'); } catch (e) {} done ? ok() : toast('Tap the box below, then Copy'); };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(SHORTCUT_JS).then(ok, legacy); else legacy(); };
-  $('#sfCbsPaste').onclick = async () => { try { const t = (await navigator.clipboard.readText()).trim(); if (/^[A-Za-z0-9_\-.+\/=%]{20,}$/.test(t)) { $('#sfCbs').value = t; toast('Token pasted \u2014 tap Load teams, then Save'); } else toast(/^No token found/.test(t) ? t : 'Clipboard doesn\u2019t look like a token'); } catch (e) { toast('Couldn\u2019t read the clipboard \u2014 long-press the Token box and Paste'); } };
+  $('#sfCbsPaste').onclick = () => pasteCbsToken(true);
   $('#sfCbsDiag').onclick = async () => { if (!CFG.cbsToken) { toast('Add your CBS token first'); return; } const txt = await cbsDiagnostics(); try { await navigator.clipboard.writeText(txt); toast('Copied (field names only, no scores or token)'); } catch (e) { $('#sfMsg').textContent = txt; } };
   let watchSel = myWatch().slice();
   const drawWatch = () => { $('#sfWatch').innerHTML = Object.entries(PROV).map(([k, P]) => { const i = watchSel.indexOf(k); return `<button class="row svc${i >= 0 ? ' on' : ''}" data-svc="${k}" aria-pressed="${i >= 0}"><span class="n">${i >= 0 ? i + 1 : ''}</span><span class="k">${esc(P.app)}<small>${esc([P.tv && P.tv !== P.app ? P.tv + ' on TV' : '', P.lang].filter(Boolean).join(' · '))}</small></span></button>`; }).join(''); };
