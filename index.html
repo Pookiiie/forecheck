@@ -727,6 +727,29 @@ svg text{font-family:var(--bc)}
 .play+.play{border-top:1px solid var(--sep)}
 .play .t{font:700 12.5px var(--bc);color:var(--fg2);letter-spacing:.03em;padding-top:1px}
 .tag{display:inline-block;font:700 11px/16px var(--bc);letter-spacing:.06em;padding:0 5px;border-radius:4px;margin-right:5px}
+.gol{display:grid;grid-template-columns:52px auto minmax(0,1fr) auto;align-items:baseline;gap:0 6px;padding:6px 0}
+.gol+.gol{border-top:1px solid var(--sep)}
+.gol .t{font:700 12.5px var(--bc);color:var(--fg2);letter-spacing:.03em}
+.gol .tag{margin:0}
+.gol .w{min-width:0;font:400 14px/1.3 var(--ui)}
+.gol .w b{font-weight:650}.gol .w i{font-style:normal;color:var(--fg2);font-size:12.5px}
+.gol .w .chip{font-size:11px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+.gol .w small{display:block;font:400 12px/1.3 var(--ui);color:var(--fg2)}
+.gol .sc{font:700 14px var(--bc);font-variant-numeric:tabular-nums;color:var(--fg2)}
+/* live Habs strip under the home score bug */
+.hl{display:grid;gap:6px}
+.hl .k{font:700 10.5px var(--bc);letter-spacing:.14em;color:var(--fg2);text-transform:uppercase;white-space:nowrap}
+.hl .sogr{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:7px}
+.hl .sogr b{font:800 16px/1 var(--bc);font-variant-numeric:tabular-nums;min-width:16px;text-align:center}
+.hl .bar{display:flex;gap:2px;height:7px;border-radius:4px;overflow:hidden;background:var(--well)}
+.hl .bar i{display:block;height:100%;min-width:2px}
+.hl .flag b{text-transform:none;letter-spacing:.03em}
+.hl .flag span{color:var(--fg2)}
+.hl .lgl{display:flex;align-items:baseline;gap:6px;min-width:0;white-space:nowrap}
+.hl .lgl .tag{margin:0}
+.hl .lgl .w{min-width:0;overflow:hidden;text-overflow:ellipsis;font:400 13.5px var(--ui)}
+.hl .lgl .w b{font-weight:650}.hl .lgl .w small{font-size:12px;color:var(--fg2)}
+.hl .lgl .t{margin-left:auto;font:700 12px var(--bc);color:var(--fg2);letter-spacing:.03em}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font:400 11.5px var(--ui);color:var(--fg2)}
 .legend span{display:inline-flex;align-items:center;gap:4px}
 .sw{width:9px;height:9px;border-radius:50%;display:inline-block}
@@ -1219,6 +1242,7 @@ async function heroHTML(sp, games, extra = {}) {
     const under = [flagUnder(g), mineRow(g)];
     if (g.state === 'post' && next) under.push(`<div class="meta">Next: ${nextLine(next, ab)}</div>`);
     if (sp === 'nhl' && g.state === 'post') under.push(await habsRecap(g, ab));
+    if (sp === 'nhl' && g.state === 'in') under.push(await habsLive(g));
     const wg = showWatch(g) ? pickWatch(g) : null; if (wg && !wg.main.length) under.push(watchChips(g));
     return { html: `<button class="hero" data-open="${sp}:${g.id}">${bug(g, { watch: wg })}${under.join('') ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: g.id, g };
   }
@@ -2117,6 +2141,69 @@ function nhlFlow(g, plays) {
   });
   return s + '</svg>';
 }
+/* who scored: scorer, season tally and assists from ESPN's play text ("Lane Hutson Goal (3) Wrist Shot, assists: Noah Dobson (7)"),
+   then the play's participants (names from the box score), then the raw text */
+function goalParts(p, s) {
+  const t = String(p.text || '').trim().replace(/^(?:goal\s*[-–:]\s*|goal by\s+)/i, '');
+  const m = /^(.+?)\s*(?:goal\s*)?\((\d+)\)(.*)$/i.exec(t);
+  if (m && m[1].split(/\s+/).length <= 5) {
+    const am = /assist(?:s|ed by)?\s*:?\s*(.+)$/i.exec(m[3]);
+    const ast = am && !/unassisted/i.test(am[1]) ? am[1].split(/,\s*|\s+and\s+/).map(x => x.replace(/\(\d+\)/g, '').trim()).filter(Boolean) : [];
+    return { who: m[1].replace(/\s+goal$/i, '').trim(), n: m[2], ast };
+  }
+  const names = {}; ((s && s.boxscore && s.boxscore.players) || []).forEach(b => (b.statistics || []).forEach(c => (c.athletes || []).forEach(a => { if (a.athlete) names[String(a.athlete.id)] = a.athlete.displayName || a.athlete.shortName; })));
+  const pp = (p.participants || []).map(x => names[String((x.athlete && x.athlete.id) || x.id)]).filter(Boolean);
+  if (pp.length) return { who: pp[0], n: '', ast: pp.slice(1) };
+  return { who: '', raw: t, ast: [] };
+}
+const strengthChip = p => p.strength && p.strength.abbreviation && p.strength.abbreviation !== 'even-strength' ? `<span class="chip">${esc(p.strength.text === 'Power Play' ? 'PP' : p.strength.text === 'Shorthanded' ? 'SH' : p.strength.text)}</span>` : '';
+function nhlGoalsSec(g, s, plays, ink) {
+  const goals = plays.filter(p => p.type && p.type.text === 'Goal'); if (!goals.length) return '';
+  return sec('Goals', `${esc(g.away.abbr)} – ${esc(g.home.abbr)}`, `<div class="gols">${goals.map(p => {
+    const t = String(p.team && p.team.id) === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a; const q = goalParts(p, s);
+    const who = q.who ? `<b>${esc(q.who)}</b>${q.n ? ` <i>(${esc(q.n)})</i>` : ''}` : esc(q.raw);
+    return `<div class="gol"><span class="t">${esc(pLab(p.period.number))} ${esc(p.clock && p.clock.displayValue)}</span><span class="tag" style="background:${col};color:${onInk(col)}">${esc(t.abbr)}</span><span class="w">${who}${strengthChip(p)}${q.ast.length ? `<small>${esc(q.ast.map(lastName).join(', '))}</small>` : q.who ? '<small>Unassisted</small>' : ''}</span><span class="sc">${esc(p.awayScore)}–${esc(p.homeScore)}</span></div>`;
+  }).join('')}</div>`);
+}
+/* live Habs game on the home screen: shots on goal, power play, last goal, last play */
+function powerPlay(g, plays, s) {
+  if (g.state !== 'in' || /end|intermission/i.test(g.detail || '')) return null;
+  const plen = n => n === 4 && (g.stype || 2) === 2 ? 300 : 1200;
+  // play clocks may count up or down: check which way they run within a period
+  let up = 0, dn = 0; for (let i = 1; i < plays.length; i++) { const a = plays[i - 1], b = plays[i]; if (!a.period || !b.period || a.period.number !== b.period.number) continue; const d = secs(b.clock && b.clock.displayValue) - secs(a.clock && a.clock.displayValue); if (d > 0) up++; else if (d < 0) dn++; }
+  const gt = (per, c, elapsed) => { const L = plen(per); return (per - 1) * 1200 + (elapsed ? c : L - c); };
+  const now = gt(+g.period || 1, secs(g.clock), false);
+  const teamOf = {}; ((s.boxscore && s.boxscore.players) || []).forEach(b => (b.statistics || []).forEach(c => (c.athletes || []).forEach(a => { if (a.athlete) teamOf[String(a.athlete.id)] = String(b.team.id); })));
+  const goals = plays.filter(p => p.type && p.type.text === 'Goal' && p.period).map(p => ({ t: gt(p.period.number, secs(p.clock && p.clock.displayValue), up >= dn), team: String(p.team && p.team.id) }));
+  const act = { [g.home.id]: [], [g.away.id]: [] };
+  plays.filter(p => p.type && /penalty/i.test(p.type.text) && p.period && !/penalty shot/i.test(p.text || '')).forEach(p => {
+    const txt = p.text || ''; const n = /(\d+)\s*(?:minutes?|mins?)\b/i.exec(txt); let dur = n ? +n[1] : /double/i.test(txt) ? 4 : /major|fighting/i.test(txt) ? 5 : 2;
+    if (dur >= 10 || (/misconduct/i.test(txt) && !n)) return;
+    const pid = p.participants && p.participants[0] && String((p.participants[0].athlete && p.participants[0].athlete.id) || p.participants[0].id);
+    const tid = (pid && teamOf[pid]) || String(p.team && p.team.id); if (!act[tid]) return;
+    const t0 = gt(p.period.number, secs(p.clock && p.clock.displayValue), up >= dn); let end = t0 + dur * 60;
+    if (dur < 5) { const gl = goals.find(x => x.t > t0 && x.t <= now && x.team !== tid); if (gl) end = gl.t; }
+    if (t0 <= now && now < end) act[tid].push(end - now);
+  });
+  const h = act[g.home.id], a = act[g.away.id]; if (h.length === a.length) return null;
+  const pp = h.length < a.length ? g.home : g.away, sh = pp === g.home ? a : h, n = Math.min(...(pp === g.home ? a : h));
+  return { team: pp, left: n, men: `${5 - Math.min(2, (pp === g.home ? h : a).length)} on ${5 - Math.min(2, sh.length)}` };
+}
+async function habsLive(g) {
+  let s; try { s = await cached('live:' + g.id, 12e3, () => espn('nhl', 'summary?event=' + g.id)); } catch (e) { return ''; }
+  const plays = s.plays || [], ink = pairInk(g); const T = (s.boxscore && s.boxscore.teams) || [];
+  const shots = t => { const b = T.find(x => String(x.team.id) === t.id); const x = b && (b.statistics || []).find(z => z.name === 'shotsTotal'); return x && x.displayValue !== '' ? +x.displayValue || 0 : plays.filter(p => String(p.team && p.team.id) === t.id && p.type && /^(Shot|Goal)$/.test(p.type.text)).length; };
+  const sa = shots(g.away), sh = shots(g.home), tot = Math.max(1, sa + sh);
+  let h = `<div class="hl"><div class="sogr"><span class="k">SOG</span><b>${sa}</b><span class="bar"><i style="width:${(sa / tot * 100).toFixed(1)}%;background:${ink.a}"></i><i style="width:${(sh / tot * 100).toFixed(1)}%;background:${ink.h}"></i></span><b>${sh}</b></div>`;
+  const pp = powerPlay(g, plays, s);
+  if (pp) { const col = pp.team === g.home ? ink.h : ink.a; h += `<div class="flag"><b style="background:${col};color:${onInk(col)}">Power play ${esc(pp.team.abbr)}</b><span>${Math.floor(pp.left / 60)}:${String(Math.round(pp.left % 60)).padStart(2, '0')} left${pp.men !== '5 on 4' ? ' · ' + esc(pp.men) : ''}</span></div>`; }
+  const goals = plays.filter(p => p.type && p.type.text === 'Goal'), lg = goals[goals.length - 1];
+  if (lg) { const t = String(lg.team && lg.team.id) === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a; const q = goalParts(lg, s);
+    h += `<div class="lgl"><span class="k">Last goal</span><span class="tag" style="background:${col};color:${onInk(col)}">${esc(t.abbr)}</span><span class="w">${q.who ? `<b>${esc(lastName(q.who))}</b>${q.n ? ` (${esc(q.n)})` : ''}${q.ast.length ? `<small> · ${esc(q.ast.map(lastName).join(', '))}</small>` : ''}` : esc(q.raw)}</span><span class="t">${esc(pLab(lg.period.number))} ${esc(lg.clock && lg.clock.displayValue)}</span></div>`; }
+  const last = plays.filter(p => p.type && !/^(Stoppage|Face ?Off|Period Start|Period End|Goal|Game End|Shootout End)$/i.test(p.type.text) && p.text).pop();
+  if (last) h += `<div class="play">${esc(pLab(last.period && last.period.number))} ${esc(last.clock && last.clock.displayValue)} · ${esc(last.text)}</div>`;
+  return h + '</div>';
+}
 /* goalie lines right under the score: saves/shots, SV%, goals against (and time on ice if a team used two) */
 function nhlGoalies(g, s, ink) {
   if (g.state === 'pre') return '';
@@ -2181,13 +2268,11 @@ function nhlDetail(g, s) {
   const A = T.find(t => String(t.team.id) === g.away.id), Hm = T.find(t => String(t.team.id) === g.home.id);
   const v = (t, k) => { const x = t && (t.statistics || []).find(z => z.name === k); return x ? x.displayValue : null; };
   const sog = g.state !== 'pre' && A && Hm && v(A, 'shotsTotal') != null ? { a: v(A, 'shotsTotal'), h: v(Hm, 'shotsTotal') } : null;
-  let h = headBlock(g, sog) + nhlGoalies(g, s, ink);
+  let h = headBlock(g, sog) + nhlGoalsSec(g, s, plays, ink) + nhlGoalies(g, s, ink);
   h += g.state === 'pre' ? preInfo(g, s) : watchSec(g);
   if (g.state === 'pre') h += nhlPreview(g, s, ink);
   if (plays.some(p => p.coordinate && /^(Shot|Missed|Goal)$/.test(p.type && p.type.text))) h += sec('Shot map', 'attacking →', `${rinkSVG(g, plays)}<div class="legend"><span><i class="sw" style="background:${ink.a}"></i>${esc(g.away.abbr)}</span><span><i class="sw" style="background:${ink.h}"></i>${esc(g.home.abbr)}</span><span>● on goal</span><span>○ missed</span><span>◉ goal</span></div>`);
   const flow = nhlFlow(g, plays); if (flow) h += sec('Shots on goal', 'dots are goals', flow);
-  const goals = plays.filter(p => p.type && p.type.text === 'Goal');
-  if (goals.length) h += sec('Goals', '', `<div>${goals.map(p => { const t = String(p.team && p.team.id) === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a; const str = p.strength && p.strength.abbreviation !== 'even-strength' ? ` <span class="chip">${esc(p.strength.text === 'Power Play' ? 'PP' : p.strength.text === 'Shorthanded' ? 'SH' : p.strength.text)}</span>` : ''; return `<div class="play"><span class="t">${esc(pLab(p.period.number))} ${esc(p.clock && p.clock.displayValue)}</span><div><span class="tag" style="background:${col};color:${onInk(col)}">${esc(t.abbr)}</span>${esc(p.text)}${str} <span class="n" style="color:var(--fg2)">${esc(p.awayScore)}–${esc(p.homeScore)}</span></div></div>`; }).join('')}</div>`);
   if (A && Hm && g.state === 'pre') {
     // before the game ESPN gives season figures; compare per-game rates so teams with different games played line up
     const gp = t => { const m = /^(\d+)-(\d+)(?:-(\d+))?/.exec(t.rec || ''); return m ? (+m[1]) + (+m[2]) + (+(m[3] || 0)) : 0; };
