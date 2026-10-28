@@ -736,20 +736,25 @@ svg text{font-family:var(--bc)}
 .gol .w .chip{font-size:11px;padding:1px 5px;margin-left:6px;vertical-align:1px}
 .gol .w small{display:block;font:400 12px/1.3 var(--ui);color:var(--fg2)}
 .gol .sc{font:700 14px var(--bc);font-variant-numeric:tabular-nums;color:var(--fg2)}
-/* live Habs strip under the home score bug */
-.hl{display:grid;gap:6px}
-.hl .k{font:700 10.5px var(--bc);letter-spacing:.14em;color:var(--fg2);text-transform:uppercase;white-space:nowrap}
-.hl .sogr{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:7px}
-.hl .sogr b{font:800 16px/1 var(--bc);font-variant-numeric:tabular-nums;min-width:16px;text-align:center}
-.hl .bar{display:flex;gap:2px;height:7px;border-radius:4px;overflow:hidden;background:var(--well)}
-.hl .bar i{display:block;height:100%;min-width:2px}
-.hl .flag b{text-transform:none;letter-spacing:.03em}
-.hl .flag span{color:var(--fg2)}
-.hl .lgl{display:flex;align-items:baseline;gap:6px;min-width:0;white-space:nowrap}
-.hl .lgl .tag{margin:0}
-.hl .lgl .w{min-width:0;overflow:hidden;text-overflow:ellipsis;font:400 13.5px var(--ui)}
-.hl .lgl .w b{font-weight:650}.hl .lgl .w small{font-size:12px;color:var(--fg2)}
-.hl .lgl .t{margin-left:auto;font:700 12px var(--bc);color:var(--fg2);letter-spacing:.03em}
+/* live Habs game track under the home score bug: one column per period, scorers underneath, Habs goalie at the end */
+.gtr{display:grid;gap:0;margin:1px 2px 0}
+.gtr .gp{min-width:0;padding:0 6px;border-left:1px solid var(--sep)}
+.gtr .gp:first-child{border-left:0;padding-left:0}
+.gtr .tk{position:relative;height:13px;margin-bottom:3px}
+.gtr .ln,.gtr .dn{position:absolute;left:0;top:5px;height:3px;border-radius:2px}
+.gtr .ln{right:0;background:var(--well)}
+.gtr .dn{background:color-mix(in srgb,var(--fg) 32%,transparent)}
+.gtr .pp{position:absolute;top:2px;height:9px;border-radius:2px;background:#ffd23f}
+.gtr .gd{position:absolute;top:1px;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);box-sizing:border-box}
+.gtr .nw{position:absolute;top:-1px;width:2px;height:15px;margin-left:-1px;border-radius:1px;background:#fff}
+.gtr .h{font:700 10px var(--bc);letter-spacing:.12em;color:var(--fg3);margin-bottom:2px;white-space:nowrap}
+.gtr .h em{font-style:normal;color:#111;background:#ffd23f;border-radius:3px;padding:0 4px;letter-spacing:.04em;margin-left:3px}
+.gtr .g{display:flex;align-items:center;gap:5px;font:500 12.5px/1.35 var(--ui);white-space:nowrap;min-width:0}
+.gtr .g span{overflow:hidden;text-overflow:ellipsis}
+.gtr .g u{flex:none;width:7px;height:7px;border-radius:50%;text-decoration:none}
+.gtr .g small{flex:none;font:700 10.5px var(--bc);color:var(--fg2);letter-spacing:.04em}
+.gtr .net{padding-right:0}
+.gtr .net .sv{font:700 11px var(--bc);color:var(--fg2);letter-spacing:.03em;font-variant-numeric:tabular-nums}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font:400 11.5px var(--ui);color:var(--fg2)}
 .legend span{display:inline-flex;align-items:center;gap:4px}
 .sw{width:9px;height:9px;border-radius:50%;display:inline-block}
@@ -1242,9 +1247,9 @@ async function heroHTML(sp, games, extra = {}) {
     const under = [flagUnder(g), mineRow(g)];
     if (g.state === 'post' && next) under.push(`<div class="meta">Next: ${nextLine(next, ab)}</div>`);
     if (sp === 'nhl' && g.state === 'post') under.push(await habsRecap(g, ab));
-    if (sp === 'nhl' && g.state === 'in') under.push(await habsLive(g));
+    const lv = sp === 'nhl' && g.state === 'in' ? await habsLive(g, ab) : null; if (lv) under.push(lv.html);
     const wg = showWatch(g) ? pickWatch(g) : null; if (wg && !wg.main.length) under.push(watchChips(g));
-    return { html: `<button class="hero" data-open="${sp}:${g.id}">${bug(g, { watch: wg })}${under.join('') ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: g.id, g };
+    return { html: `<button class="hero" data-open="${sp}:${g.id}">${bug(g, { watch: wg, sog: lv && lv.sog })}${under.join('') ? `<div class="under">${under.join('')}</div>` : ''}</button>`, id: g.id, g };
   }
   if (sp === 'nfl' && extra.byes && extra.byes.includes(ab)) {
     const me = { abbr: ab, color: '#' + (team.color || '333'), alt: '#' + (team.alternateColor || team.color || '333'), logo: `https://a.espncdn.com/i/teamlogos/${sp}/500/${ab.toLowerCase()}.png` };
@@ -2189,20 +2194,40 @@ function powerPlay(g, plays, s) {
   const pp = h.length < a.length ? g.home : g.away, sh = pp === g.home ? a : h, n = Math.min(...(pp === g.home ? a : h));
   return { team: pp, left: n, men: `${5 - Math.min(2, (pp === g.home ? h : a).length)} on ${5 - Math.min(2, sh.length)}` };
 }
-async function habsLive(g) {
-  let s; try { s = await cached('live:' + g.id, 12e3, () => espn('nhl', 'summary?event=' + g.id)); } catch (e) { return ''; }
+/* live Habs game on the home screen: a track per period (goal dots in team colours, power play in yellow, white mark = now)
+   with that period's scorers underneath, and who's in net for the Habs. Shots on goal ride in the score bug. */
+async function habsLive(g, ab) {
+  let s; try { s = await cached('live:' + g.id, 12e3, () => espn('nhl', 'summary?event=' + g.id)); } catch (e) { return null; }
   const plays = s.plays || [], ink = pairInk(g); const T = (s.boxscore && s.boxscore.teams) || [];
   const shots = t => { const b = T.find(x => String(x.team.id) === t.id); const x = b && (b.statistics || []).find(z => z.name === 'shotsTotal'); return x && x.displayValue !== '' ? +x.displayValue || 0 : plays.filter(p => String(p.team && p.team.id) === t.id && p.type && /^(Shot|Goal)$/.test(p.type.text)).length; };
-  const sa = shots(g.away), sh = shots(g.home), tot = Math.max(1, sa + sh);
-  let h = `<div class="hl"><div class="sogr"><span class="k">SOG</span><b>${sa}</b><span class="bar"><i style="width:${(sa / tot * 100).toFixed(1)}%;background:${ink.a}"></i><i style="width:${(sh / tot * 100).toFixed(1)}%;background:${ink.h}"></i></span><b>${sh}</b></div>`;
+  const sog = { a: String(shots(g.away)), h: String(shots(g.home)) };
+  const plen = n => n === 4 && (g.stype || 2) === 2 ? 300 : 1200;
+  let up = 0, dn = 0; for (let i = 1; i < plays.length; i++) { const a = plays[i - 1], b = plays[i]; if (!a.period || !b.period || a.period.number !== b.period.number) continue; const d = secs(b.clock && b.clock.displayValue) - secs(a.clock && a.clock.displayValue); if (d > 0) up++; else if (d < 0) dn++; }
+  const el = p => { const c = secs(p.clock && p.clock.displayValue), L = plen(p.period.number); return up >= dn ? c : L - c; }; // seconds into the period
+  const goals = plays.filter(p => p.type && p.type.text === 'Goal' && p.period && p.period.number <= 4);
+  const cur = Math.min(4, +g.period || 1), brk = /end|intermission/i.test(g.detail || ''), nowEl = brk ? plen(cur) : plen(cur) - secs(g.clock);
+  const nP = Math.max(3, cur, ...goals.map(p => p.period.number));
   const pp = powerPlay(g, plays, s);
-  if (pp) { const col = pp.team === g.home ? ink.h : ink.a; h += `<div class="flag"><b style="background:${col};color:${onInk(col)}">Power play ${esc(pp.team.abbr)}</b><span>${Math.floor(pp.left / 60)}:${String(Math.round(pp.left % 60)).padStart(2, '0')} left${pp.men !== '5 on 4' ? ' · ' + esc(pp.men) : ''}</span></div>`; }
-  const goals = plays.filter(p => p.type && p.type.text === 'Goal'), lg = goals[goals.length - 1];
-  if (lg) { const t = String(lg.team && lg.team.id) === g.home.id ? g.home : g.away; const col = t === g.home ? ink.h : ink.a; const q = goalParts(lg, s);
-    h += `<div class="lgl"><span class="k">Last goal</span><span class="tag" style="background:${col};color:${onInk(col)}">${esc(t.abbr)}</span><span class="w">${q.who ? `<b>${esc(lastName(q.who))}</b>${q.n ? ` (${esc(q.n)})` : ''}${q.ast.length ? `<small> · ${esc(q.ast.map(lastName).join(', '))}</small>` : ''}` : esc(q.raw)}</span><span class="t">${esc(pLab(lg.period.number))} ${esc(lg.clock && lg.clock.displayValue)}</span></div>`; }
-  const last = plays.filter(p => p.type && !/^(Stoppage|Face ?Off|Period Start|Period End|Goal|Game End|Shootout End)$/i.test(p.type.text) && p.text).pop();
-  if (last) h += `<div class="play">${esc(pLab(last.period && last.period.number))} ${esc(last.clock && last.clock.displayValue)} · ${esc(last.text)}</div>`;
-  return h + '</div>';
+  const pct = (v, n) => (Math.max(0, Math.min(1, v / plen(n))) * 100).toFixed(1) + '%';
+  const cols = [];
+  for (let n = 1; n <= nP; n++) {
+    const gs = goals.filter(p => p.period.number === n);
+    const done = n < cur ? 1 : n === cur ? nowEl / plen(n) : 0;
+    let tr = `<span class="ln"></span>${done ? `<span class="dn" style="width:${(done * 100).toFixed(1)}%"></span>` : ''}`;
+    if (pp && n === cur) tr += `<span class="pp" style="left:${pct(nowEl, n)};width:${pct(Math.min(pp.left, plen(n) - nowEl), n)}"></span>`;
+    tr += gs.map(p => { const c = String(p.team && p.team.id) === g.home.id ? ink.h : ink.a; return `<span class="gd" style="left:${pct(el(p), n)};background:${c}"></span>`; }).join('');
+    if (n === cur && !brk) tr += `<span class="nw" style="left:${pct(nowEl, n)}"></span>`;
+    const ppTag = pp && n === cur ? ` <em>PP ${esc(pp.team.abbr)} ${Math.floor(pp.left / 60)}:${String(Math.round(pp.left % 60)).padStart(2, '0')}</em>` : '';
+    const list = gs.map(p => { const c = String(p.team && p.team.id) === g.home.id ? ink.h : ink.a; const q = goalParts(p, s); const pp2 = p.strength && /power/i.test(p.strength.text || '') ? ' <small>PP</small>' : p.strength && /short/i.test(p.strength.text || '') ? ' <small>SH</small>' : ''; return `<div class="g"><u style="background:${c}"></u><span>${esc(q.who ? lastName(q.who) : (q.raw || '').split(' ').slice(0, 2).join(' '))}</span>${pp2}</div>`; }).join('');
+    cols.push(`<div class="gp${n > cur ? ' fut' : ''}"><div class="tk">${tr}</div><div class="h">${pLab(n).toUpperCase()}${ppTag}</div>${list}</div>`);
+  }
+  // the Habs goalie in net: the last one to see ice time
+  const me = g.home.abbr === ab ? g.home : g.away, P = (s.boxscore && s.boxscore.players) || [];
+  const gb = P.find(b => String(b.team.id) === me.id), gc = gb && (gb.statistics || []).find(c => c.name === 'goalies');
+  let net = '';
+  if (gc) { const lab = gc.labels || gc.keys || []; const v = (a, k) => { const i = lab.indexOf(k); return i >= 0 ? a.stats[i] : ''; }; const used = (gc.athletes || []).filter(a => secs(v(a, 'TOI')) > 0 || +v(a, 'SA') > 0); const a = used[used.length - 1];
+    if (a) net = `<div class="gp net"><div class="tk"></div><div class="h">IN NET</div><div class="g"><span>${esc(lastName(a.athlete.displayName || a.athlete.shortName || ''))}</span></div><div class="sv">${esc(v(a, 'SV'))}/${esc(v(a, 'SA'))} SV</div></div>`; }
+  return { sog, html: `<div class="gtr" style="grid-template-columns:repeat(${nP},minmax(0,1fr))${net ? ' auto' : ''}">${cols.join('')}${net}</div>` };
 }
 /* goalie lines right under the score: saves/shots, SV%, goals against (and time on ice if a team used two) */
 function nhlGoalies(g, s, ink) {
