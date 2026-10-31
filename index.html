@@ -2577,7 +2577,7 @@ async function loadGoblin() {
 }
 /* Goblin GM upload: the scheduled Goblin GM run calls goblinUpload(report, actions) on this page in the Claude app's browser on Eric's computer.
    It adds the report to goblin/bundle.enc through the GitHub API with this device's report key and upload token (Settings > Goblin GM). Neither leaves this device except the token, sent only to api.github.com. */
-window.goblinUpload = async (R, A) => {
+window.goblinUpload = async (R, A, earlier) => { // earlier: optional other reports of the same week, added only if a failed upload missed them
   if (!CFG.goblinKey || !CFG.ghToken) return 'Forecheck setup missing on this computer: ' + [!CFG.goblinKey && 'report key', !CFG.ghToken && 'upload token'].filter(Boolean).join(' and ');
   if (!R || !R.id || R.week == null) return 'No report given';
   const U = 'https://api.github.com/repos/Pookiiie/forecheck/contents/goblin/bundle.enc', H = { Authorization: 'Bearer ' + CFG.ghToken, Accept: 'application/vnd.github+json' }, te = new TextEncoder(), td = new TextDecoder();
@@ -2587,9 +2587,10 @@ window.goblinUpload = async (R, A) => {
   for (let t = 0; t < 3; t++) {
     const g = await fetch(U + '?ref=main&t=' + Date.now(), { headers: H, cache: 'no-store' }); let sha, B = { v: 1, reports: {} };
     if (g.status === 401 || g.status === 403) return 'GitHub refused the upload token (' + g.status + '): make a new one and paste it in Forecheck Settings on this computer';
-    if (g.ok) { const j = await g.json(); sha = j.sha; try { const e = JSON.parse(td.decode(b64u(String(j.content).replace(/\s/g, '')))), ct = b64u(e.ct), tg = b64u(e.tag), b = new Uint8Array(ct.length + tg.length); b.set(ct); b.set(tg, ct.length); B = JSON.parse(td.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64u(e.iv) }, key, b))); } catch (e) { B = { v: 1, reports: {} }; } }
+    if (g.ok) { const j = await g.json(); sha = j.sha; try { const e = JSON.parse(td.decode(b64u(String(j.content).replace(/\s/g, '')))), ct = b64u(e.ct), tg = b64u(e.tag), b = new Uint8Array(ct.length + tg.length); b.set(ct); b.set(tg, ct.length); B = JSON.parse(td.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64u(e.iv) }, key, b))); } catch (e) { return 'The report key on this computer doesn\u2019t open the reports already in Forecheck: check it in Settings (nothing was uploaded)'; } }
     else if (g.status !== 404) return 'GitHub read failed: ' + g.status;
     for (const k in B.reports) if (B.reports[k].week !== R.week) delete B.reports[k];
+    (Array.isArray(earlier) ? earlier : []).forEach(x => { if (x && x.id && x.week === R.week && !B.reports[x.id]) B.reports[x.id] = x; });
     B.reports[R.id] = R; B.latest = R.id; B.week = R.week;
     const iv = crypto.getRandomValues(new Uint8Array(12)), o = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, te.encode(JSON.stringify(B))));
     const env = JSON.stringify({ v: 1, iv: en(iv), tag: en(o.slice(-16)), ct: en(o.slice(0, -16)) });
