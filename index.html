@@ -869,7 +869,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem('fc_' + k, JSON.stringify(v)); } catch (e) {} },
   del(k) { try { localStorage.removeItem('fc_' + k); } catch (e) {} }
 };
-const DEFAULTS = { look: 'glass', watch: ['rds', 'sn'], favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '', goblinKey: '' };
+const DEFAULTS = { look: 'glass', watch: ['rds', 'sn'], favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '', goblinKey: '', ghToken: '' };
 let CFG = Object.assign({}, DEFAULTS, LS.get('cfg', {}));
 const saveCfg = () => LS.set('cfg', CFG);
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2400); }
@@ -2736,8 +2736,9 @@ function openSettings(banner) {
   <section class="sec flush"><button class="row btn" id="sfCopyJs">Copy iPhone Shortcut script</button></section>
   <textarea class="code" id="sfJs" readonly rows="4" style="width:100%;font:12px/1.4 ui-monospace,Menlo,monospace;resize:none">${esc(SHORTCUT_JS)}</textarea>
   <section class="sec flush"><h2><span>Goblin GM</span></h2><div>
-    <label class="row"><span class="k">Report key</span><input id="sfGob" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(CFG.goblinKey)}" placeholder="Paste key"></label></div></section>
-  <p class="foot">Goblin GM saves an encrypted copy of each report next to this app. Only this key, kept on this device, can open it.</p>
+    <label class="row"><span class="k">Report key</span><input id="sfGob" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(CFG.goblinKey)}" placeholder="Paste key"></label>
+    <label class="row"><span class="k">Upload token</span><input id="sfGh" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(CFG.ghToken || '')}" placeholder="Computer only"></label></div></section>
+  <p class="foot">Goblin GM saves an encrypted copy of each report next to this app. Only this key, kept on this device, can open it. The upload token is only needed on the computer that runs Goblin GM, in the Claude app\u2019s browser: a GitHub fine-grained token for this repository with Contents set to read and write. Leave it empty on your phone.</p>
   <section class="sec flush"><button class="row btn red" id="sfReset">Clear saved data</button></section>
   <p class="foot" id="sfMsg">Settings are stored only on this device.</p>`;
   renderStatus(banner);
@@ -2763,7 +2764,7 @@ function openSettings(banner) {
   const drawWatch = () => { $('#sfWatch').innerHTML = Object.entries(PROV).map(([k, P]) => { const i = watchSel.indexOf(k); return `<button class="row svc${i >= 0 ? ' on' : ''}" data-svc="${k}" aria-pressed="${i >= 0}"><span class="n">${i >= 0 ? i + 1 : ''}</span><span class="k">${esc(P.app)}<small>${esc([P.tv && P.tv !== P.app ? P.tv + ' on TV' : '', P.lang].filter(Boolean).join(' · '))}</small></span></button>`; }).join(''); };
   drawWatch();
   $('#sfWatch').onclick = e => { const b = e.target.closest('[data-svc]'); if (!b) return; const k = b.dataset.svc; watchSel = watchSel.includes(k) ? watchSel.filter(x => x !== k) : watchSel.concat(k); drawWatch(); };
-  $('#sfSave').onclick = () => { CFG.watch = watchSel.slice(); CFG.look = $('#sfIce').value; applyIce(); CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; CFG.goblinKey = $('#sfGob').value.trim(); saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
+  $('#sfSave').onclick = () => { CFG.watch = watchSel.slice(); CFG.look = $('#sfIce').value; applyIce(); CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; CFG.goblinKey = $('#sfGob').value.trim(); CFG.ghToken = $('#sfGh').value.trim(); saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
   $('#sfReset').onclick = () => { const b = $('#sfReset'); if (b.dataset.armed) { LS.del('cfg'); LS.del('sp_players'); CFG = Object.assign({}, DEFAULTS); MY_NAMES.clear(); FX.data = {}; FX.byTeam = {}; toast('Cleared'); closeSheet(); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to clear everything'; } };
 }
 
