@@ -2575,6 +2575,30 @@ async function loadGoblin() {
     });
   } catch (e) { return null; }
 }
+/* Goblin GM upload: the scheduled Goblin GM run calls goblinUpload(report, actions) on this page in the Claude app's browser on Eric's computer.
+   It adds the report to goblin/bundle.enc through the GitHub API with this device's report key and upload token (Settings > Goblin GM). Neither leaves this device except the token, sent only to api.github.com. */
+window.goblinUpload = async (R, A) => {
+  if (!CFG.goblinKey || !CFG.ghToken) return 'Forecheck setup missing on this computer: ' + [!CFG.goblinKey && 'report key', !CFG.ghToken && 'upload token'].filter(Boolean).join(' and ');
+  if (!R || !R.id || R.week == null) return 'No report given';
+  const U = 'https://api.github.com/repos/Pookiiie/forecheck/contents/goblin/bundle.enc', H = { Authorization: 'Bearer ' + CFG.ghToken, Accept: 'application/vnd.github+json' }, te = new TextEncoder(), td = new TextDecoder();
+  const en = u => { let s = ''; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s); };
+  let key; try { key = await crypto.subtle.importKey('raw', b64u(CFG.goblinKey), 'AES-GCM', false, ['encrypt', 'decrypt']); } catch (e) { return 'The report key in Settings is not valid'; }
+  R.actions = Array.isArray(A) ? A : []; R.at = new Date().toISOString(); let last = '';
+  for (let t = 0; t < 3; t++) {
+    const g = await fetch(U + '?ref=main&t=' + Date.now(), { headers: H, cache: 'no-store' }); let sha, B = { v: 1, reports: {} };
+    if (g.status === 401 || g.status === 403) return 'GitHub refused the upload token (' + g.status + '): make a new one and paste it in Forecheck Settings on this computer';
+    if (g.ok) { const j = await g.json(); sha = j.sha; try { const e = JSON.parse(td.decode(b64u(String(j.content).replace(/\s/g, '')))), ct = b64u(e.ct), tg = b64u(e.tag), b = new Uint8Array(ct.length + tg.length); b.set(ct); b.set(tg, ct.length); B = JSON.parse(td.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64u(e.iv) }, key, b))); } catch (e) { B = { v: 1, reports: {} }; } }
+    else if (g.status !== 404) return 'GitHub read failed: ' + g.status;
+    for (const k in B.reports) if (B.reports[k].week !== R.week) delete B.reports[k];
+    B.reports[R.id] = R; B.latest = R.id; B.week = R.week;
+    const iv = crypto.getRandomValues(new Uint8Array(12)), o = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, te.encode(JSON.stringify(B))));
+    const env = JSON.stringify({ v: 1, iv: en(iv), tag: en(o.slice(-16)), ct: en(o.slice(0, -16)) });
+    const p = await fetch(U, { method: 'PUT', headers: H, body: JSON.stringify(Object.assign({ message: 'Goblin GM report (encrypted)', content: en(te.encode(env)), branch: 'main' }, sha ? { sha } : {})) });
+    if (p.ok) { for (const k in memo) if (/goblin/.test(k)) delete memo[k]; return 'Forecheck updated: ' + Object.keys(B.reports).join(', '); }
+    last = p.status + ' ' + (await p.text()).slice(0, 120); if (p.status !== 409 && p.status !== 422) break;
+  }
+  return 'GitHub upload failed: ' + last;
+};
 async function openGoblin(id) { S.gobId = id; setSport('nfl'); openSheet('goblin', 'Goblin GM', 'Scores'); await loadGoblinSheet(); }
 async function loadGoblinSheet() {
   const B = await loadGoblin(); if (S.sheetMode !== 'goblin') return false;
