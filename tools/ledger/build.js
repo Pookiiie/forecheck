@@ -1,5 +1,5 @@
-// Builds "The Goblin's Ledger" into Forecheck (index.html) and both Goblin GM report pages from one source.
-// usage: node build.js <forecheck index.html> <eric page out> <max page out>
+// Builds "The Goblin's Ledger" into both Goblin GM report pages (Forecheck no longer shows Goblin GM reports, so pass - for the app).
+// usage: node build.js - <eric page out> <max page out>
 const fs = require('fs'); const path = require('path');
 const { STONE, WOOD, WOOD_TAG, PLANK_BITS, PAPER, CLOTH, WEB, deckle, FILIGREE, BAR, IVY } = require('./textures.js');
 const { gobURL } = require('./goblin.js');
