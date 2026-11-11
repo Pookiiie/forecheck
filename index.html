@@ -755,7 +755,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem('fc_' + k, JSON.stringify(v)); } catch (e) {} },
   del(k) { try { localStorage.removeItem('fc_' + k); } catch (e) {} }
 };
-const DEFAULTS = { look: 'glass', watch: ['rds', 'sn'], favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '' };
+const DEFAULTS = { look: 'glass', watch: ['rds', 'sn'], favNFL: 'MIN', favNHL: 'MTL', sleeperLeague: '', sleeperRoster: '', cbsToken: '', cbsTeam: '', cbsTokenAt: 0 };
 let CFG = Object.assign({}, DEFAULTS, LS.get('cfg', {}));
 const saveCfg = () => LS.set('cfg', CFG);
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2400); }
@@ -1323,6 +1323,7 @@ function fxCards() {
       // second line: each projection under its score, players left (or Final) under the bar
       const sub = isDone(m) ? '<span></span><small class="sl">Final</small>' : `<span></span><small class="pj">${fmtP(m.me.est)}</small><small class="pj d">${m.opp ? '\u2013' : ''}</small><small class="pj">${m.opp ? fmtP(m.opp.est) : ''}</small><small class="sl">${leftTxt(m)}</small>`;
       rows.push(`<button class="cf${wc}${k === 'cv' ? ' lgB' : ''}" data-fxopen="${k}"><span class="tg${k === 'cv' ? ' B' : ''}">${esc(tag)}</span><b>${fmtP(m.me.pts)}</b>${m.opp ? `<span class="vs">–</span><span class="op">${fmtP(m.opp.pts)}</span>` : '<span></span><span></span>'}<span class="wb">${o != null ? `<u style="width:${o}%"></u>` : ''}</span><span class="pc ${o == null ? '' : o >= 50 ? 'up' : 'dn'}">${o != null ? oddsLabel(m, o) : ''}</span>${sub}${lineupCard(iss)}</button>`);
+      if (m.stale) { const when = new Date(m.stale.t).toLocaleString('en-CA', { weekday: 'short', hour: 'numeric', minute: '2-digit' }); msg(k, '', 'data-cbspaste', m.stale.why === CBS_DOWN ? 'CBS isn\u2019t answering \u00b7 scores estimated' : 'CBS token expired \u00b7 scores estimated', `Lineups as of ${esc(when)}, scored from live stats. For lineup changes, run your CBS shortcut and tap here`, 'amber'); }
     } else if (k === 'cv' && d.cvErr === CBS_DOWN) msg(k, def, 'data-cbspaste', 'CBS isn’t answering (error 500)', 'Often CBS’s side — it retries on its own. If your league works in Safari, run your CBS shortcut and tap here for a new token', 'amber');
     else if (k === 'cv' && d.cvErr === CBS_EXPIRED) msg(k, def, 'data-cbspaste', 'Token expired', 'Run your CBS shortcut in Safari, then tap here to paste the new one', 'red');
     else if (d[k + 'Err']) msg(k, def, 'data-settings', esc(d[k + 'Err']), 'Tap to fix in Settings', 'red');
@@ -2335,6 +2336,16 @@ async function cbsDiagnostics() {
   return JSON.stringify(out);
 }
 const CBS_EXPIRED = 'Your CBS token has expired.', CBS_DOWN = 'CBS error 500';
+/* Token bookkeeping, to learn how long a CBS token really lasts: when it was saved, when CBS last accepted it and when it first refused it.
+   Saving a new token files the old one's lifetime as a range (last OK .. first refusal) under cbsLife. Kept on this device only. */
+function setCbsToken(t) {
+  if (!t || t === CFG.cbsToken) return false;
+  const h = LS.get('cbsHealth', {}); if (CFG.cbsTokenAt && h.dead) LS.set('cbsLife', { min: Math.max(0, (h.ok || CFG.cbsTokenAt) - CFG.cbsTokenAt), max: h.dead - CFG.cbsTokenAt, at: Date.now() });
+  CFG.cbsToken = t; CFG.cbsTokenAt = Date.now(); LS.set('cbsHealth', {}); saveCfg(); return true;
+}
+const cbsMark = ok => { const h = LS.get('cbsHealth', {}); if (ok) { h.ok = Date.now(); delete h.dead; } else if (!h.dead) h.dead = Date.now(); LS.set('cbsHealth', h); };
+const agoTxt = ms => ms < 36e5 ? Math.max(1, Math.round(ms / 6e4)) + ' min' : ms < 48 * 36e5 ? Math.round(ms / 36e5) + ' h' : Math.round(ms / 864e5) + ' days';
+const statRows = (season, wk) => cached(`stat:${season}:${wk}`, 30e3, () => getJSON(`https://api.sleeper.app/stats/nfl/${season}/${wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF`));
 /* one-tap token refresh from the BELL card: read the token the Shortcut copied, save it, reload */
 /* clipboard → CBS token: tolerate quotes, "token=" prefixes or surrounding text; returns '' if nothing token-like */
 const tokenIn = t => { const m = String(t || '').match(/[A-Za-z0-9_\-.+\/=%]{20,}/g); return m ? m.sort((a, b) => b.length - a.length)[0].replace(/^token=/i, '') : ''; };
@@ -2345,7 +2356,7 @@ async function pasteCbsToken(fromSettings) {
   if (!t) { toast(/^No token found/.test(raw) ? raw : 'Clipboard doesn\u2019t hold a CBS token yet \u2014 run your shortcut first'); return; }
   const f = document.getElementById('sfCbs'); if (f) f.value = t;
   if (t === CFG.cbsToken) { toast('That\u2019s the token already saved \u2014 run your shortcut again for a new one'); return; }
-  CFG.cbsToken = t; saveCfg(); for (const k in memo) delete memo[k];
+  setCbsToken(t); for (const k in memo) delete memo[k];
   toast(CFG.cbsTeam ? 'New CBS token saved' : 'Token saved \u2014 tap Load teams to pick your team'); if (!fromSettings) refresh(true);
 }
 async function cbsData(nfl) {
@@ -2354,15 +2365,26 @@ async function cbsData(nfl) {
   const live = async extra => { try { return await cbsCall('league/scoring/live', extra); } catch (e) {
     if (/HTTP 5\d\d|internal server error/i.test(e.message)) throw new Error(CBS_DOWN);
     if (/HTTP 40[013]|load failed|failed to fetch|networkerror|invalid|expired|token/i.test(e.message)) throw new Error(CBS_EXPIRED); throw e; } };
-  const [b0, pm] = await Promise.all([live('&period=' + wk), projRows(nfl.year, wk).then(cbsProjMap).catch(() => ({ k: {}, n: {}, ik: {}, iname: {} }))]);
-  let b = b0; if (!((b.live_scoring || b).teams || []).length) b = await live('');   // fall back to whatever week CBS considers live
+  const pmP = projRows(nfl.year, wk).then(cbsProjMap).catch(() => ({ k: {}, n: {}, ik: {}, iname: {} }));
+  // When CBS refuses the token (or is down), keep going with the lineups it last gave us for this week and score them
+  // ourselves from Sleeper's live stats with BELL's rules. The token then only matters for picking up lineup changes.
+  let b, stale = null, act = null;
+  try { b = await live('&period=' + wk); if (!((b.live_scoring || b).teams || []).length) b = await live(''); cbsMark(true); }   // second call: whatever week CBS considers live
+  catch (e) {
+    const known = e.message === CBS_EXPIRED || e.message === CBS_DOWN; if (known) cbsMark(false);
+    const c = LS.get('cbsLast', null); if (!(known && c && c.wk === wk && c.yr === nfl.year && (c.teams || []).length)) throw e;
+    try { act = cbsProjMap(await statRows(nfl.year, wk)); } catch (e2) { throw e; }
+    b = { teams: c.teams }; stale = { t: c.t, why: e.message };
+  }
+  const pm = await pmP;
   const ls = b.live_scoring || b; const teams = ls.teams || []; if (!teams.length) throw new Error('CBS returned no teams for week ' + wk);
   const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
   const T = teams.map(t => {
     const rows = (t.players || []).map(p => {
       const status = String(p.status || p.roster_status || p.roster_pos || '').toUpperCase(); const st = !/^(RS|BN|B|IR|RES)/.test(status);
-      const team = p.pro_team || p.team || ''; const pts = num(p.fpts ?? p.pts ?? p.points) || 0;
+      const team = p.pro_team || p.team || '';
       const nm = p.fullname || p.full_name || p.name || ''; const isD = /^(DST|DEF|D\/ST)$/i.test(p.position || '');
+      const pts = act ? +((isD ? act.k['DEF|' + nflAbbr(team)] : (act.k[normName(nm) + '|' + nflAbbr(team)] ?? act.n[normName(nm)])) || 0) : num(p.fpts ?? p.pts ?? p.points) || 0;
       let pj = num(p.proj_fpts ?? p.proj_pts ?? p.projected_points ?? p.fpts_proj);
       if (pj == null) pj = isD ? (pm.k['DEF|' + nflAbbr(team)] ?? null) : (pm.k[normName(nm) + '|' + nflAbbr(team)] ?? pm.n[normName(nm)] ?? null);
       const g = nfl.map[nflAbbr(team)]; const rem = !g || nfl.byes.includes(nflAbbr(team)) ? 0 : remainFrac(g);
@@ -2375,10 +2397,11 @@ async function cbsData(nfl) {
   const oid = t => String(typeof t.opp === 'object' ? t.opp.id : t.opp);
   const me = T.find(t => t.rid === String(CFG.cbsTeam)); const opp = me && me.opp != null ? T.find(t => t.rid === oid(me)) : null;
   if (me) me.rows.forEach(r => addMine(r.name, 'BELL'));
+  if (!stale) LS.set('cbsLast', { wk, yr: nfl.year, t: Date.now(), teams: teams.map((t, i) => ({ id: t.id, name: t.name || t.long_name || '', opponent: T[i].opp != null ? oid(T[i]) : null, players: (t.players || []).map(p => ({ fullname: p.fullname || p.full_name || p.name || '', position: p.position || '', pro_team: p.pro_team || p.team || '', status: p.status || p.roster_status || p.roster_pos || '' })) })) });
   let league = [];
   if (T.some(t => t.opp != null)) { const seen = new Set(); T.forEach(t => { if (seen.has(t.rid)) return; const o = T.find(x => x.rid === oid(t)); seen.add(t.rid); if (o) { seen.add(o.rid); league.push([t, o]); } else league.push([t]); }); }
   else league = T.slice().sort((a, b) => b.pts - a.pts).map(t => [t]);
-  return { key: 'cv', sc: Object.assign({ rec: 0 }, CBS_SC, BELL_DEF), title: 'BELL', short: 'BELL', src: 'CBS', week: wk, me, opp, league, nfl };
+  return { key: 'cv', sc: Object.assign({ rec: 0 }, CBS_SC, BELL_DEF), title: 'BELL', short: 'BELL', src: 'CBS', week: wk, me, opp, league, nfl, stale };
 }
 const fmtP = v => v == null ? '–' : (Math.round(v * 10) / 10).toFixed(1);
 function ncdf(z) { const t = 1 / (1 + .3275911 * Math.abs(z) / Math.SQRT2); const e = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - .284496736) * t + .254829592) * t * Math.exp(-z * z / 2); return .5 * (1 + Math.sign(z) * e); }
@@ -2454,8 +2477,9 @@ async function renderStatus(banner) {
   const box = $('#sfStatus'); if (!box) return;
   const row = (k, cls, v) => `<div class="row"><span class="k">${esc(k)}</span><span class="v ${cls}">${v}</span></div>`;
   let sl = CFG.sleeperLeague ? 'Checking…' : 'Not set up', slc = '';
-  const cb = CFG.cbsToken ? (CFG.cbsTeam ? '✓ Token saved' : 'Pick your team') : CFG.cbsTeam ? 'Needs your token' : 'Not set up';
-  const paint = () => { $('#sfBanner').innerHTML = banner ? `<div class="banner">${banner}</div>` : ''; box.innerHTML = row('Favourites', 'ok', '✓ ' + esc([CFG.favNFL, CFG.favNHL].filter(Boolean).join(' · ') || 'None')) + row('Sleeper', slc, sl) + row('CBS', CFG.cbsToken ? 'ok' : '', cb); };
+  const life = LS.get('cbsLife', null), hl = LS.get('cbsHealth', {});
+  const cb = CFG.cbsToken ? (CFG.cbsTeam ? (hl.dead ? 'Token refused' : '✓ Token saved') + (CFG.cbsTokenAt ? ' ' + agoTxt(Date.now() - CFG.cbsTokenAt) + ' ago' : '') + (life ? ` · last one lasted ${life.max - life.min < 36e5 ? agoTxt(life.max) : agoTxt(life.min) + '–' + agoTxt(life.max)}` : '') : 'Pick your team') : CFG.cbsTeam ? 'Needs your token' : 'Not set up';
+  const paint = () => { $('#sfBanner').innerHTML = banner ? `<div class="banner">${banner}</div>` : ''; box.innerHTML = row('Favourites', 'ok', '✓ ' + esc([CFG.favNFL, CFG.favNHL].filter(Boolean).join(' · ') || 'None')) + row('Sleeper', slc, sl) + row('CBS', CFG.cbsToken && !hl.dead ? 'ok' : '', esc(cb)); };
   paint();
   if (CFG.sleeperLeague) {
     try {
@@ -2523,7 +2547,7 @@ function openSettings(banner) {
   const drawWatch = () => { $('#sfWatch').innerHTML = Object.entries(PROV).map(([k, P]) => { const i = watchSel.indexOf(k); return `<button class="row svc${i >= 0 ? ' on' : ''}" data-svc="${k}" aria-pressed="${i >= 0}"><span class="n">${i >= 0 ? i + 1 : ''}</span><span class="k">${esc(P.app)}<small>${esc([P.tv && P.tv !== P.app ? P.tv + ' on TV' : '', P.lang].filter(Boolean).join(' · '))}</small></span></button>`; }).join(''); };
   drawWatch();
   $('#sfWatch').onclick = e => { const b = e.target.closest('[data-svc]'); if (!b) return; const k = b.dataset.svc; watchSel = watchSel.includes(k) ? watchSel.filter(x => x !== k) : watchSel.concat(k); drawWatch(); };
-  $('#sfSave').onclick = () => { CFG.watch = watchSel.slice(); CFG.look = $('#sfIce').value; applyIce(); CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; CFG.cbsToken = $('#sfCbs').value.trim(); CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
+  $('#sfSave').onclick = () => { CFG.watch = watchSel.slice(); CFG.look = $('#sfIce').value; applyIce(); CFG.favNFL = $('#sfNfl').value; CFG.favNHL = $('#sfNhl').value; CFG.sleeperLeague = $('#sfSl').value.trim(); CFG.sleeperRoster = $('#sfSlTeam').value; { const t = $('#sfCbs').value.trim(); if (t) setCbsToken(t); else CFG.cbsToken = ''; } CFG.cbsTeam = $('#sfCbsTeam').value; saveCfg(); for (const k in memo) delete memo[k]; MY_NAMES.clear(); toast('Saved'); closeSheet(); };
   $('#sfReset').onclick = () => { const b = $('#sfReset'); if (b.dataset.armed) { LS.del('cfg'); LS.del('sp_players'); CFG = Object.assign({}, DEFAULTS); MY_NAMES.clear(); FX.data = {}; FX.byTeam = {}; toast('Cleared'); closeSheet(); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to clear everything'; } };
 }
 
