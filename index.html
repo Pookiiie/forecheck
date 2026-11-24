@@ -916,7 +916,22 @@ const PROV = {
   prime: { name: 'Prime Video', bug: 'Prime', app: 'Prime Video', short: 'Prime', tv: '', lang: 'EN/FR' }
 };
 const PV = (p, note) => ({ p, note });
+/* The NHL's own Canadian TV list for each Habs game (habs-tv.json, refreshed by a GitHub Action since the NHL API can't be read
+   from the browser). National networks plus the Habs' own regional ones (RDS, TSN2); other teams' regional feeds are left out. */
+let HTV = null;
+const loadHabsTV = () => cached('habsTV', 30 * 6e4, () => fetch('habs-tv.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null)).then(j => { HTV = j; }).catch(() => {});
+const NETP = n => /^SN/i.test(n) ? 'sn' : /^TVA/i.test(n) ? 'tva' : /^RDS/i.test(n) ? 'rds' : /^TSN/i.test(n) ? 'tsn' : /prime/i.test(n) ? 'prime' : null;
+function habsTV(g) {
+  if (!HTV || !HTV.games || (CFG.favNHL || 'MTL') !== 'MTL') return null;
+  const t = +new Date(g.date), x = HTV.games.find(e => Math.abs(Date.parse(e.t) - t) < 3 * 36e5); if (!x || !(x.tv || []).length) return null;
+  const side = x.h === 'MTL' ? 'H' : 'A', seen = new Set(), items = [];
+  x.tv.filter(b => b.m === 'N' || b.m === side).forEach(b => { const p = NETP(b.n); if (!p || seen.has(p)) return; seen.add(p); items.push(PV(p, b.n === 'SN+' ? 'only' : p === 'tsn' && b.n !== 'TSN2' ? b.n : '')); });
+  if (!items.length) return null;
+  const nat = x.tv.some(b => b.m === 'N');
+  return { items, note: (nat ? 'National game' : 'Regional game') + (x.tv.some(b => b.n === 'SN+') ? ': English feed only on Sportsnet+' : '') + '. From the NHL\u2019s broadcast list.', link: 'https://www.nhl.com/canadiens/schedule', linkText: 'Habs broadcast schedule' };
+}
 function watchHabs(g) {
+  const real = habsTV(g); if (real) return real;
   const { wd } = et(g.date); let out, note;
   if (/classic|stadium series/i.test(g.note || '')) { out = [PV('sn'), PV('tva')]; note = (g.note || 'Outdoor game') + ': national broadcast.'; }
   else if (wd === 'Sat') { out = [PV('sn'), PV('tva')]; note = 'Saturday Habs games are usually national. If not, TSN2 and RDS.'; }
@@ -1680,7 +1695,7 @@ function plogHTML(r, j) {
 const nhlName = t => (CFG.favNHL || 'MTL') === 'MTL' ? 'Habs' : ((t && (t.shortDisplayName || t.name)) || CFG.favNHL || 'Hockey');
 async function loadNHL() {
   const ab = CFG.favNHL || 'MTL';
-  const [sc, today] = await Promise.all([teamSchedule('nhl', ab), espn('nhl', 'scoreboard').catch(() => null)]);
+  const [sc, today] = await Promise.all([teamSchedule('nhl', ab), espn('nhl', 'scoreboard').catch(() => null), loadHabsTV()]);
   const fresh = today ? (today.events || []).map(e => mkGame('nhl', e)).filter(g => g.home.abbr === ab || g.away.abbr === ab) : [];
   const games = sc.games.slice();
   fresh.forEach(g => { const i = games.findIndex(x => x.id === g.id); if (i >= 0) games[i] = g; else games.push(g); });
